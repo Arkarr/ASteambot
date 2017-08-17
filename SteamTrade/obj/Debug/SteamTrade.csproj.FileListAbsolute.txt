@@ -1,0 +1,36 @@
+G:\VS\ASteambot\SteamTrade\bin\Debug\SteamTrade.dll
+G:\VS\ASteambot\SteamTrade\bin\Debug\SteamTrade.pdb
+G:\VS\ASteambot\SteamTrade\bin\Debug\Newtonsoft.Json.dll
+G:\VS\ASteambot\SteamTrade\bin\Debug\protobuf-net.dll
+G:\VS\ASteambot\SteamTrade\bin\Debug\SteamKit2.dll
+G:\VS\ASteambot\SteamTrade\bin\Debug\Newtonsoft.Json.xml
+G:\VS\ASteambot\SteamTrade\bin\Debug\protobuf-net.pdb
+G:\VS\ASteambot\SteamTrade\bin\Debug\protobuf-net.xml
+G:\VS\ASteambot\SteamTrade\bin\Debug\SteamKit2.xml
+G:\VS\ASteambot\SteamTrade\obj\Debug\SteamTrade.dll
+G:\VS\ASteambot\SteamTrade\obj\Debug\SteamTrade.pdb
+H:\VS\ASteambot\SteamTrade\bin\Debug\SteamTrade.dll
+H:\VS\ASteambot\SteamTrade\bin\Debug\SteamTrade.pdb
+H:\VS\ASteambot\SteamTrade\bin\Debug\Newtonsoft.Json.dll
+H:\VS\ASteambot\SteamTrade\bin\Debug\protobuf-net.dll
+H:\VS\ASteambot\SteamTrade\bin\Debug\SteamKit2.dll
+H:\VS\ASteambot\SteamTrade\bin\Debug\Newtonsoft.Json.xml
+H:\VS\ASteambot\SteamTrade\bin\Debug\protobuf-net.pdb
+H:\VS\ASteambot\SteamTrade\bin\Debug\protobuf-net.xml
+H:\VS\ASteambot\SteamTrade\bin\Debug\SteamKit2.xml
+H:\VS\ASteambot\SteamTrade\obj\Debug\SteamTrade.csprojResolveAssemblyReference.cache
+H:\VS\ASteambot\SteamTrade\obj\Debug\SteamTrade.dll
+H:\VS\ASteambot\SteamTrade\obj\Debug\SteamTrade.pdb
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\bin\Debug\SteamTrade.dll
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\bin\Debug\SteamTrade.pdb
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\bin\Debug\protobuf-net.dll
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\bin\Debug\SteamKit2.dll
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\bin\Debug\Newtonsoft.Json.xml
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\bin\Debug\protobuf-net.pdb
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\bin\Debug\protobuf-net.xml
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\bin\Debug\SteamKit2.xml
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\obj\Debug\SteamTrade.csprojResolveAssemblyReference.cache
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\obj\Debug\SteamTrade.dll
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\obj\Debug\SteamTrade.pdb
+C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamTrade\obj\Debug\SteamTrade.csproj.CoreCompileInputs.cache
