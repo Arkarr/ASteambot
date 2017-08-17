@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+#steam related
+*.bin
+*.auth
