@@ -16,6 +16,7 @@
 *.dylib
 *.dll
 /build/
+/obj/
 *.suo
 *.user
 _ReSharper.*/
