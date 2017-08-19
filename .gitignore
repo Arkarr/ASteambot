@@ -52,3 +52,5 @@ Version.cpp
 #steam related
 *.bin
 *.auth
+
+!BINARIES/
