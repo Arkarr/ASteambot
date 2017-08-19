@@ -15,7 +15,6 @@ C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamAuth\bin\De
 C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamAuth\bin\Debug\SteamAuth.pdb
 C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamAuth\bin\Debug\Newtonsoft.Json.dll
 C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamAuth\bin\Debug\Newtonsoft.Json.xml
-C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamAuth\obj\Debug\SteamAuth.csprojResolveAssemblyReference.cache
 C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamAuth\obj\Debug\SteamAuth.dll
 C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamAuth\obj\Debug\SteamAuth.pdb
 C:\Users\Arkarr\Documents\Visual Studio 2017\Projects\ASteambot\SteamAuth\obj\Debug\SteamAuth.csproj.CoreCompileInputs.cache

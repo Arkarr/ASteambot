@@ -1,27 +1,24 @@
-﻿using SteamKit2;
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Security.Cryptography;
-using SteamTrade;
-using SteamTrade.TradeOffer;
+﻿using System;
+using SteamKit2;
 using SteamAuth;
-using System.ComponentModel;
+using System.IO;
+using SteamTrade;
 using System.Net;
+using System.Linq;
+using System.Threading;
+using System.ComponentModel;
+using SteamTrade.TradeOffer;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace ASteambot
 {
-
     public class Bot
     {
         public bool LoggedIn { get; private set; }
         public bool WebLoggedIn { get; private set; }
         public string Name { get; private set; }
-        public GenericInventory MyInventory { get; private set; }
+        public GenericInventory MyGenericInventory { get; private set; }
 
         private bool stop;
         private bool renaming;
@@ -45,7 +42,7 @@ namespace ASteambot
             steamClient = new SteamClient();
             manager = new CallbackManager(steamClient);
             steamWeb = new SteamTrade.SteamWeb();
-            MyInventory = new GenericInventory(steamWeb);
+            MyGenericInventory = new GenericInventory(steamWeb);
 
             steamCallbackManager = new CallbackManager(steamClient);
 
@@ -139,10 +136,14 @@ namespace ASteambot
         /// ///////////////////////////////////////////////////////////////
         public void CreateTradeOffer(string otherSteamID)
         {
+            List<long> contextId = new List<long>();
+            contextId.Add(2);
+            MyGenericInventory.load(440, contextId, steamClient.SteamID);
+
             SteamID partenar = new SteamID(otherSteamID);
             TradeOffer to = tradeOfferManager.NewOffer(partenar);
 
-            GenericInventory.Item test = MyInventory.items.FirstOrDefault().Value;
+            GenericInventory.Item test = MyGenericInventory.items.FirstOrDefault().Value;
 
             to.Items.AddMyItem(test.appid, test.contextid, (long)test.assetid);
 
@@ -177,6 +178,35 @@ namespace ASteambot
         public void DeactivateAuthenticator()
         {
             steamGuardAccount.DeactivateAuthenticator();
+        }
+
+        public void WithDrawn(string steamid)
+        {
+            SteamID steamID = new SteamID(steamid);
+            string name = steamFriends.GetFriendPersonaName(steamID);
+
+            Console.WriteLine("You are about to send ALL the bot's items to {0} ({1}) via a trade offer, do you confirm ? (YES/NO)", name, steamid);
+            string answer = Console.ReadLine();
+
+            if (!answer.Equals("YES"))
+            {
+                Console.WriteLine("Operation cancelled. Nothing traded.");
+                return;
+            }
+            
+            TradeOffer to = tradeOfferManager.NewOffer(steamID);
+
+            Inventory inventory = Inventory.FetchInventory(steamUser.SteamID, loginInfo.API, steamWeb);
+            foreach (Inventory.Item item in inventory.Items)
+            {
+                if(item.IsNotTradeable == false)
+                    to.Items.AddMyItem(item.AppId, item.ContextId, (long)item.Id);
+            }
+
+            string offerId;
+            to.Send(out offerId, "Backpack withdrawn");
+
+            to.Accept();
         }
 
         public void LinkMobileAuth()
@@ -433,10 +463,6 @@ namespace ASteambot
                 case EResult.OK:
                     myUserNonce = callback.WebAPIUserNonce;
                     Console.WriteLine("Logged in to steam !");
-                    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    List<long> contextId = new List<long>();
-                    contextId.Add(2);
-                    MyInventory.load(440, contextId, steamClient.SteamID);
                     break;
 
                 case EResult.AccountLoginDeniedNeedTwoFactor:
@@ -518,9 +544,29 @@ namespace ASteambot
             SpawnTradeOfferPollingThread();
         }
 
-        public void TradeOfferUpdated(TradeOffer offer)
+        private void TradeOfferUpdated(TradeOffer offer)
         {
-            Console.WriteLine("Offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
+            if (offer.IsOurOffer)
+                OwnTradeOfferUpdated(offer);
+            else
+                PartenarTradeOfferUpdated(offer);
+        }
+
+        private void OwnTradeOfferUpdated(TradeOffer offer)
+        {
+            Console.WriteLine("Sent offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
+        }
+
+        private void PartenarTradeOfferUpdated(TradeOffer offer)
+        {
+            Console.WriteLine("Received offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
+            if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
+            {
+                if (offer.Items.GetMyItems().Count == 0)
+                    offer.Accept();
+                else
+                    offer.Decline();
+            }
         }
 
         public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
@@ -563,12 +609,9 @@ namespace ASteambot
                 Thread.Sleep(30 * 1000);//tradeOfferPollingIntervalSecs * 1000);
             }
         }
-
-        /////////////////////////////////////////////////////////////////////
-
+        
         //Helper function :
         #region Helper function
-        //Helper function
         public void Run()
         {
             if (!stop)

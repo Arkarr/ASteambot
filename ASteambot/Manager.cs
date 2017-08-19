@@ -76,22 +76,15 @@ namespace ASteambot
                 case "unlinkauthenticator":
                     UnlinkAuthenticator();
                     break;
+                case "withdrawn":
+                    WithDrawn(args);
+                    break;
                 default:
                     Console.WriteLine("Command \"{0}\" not found ! Use 'help' !", command);
                 break;
             }
 
             return true;
-        }
-
-        public void LinkAuthenticator()
-        {
-            SelectedBot.LinkMobileAuth();
-        }
-
-        public void UnlinkAuthenticator()
-        {
-            SelectedBot.DeactivateAuthenticator();
         }
 
         public void ShowHelp()
@@ -102,6 +95,30 @@ namespace ASteambot
             Console.WriteLine("rename - rename a bot through steam.");
             Console.WriteLine("createto - create a thread offer.");
             Console.WriteLine("help - show this text.");
+            Console.WriteLine("linkauthenticator - link a mobile authenticator through the bot, required to do trade offers correctly.");
+            Console.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
+            Console.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
+        }
+
+        public void WithDrawn(string[] args)
+        {
+            if (args.Count() < 2)
+            {
+                Console.WriteLine("Usage : withdrawn [STEAM ID]");
+                return;
+            }
+
+            SelectedBot.WithDrawn(args[1]);
+        }
+
+        public void LinkAuthenticator()
+        {
+            SelectedBot.LinkMobileAuth();
+        }
+
+        public void UnlinkAuthenticator()
+        {
+            SelectedBot.DeactivateAuthenticator();
         }
 
         public void CreateTradeOffer(string[] args)
