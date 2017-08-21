@@ -20,6 +20,13 @@ namespace ASteambot
         public string Name { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
 
+        enum SupportedGames
+        {
+            TF2 = 440,
+            CSGO = 730,
+            Dota2 = 570
+        };
+
         private bool stop;
         private bool renaming;
         private string myUserNonce;
@@ -138,7 +145,7 @@ namespace ASteambot
         {
             List<long> contextId = new List<long>();
             contextId.Add(2);
-            MyGenericInventory.load(440, contextId, steamClient.SteamID);
+            MyGenericInventory.load((int)SupportedGames.TF2, contextId, steamClient.SteamID);
 
             SteamID partenar = new SteamID(otherSteamID);
             TradeOffer to = tradeOfferManager.NewOffer(partenar);
@@ -152,10 +159,10 @@ namespace ASteambot
 
             Console.WriteLine("Offer ID : {0}", offerId);
 
-            AcceptAllMobileTradeConfirmations();
+            AcceptMobileTradeConfirmation(offerId);
         }
 
-        public void AcceptAllMobileTradeConfirmations()
+        public void AcceptMobileTradeConfirmation(string offerId)
         {
             steamGuardAccount.Session.SteamLogin = steamWeb.Token;
             steamGuardAccount.Session.SteamLoginSecure = steamWeb.TokenSecure;
@@ -163,9 +170,11 @@ namespace ASteambot
             {
                 foreach (var confirmation in steamGuardAccount.FetchConfirmations())
                 {
-                    if (steamGuardAccount.AcceptConfirmation(confirmation))
+                    if (confirmation.ConfType == Confirmation.ConfirmationType.Trade)
                     {
-                        Console.WriteLine("Confirmed {0}. (Confirmation ID #{1})", confirmation.Description, confirmation.ID);
+                        long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
+                        if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
+                            Console.WriteLine("Confirmed {0}. (Confirmation ID #{1})", confirmation.Description, confirmation.ID);
                     }
                 }
             }
@@ -174,10 +183,18 @@ namespace ASteambot
                 Console.WriteLine("Invalid session when trying to fetch trade confirmations.");
             }
         }
-        
+
         public void DeactivateAuthenticator()
         {
-            steamGuardAccount.DeactivateAuthenticator();
+            if (steamGuardAccount == null)
+            {
+                Console.WriteLine("Unable to unlink mobile authenticator, is it really linked ?");
+            }
+            else
+            {
+                steamGuardAccount.DeactivateAuthenticator();
+                Console.WriteLine("Done !");
+            }
         }
 
         public void WithDrawn(string steamid)
@@ -185,7 +202,13 @@ namespace ASteambot
             SteamID steamID = new SteamID(steamid);
             string name = steamFriends.GetFriendPersonaName(steamID);
 
-            Console.WriteLine("You are about to send ALL the bot's items to {0} ({1}) via a trade offer, do you confirm ? (YES/NO)", name, steamid);
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write("You are about to send ALL the bot's items to");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Write(" {0} ({1}) ", name, steamid);
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write("via a trade offer, do you confirm ? (YES / NO)");
+            Console.WriteLine();
             string answer = Console.ReadLine();
 
             if (!answer.Equals("YES"))
@@ -196,17 +219,55 @@ namespace ASteambot
             
             TradeOffer to = tradeOfferManager.NewOffer(steamID);
 
-            Inventory inventory = Inventory.FetchInventory(steamUser.SteamID, loginInfo.API, steamWeb);
+            /*Inventory inventory = Inventory.FetchInventory(steamUser.SteamID, loginInfo.API, steamWeb);
             foreach (Inventory.Item item in inventory.Items)
             {
                 if(item.IsNotTradeable == false)
                     to.Items.AddMyItem(item.AppId, item.ContextId, (long)item.Id);
+            }*/
+            
+            long[] contextID = new long[1];
+            contextID[0] = 2;
+
+            MyGenericInventory.load((int)SupportedGames.TF2, contextID, steamUser.SteamID);
+            foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
+            {
+                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+                if (description.tradable)
+                    to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
             }
 
-            string offerId;
-            to.Send(out offerId, "Backpack withdrawn");
+            MyGenericInventory.load((int)SupportedGames.CSGO, contextID, steamUser.SteamID);
+            foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
+            {
+                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+                if (description.tradable)
+                    to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
+            }
 
-            to.Accept();
+            MyGenericInventory.load((int)SupportedGames.Dota2, contextID, steamUser.SteamID);
+            foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
+            {
+                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+                if (description.tradable)
+                    to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
+            }
+
+            if (to.Items.GetMyItems().Count <= 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Couldn't send trade offer, inventory is empty.");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            else
+            {
+                string offerId;
+                to.Send(out offerId, "Backpack withdrawn");
+
+                AcceptMobileTradeConfirmation(offerId);
+
+                Console.WriteLine("Whitdrawn offer sent !");
+            }
         }
 
         public void LinkMobileAuth()
