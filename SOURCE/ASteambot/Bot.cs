@@ -10,17 +10,24 @@ using System.ComponentModel;
 using SteamTrade.TradeOffer;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using ASteambot.SteamGroups;
+using System.Timers;
+using ASteambot.Networking;
+using System.Threading.Tasks;
+using SteamTrade.TradeWebAPI;
 
 namespace ASteambot
 {
     public class Bot
     {
+        public string Name { get; private set; }
         public bool LoggedIn { get; private set; }
         public bool WebLoggedIn { get; private set; }
-        public string Name { get; private set; }
+        public Manager botManager { get; private set; }
+        public SteamFriends SteamFriends { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
 
-        enum SupportedGames
+        enum Games
         {
             TF2 = 440,
             CSGO = 730,
@@ -28,34 +35,223 @@ namespace ASteambot
         };
 
         private bool stop;
+        private Database DB;
+        private int gameScan;
+        private Config config;
         private bool renaming;
-        private string myUserNonce;
+        private Games currentGame;
         private string myUniqueId;
+        private string myUserNonce;
         private LoginInfo loginInfo;
         private SteamUser steamUser;
+        private List<SteamID> friends;
+        private SteamMarketPrices smp;
         private SteamClient steamClient;
         private CallbackManager manager;
         private Thread tradeOfferThread;
-        private SteamFriends steamFriends;
         private BackgroundWorker botThread;
+        private HandleMessage messageHandler;
         private SteamTrade.SteamWeb steamWeb;
+        private HandleSteamChat steamchatHandler;
+        private AsynchronousSocketListener socket;
         private TradeOfferManager tradeOfferManager;
         private SteamGuardAccount steamGuardAccount;
         private CallbackManager steamCallbackManager;
 
-        public Bot(LoginInfo loginInfo)
+        public Bot(Manager botManager, LoginInfo loginInfo, Config config, AsynchronousSocketListener socket)
         {
+            this.socket = socket;
+            this.config = config;
             this.loginInfo = loginInfo;
+            this.botManager = botManager;
             steamClient = new SteamClient();
-            manager = new CallbackManager(steamClient);
+            messageHandler = new HandleMessage();
             steamWeb = new SteamTrade.SteamWeb();
+            manager = new CallbackManager(steamClient);
+            steamchatHandler = new HandleSteamChat(this);
             MyGenericInventory = new GenericInventory(steamWeb);
-
             steamCallbackManager = new CallbackManager(steamClient);
+
+            this.socket.MessageReceived += Socket_MessageReceived;
+
+            DB = new Database(config.DatabaseServer, config.DatabaseUser, config.DatabasePassword, config.DatabaseName, config.DatabasePort);
+            DB.InitialiseDatabase();
 
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
             botThread.DoWork += BackgroundWorkerOnDoWork;
             botThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
+
+            System.Timers.Timer refreshMarket = new System.Timers.Timer(421000);//15*1000*60);
+            refreshMarket.Elapsed += UpdateMarketItems;
+            refreshMarket.AutoReset = true;
+            refreshMarket.Enabled = true;
+        }
+
+        private void Socket_MessageReceived(object sender, EventArgGameServer e)
+        {
+            string code = e.GetNetworkCode;
+            string args = e.GetArguments;
+            IPAddress ip = e.GetIP;
+            int port = e.GetPort;
+
+            messageHandler.Execute(this, ip, port, code, args);
+        }
+
+        private void ScanMarket()
+        {
+            switch(gameScan)
+            {
+                case 0:
+                    gameScan++;
+                    smp.ScanMarket(config.BackpacktfAPIKey, (int)Games.CSGO);
+                    currentGame = Games.CSGO;
+                    break;
+                case 1:
+                    gameScan++;
+                    smp.ScanMarket(config.BackpacktfAPIKey, (int)Games.TF2);
+                    currentGame = Games.TF2;
+                    break;
+                case 2:
+                    gameScan = 0;
+                    smp.ScanMarket(config.BackpacktfAPIKey, (int)Games.Dota2);
+                    currentGame = Games.Dota2;
+                    break;
+            }
+
+            if (smp.Items.Count == 0 && smp.ResponseCode == 0)
+            {
+                Console.WriteLine(">>> ERROR while scanning market :");
+                Console.WriteLine(smp.ErrorMessage);
+                Console.WriteLine(">>> Prices NOT updated.");
+                string[] row = new string[4];
+                row[0] = "itemName";
+                row[1] = "last_updated";
+                row[2] = "value";
+                row[3] = "quantity";
+                List<Dictionary<string, string>> items = DB.SELECT(row, "smitems");
+                if (items != null)
+                {
+                    foreach (Dictionary<string, string> item in items)
+                    {
+                        smp.AddItem(new SteamMarketPrices.Item(item["itemName"], Int32.Parse(item["last_updated"]), Int32.Parse(item["quantity"]), Double.Parse(item["value"])));
+                    }
+                }
+                Console.WriteLine("Found " + items.Count + " backup items in database !");
+            }
+            else
+            {
+                Console.WriteLine("Item list updated !");
+
+                string[] rows = new string[1];                
+                rows[0] = "tradeOfferID";
+
+                List<Dictionary<string, string>> list = DB.SELECT(rows, "tradeoffers");//, "WHERE `tradeStatus`=\"" + TradeOfferState.TradeOfferStateActive + "\"");
+                foreach (Dictionary<string, string> tradeInfo in list)
+                {
+                    TradeOffer to;
+                    tradeOfferManager.TryGetOffer(tradeInfo["tradeOfferID"], out to);
+
+                    double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
+
+                    UpdateTradeOfferInDatabase(to, cent);
+                }
+
+                SaveMarketInDB(smp.Items);
+            }
+        }
+
+        private void SaveMarketInDB(List<SteamMarketPrices.Item> list)
+        {
+            SteamFriends.SetPersonaState(EPersonaState.Busy);
+            BackgroundWorker bw = new BackgroundWorker();
+
+            bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args)
+            {
+                BackgroundWorker b = o as BackgroundWorker;
+
+                if (list == null || list.Count == 0)
+                    return;
+
+                Console.WriteLine("Saving steam market items into database...");
+                Console.WriteLine("This may take severals minutes !");
+
+                string[] rows = new string[5];
+                rows[0] = "itemName";
+                rows[1] = "last_updated";
+                rows[2] = "value";
+                rows[3] = "quantity";
+                rows[4] = "gameid";
+
+                List<Dictionary<string, string>> items = null;
+                do
+                {
+                    items = DB.SELECT(rows, "smitems");
+                    if (items == null)
+                    {
+                        Thread.Sleep(3000);
+                        Console.WriteLine("You should put more delay between steam market scan.");
+                    }
+                }
+                while (items == null);
+
+                int itemCount = 0;
+                foreach (SteamMarketPrices.Item item in list)
+                {
+                    string[] values = new string[5];
+                    values[0] = item.name.Replace(@"\", string.Empty);
+                    values[1] = item.last_updated.ToString();
+                    values[2] = item.value.ToString();
+                    values[3] = item.quantity.ToString();
+                    values[4] = ((int)currentGame).ToString();
+
+                    if (items.Count > 0)// && BotGameUsage == Int32.Parse(items[0]["gameid"]))
+                    {
+                        if (!items.Any(tr => tr["itemName"].Equals(item.name)))
+                        {
+                            DB.INSERT("smitems", rows, values);
+                        }
+                        else
+                        {
+                            Dictionary<string, string> fitem = items.Find(tr => tr["itemName"].Equals(item.name));
+                            if (Double.Parse(fitem["last_updated"]) != item.last_updated)
+                                DB.QUERY("UPDATE smitems SET value='" + item.value + "',quantity='" + item.quantity + "',last_updated = '" + item.last_updated + "' WHERE itemName=\"" + item.name + "\"" + ";");
+                        }
+                    }
+                    else
+                    {
+                        DB.INSERT("smitems", rows, values);
+                    }
+                    itemCount++;
+
+                    Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                    string strItem = String.Format("{0} / {1} - {2}", itemCount, list.Count, values[0]);
+                    int length = Console.WindowWidth - strItem.Length - 1;
+                    if (length < 0)
+                    {
+                        strItem = strItem.Substring(0, Console.WindowWidth - 4) + "...";
+                        length = 0;
+                    }
+                    Console.WriteLine(strItem + new string(' ', length));
+                    if (itemCount != list.Count)
+                    {
+                        int pos = Console.CursorTop - 1;
+                        if (pos < 0) pos = 0;
+                        Console.SetCursorPosition(0, pos);
+                    }
+                }
+
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Done !");
+
+                SteamFriends.SetPersonaState(EPersonaState.Online);
+            });
+            bw.RunWorkerAsync();
+        }
+
+
+        private void UpdateMarketItems(object sender, ElapsedEventArgs e)
+        {
+            ScanMarket();
         }
 
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
@@ -104,7 +300,7 @@ namespace ASteambot
             stop = false;
             loginInfo.LoginFailCount = 0;
             steamUser = steamClient.GetHandler<SteamUser>();
-            steamFriends = steamClient.GetHandler<SteamFriends>();
+            SteamFriends = steamClient.GetHandler<SteamFriends>();
 
             SubscribeToEvents();
 
@@ -135,17 +331,115 @@ namespace ASteambot
 
             //Steam events :
             manager.Subscribe<SteamUser.AccountInfoCallback>(OnAccountInfo);
-            manager.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
             manager.Subscribe<SteamFriends.FriendMsgCallback>(OnSteamFriendMessage);
-            manager.Subscribe<SteamFriends.PersonaChangeCallback>(OnSteamNameChange); 
+            manager.Subscribe<SteamFriends.PersonaChangeCallback>(OnSteamNameChange);
+            manager.Subscribe<SteamFriends.FriendsListCallback>(OnSteamFriendsList);
+        }
+
+        private void OnSteamFriendsList(SteamFriends.FriendsListCallback obj)
+        {
+            List<SteamID> newFriends = new List<SteamID>();
+
+            foreach (SteamFriends.FriendsListCallback.Friend friend in obj.FriendList)
+            {
+                switch (friend.SteamID.AccountType)
+                {
+                    case EAccountType.Clan:
+
+                        if (friend.Relationship == EFriendRelationship.RequestRecipient)
+                            DeclineGroupInvite(friend.SteamID);
+                        break;
+
+                    default:
+                        CreateFriendsListIfNecessary();
+
+                        if (friend.Relationship == EFriendRelationship.None)
+                        {
+                            friends.Remove(friend.SteamID);
+                        }
+                        else if (friend.Relationship == EFriendRelationship.RequestRecipient)
+                        {
+                            if (!friends.Contains(friend.SteamID))
+                            {
+                                friends.Add(friend.SteamID);
+                                newFriends.Add(friend.SteamID);
+                            }
+                        }
+                        else if (friend.Relationship == EFriendRelationship.RequestInitiator)
+                        {
+                            if (!friends.Contains(friend.SteamID))
+                            {
+                                friends.Add(friend.SteamID);
+                                newFriends.Add(friend.SteamID);
+                            }
+                        }
+                        break;
+                }
+            }
+
+            Console.WriteLine("Recorded steam friends : {0} / {1}", SteamFriends.GetFriendCount(), getMaxFriends());
+
+            if (SteamFriends.GetFriendCount() == getMaxFriends())
+            {
+                Console.WriteLine("Too much friends. Removing one.");
+
+                Random rnd = new Random();
+                int unluckyDude = 0;
+                SteamID steamID = friends[unluckyDude];
+                while (newFriends.Contains(steamID))
+                {
+                    unluckyDude = rnd.Next(friends.Count);
+                    steamID = friends[unluckyDude];
+                }
+
+                SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, "Sorry, I had to remove you because my friend list is too small ! Feel free to add me back anytime !");
+                SteamFriends.RemoveFriend(steamID);
+            }
+        }
+
+        private int getMaxFriends()
+        {
+            int baseFriend = 250;
+            //Get steam level ....
+            return baseFriend;
+        }
+
+        private void CreateFriendsListIfNecessary()
+        {
+            if (friends != null)
+                return;
+
+            friends = new List<SteamID>();
+            for (int i = 0; i < SteamFriends.GetFriendCount(); i++)
+                friends.Add(SteamFriends.GetFriendByIndex(i));
+        }
+
+        private void AcceptGroupInvite(SteamID group)
+        {
+            var AcceptInvite = new ClientMsg<CMsgGroupInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
+
+            AcceptInvite.Body.GroupID = group.ConvertToUInt64();
+            AcceptInvite.Body.AcceptInvite = true;
+
+            steamClient.Send(AcceptInvite);
+        }
+
+        private void DeclineGroupInvite(SteamID group)
+        {
+            var DeclineInvite = new ClientMsg<CMsgGroupInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
+
+            DeclineInvite.Body.GroupID = group.ConvertToUInt64();
+            DeclineInvite.Body.AcceptInvite = false;
+
+            steamClient.Send(DeclineInvite);
         }
 
         /// ///////////////////////////////////////////////////////////////
-        public void CreateTradeOffer(string otherSteamID)
+        /*public void CreateTradeOffer(string otherSteamID)
         {
             List<long> contextId = new List<long>();
             contextId.Add(2);
-            MyGenericInventory.load((int)SupportedGames.TF2, contextId, steamClient.SteamID);
+            MyGenericInventory.load((int)Games.TF2, contextId, steamClient.SteamID);
 
             SteamID partenar = new SteamID(otherSteamID);
             TradeOffer to = tradeOfferManager.NewOffer(partenar);
@@ -160,8 +454,8 @@ namespace ASteambot
             Console.WriteLine("Offer ID : {0}", offerId);
 
             AcceptMobileTradeConfirmation(offerId);
-        }
-
+        }*/
+        ////////////////////////////////////////////////////////////////////
         public void AcceptMobileTradeConfirmation(string offerId)
         {
             steamGuardAccount.Session.SteamLogin = steamWeb.Token;
@@ -200,7 +494,13 @@ namespace ASteambot
         public void WithDrawn(string steamid)
         {
             SteamID steamID = new SteamID(steamid);
-            string name = steamFriends.GetFriendPersonaName(steamID);
+            if (!friends.Contains(steamID))
+            {
+                Console.WriteLine("This user is not in your friend list, unable to send trade offer.");
+                return;
+            }
+
+            string name = SteamFriends.GetFriendPersonaName(steamID);
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("You are about to send ALL the bot's items to");
@@ -218,18 +518,10 @@ namespace ASteambot
             }
             
             TradeOffer to = tradeOfferManager.NewOffer(steamID);
-
-            /*Inventory inventory = Inventory.FetchInventory(steamUser.SteamID, loginInfo.API, steamWeb);
-            foreach (Inventory.Item item in inventory.Items)
-            {
-                if(item.IsNotTradeable == false)
-                    to.Items.AddMyItem(item.AppId, item.ContextId, (long)item.Id);
-            }*/
-            
             long[] contextID = new long[1];
             contextID[0] = 2;
 
-            MyGenericInventory.load((int)SupportedGames.TF2, contextID, steamUser.SteamID);
+            MyGenericInventory.load((int)Games.TF2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
                 GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
@@ -237,7 +529,7 @@ namespace ASteambot
                     to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
             }
 
-            MyGenericInventory.load((int)SupportedGames.CSGO, contextID, steamUser.SteamID);
+            MyGenericInventory.load((int)Games.CSGO, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
                 GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
@@ -245,7 +537,7 @@ namespace ASteambot
                     to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
             }
 
-            MyGenericInventory.load((int)SupportedGames.Dota2, contextID, steamUser.SteamID);
+            MyGenericInventory.load((int)Games.Dota2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
                 GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
@@ -345,7 +637,7 @@ namespace ASteambot
         public void ChangeName(string newname)
         {
             renaming = true;
-            steamFriends.SetPersonaName(newname);
+            SteamFriends.SetPersonaName(newname);
         }
 
         public void Disconnect()
@@ -362,22 +654,15 @@ namespace ASteambot
             Console.WriteLine("stopping bot {0} ...", Name);
         }
 
-        private Inventory FetchBotsInventory()
-        {
-            var inventory = Inventory.FetchInventory(steamClient.SteamID, loginInfo.API, steamWeb);
-            if (inventory.IsPrivate)
-                Console.WriteLine("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
-
-            return inventory;
-        }
-
         //Events :
         #region Events callback
+        
+    
         private void OnAccountInfo(SteamUser.AccountInfoCallback callback)
         {
-            steamFriends.SetPersonaState(EPersonaState.Online);
+            SteamFriends.SetPersonaState(EPersonaState.Online);
 
-            Name = steamFriends.GetPersonaName();
+            Name = SteamFriends.GetPersonaName();
         }
         
         private void WebAPIUserNonce(SteamUser.WebAPIUserNonceCallback callback)
@@ -406,15 +691,16 @@ namespace ASteambot
 
             if (!botThread.IsBusy)
                 botThread.RunWorkerAsync();
-        }
 
+            ScanMarket();
+        }
 
         private void OnSteamNameChange(SteamFriends.PersonaChangeCallback callback)
         {
             if (renaming)
             {
                 renaming = false;
-                Name = steamFriends.GetPersonaName();
+                Name = SteamFriends.GetPersonaName();
                 Console.Title = "Akarr's steambot - [" + Name + "]";
                 Console.WriteLine("Steambot renamed sucessfully !");
             }
@@ -422,21 +708,10 @@ namespace ASteambot
 
         private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
         {
-            if(callback.EntryType == EChatEntryType.ChatMsg)
-                steamFriends.SendChatMessage(callback.Sender, EChatEntryType.ChatMsg, "Sorry I don't understand you. Yet.");
+            if (callback.EntryType == EChatEntryType.ChatMsg)
+                steamchatHandler.HandleMessage(callback.Sender, callback.Message);
         }   
-
-        private void OnFriendsList(SteamFriends.FriendsListCallback callback)
-        {
-            foreach (var friend in callback.FriendList)
-            {
-                if (friend.Relationship == EFriendRelationship.RequestRecipient)
-                    steamFriends.AddFriend(friend.SteamID);
-            }
-
-            Console.WriteLine("Recorded steam friends : {0}", steamFriends.GetFriendCount());
-        }
-
+        
         private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
         {
             Console.WriteLine("Updating sentryfile...");
@@ -598,6 +873,22 @@ namespace ASteambot
 
             Console.WriteLine("User Authenticated!");
 
+            smp = new SteamMarketPrices(steamWeb);
+
+            string[] row = new string[4];
+            row[0] = "itemName";
+            row[1] = "last_updated";
+            row[2] = "value";
+            row[3] = "quantity";
+            List<Dictionary<string, string>> items = DB.SELECT(row, "smitems");
+            if (items != null)
+            {
+                foreach (Dictionary<string, string> item in items)
+                {
+                    smp.AddItem(new SteamMarketPrices.Item(item["itemName"], Int32.Parse(item["last_updated"]), Int32.Parse(item["quantity"]), Double.Parse(item["value"])));
+                }
+            }
+
             tradeOfferManager = new TradeOfferManager(loginInfo.API, steamWeb);
             SubscribeTradeOffer(tradeOfferManager);
 
@@ -607,6 +898,10 @@ namespace ASteambot
 
         private void TradeOfferUpdated(TradeOffer offer)
         {
+            double cent = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
+
+            UpdateTradeOfferInDatabase(offer, cent);
+
             if (offer.IsOurOffer)
                 OwnTradeOfferUpdated(offer);
             else
@@ -616,11 +911,15 @@ namespace ASteambot
         private void OwnTradeOfferUpdated(TradeOffer offer)
         {
             Console.WriteLine("Sent offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
+            
+            if(offer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation)
+                AcceptMobileTradeConfirmation(offer.TradeOfferId);
         }
 
         private void PartenarTradeOfferUpdated(TradeOffer offer)
         {
             Console.WriteLine("Received offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
+
             if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
             {
                 if (offer.Items.GetMyItems().Count == 0)
@@ -628,6 +927,71 @@ namespace ASteambot
                 else
                     offer.Decline();
             }
+        }
+
+        private void UpdateTradeOfferInDatabase(TradeOffer to, double value)
+        {
+            string[] rows = new string[4];
+            string[] values = new string[4];
+            
+            rows[0] = "steamID";
+            rows[1] = "tradeOfferID"; 
+            rows[2] = "tradeValue";
+            rows[3] = "tradeStatus";
+
+            if (DB.SELECT(rows, "tradeoffers", "WHERE `tradeOfferID`=\""+ to.TradeOfferId + "\"").FirstOrDefault() == null)
+            {
+                values[0] = to.PartnerSteamId.ToString();
+                values[1] = to.TradeOfferId;
+                values[2] = value.ToString();
+                values[3] = ((int)to.OfferState).ToString();
+
+                DB.INSERT("tradeoffers", rows, values);
+            }
+            else
+            {
+                string query = String.Format("UPDATE tradeoffers SET `tradeStatus`=\"{0}\", `tradeValue`=\"{1}\" WHERE `tradeOfferID`=\"{2}\";", ((int)to.OfferState), value.ToString(), to.TradeOfferId);
+                DB.QUERY(query);
+            }
+        }
+
+        private double GetTradeOfferValue(SteamID partenar, List<TradeOffer.TradeStatusUser.TradeAsset> list)
+        {
+            if (list.Count > 0)
+                Console.WriteLine(list.Count);
+
+            double cent = 0;
+            long[] contextID = new long[1];
+            contextID[0] = 2;
+
+            List<long> appIDs = new List<long>();
+            GenericInventory gi = new GenericInventory(steamWeb);
+            
+            foreach(TradeOffer.TradeStatusUser.TradeAsset item in list)
+            {
+                if (!appIDs.Contains(item.AppId))
+                    appIDs.Add(item.AppId);
+            }
+
+            foreach (int appID in appIDs)
+            {
+                gi.load(appID, contextID, partenar);
+                foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
+                {
+                    if (item.AppId != appID)
+                        continue;
+
+                    GenericInventory.ItemDescription ides = gi.getDescription((ulong)item.AssetId);
+
+                    SteamMarketPrices.Item itemInfo = smp.Items.Find(i => i.name == ides.market_hash_name);
+                    if (itemInfo != null)
+                        cent += (itemInfo.value / 100.0);
+                    else
+                        Console.WriteLine("Item " + ides.market_hash_name + " not found !");
+                }
+            }
+
+            return cent;
         }
 
         public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)

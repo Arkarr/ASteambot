@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SteamKit2;
+using ASteambot.Networking;
+using System.Threading;
 
 namespace ASteambot
 {
@@ -11,19 +13,28 @@ namespace ASteambot
     {
         public Bot SelectedBot { get; private set; }
         public List<Bot> OnlineBots { get; private set; }
+        public List<GameServer> Servers { get; private set; }
 
         private bool Running;
+        private Config config;
         private List<Bot> bots;
+        private AsynchronousSocketListener socketServer;
+        private Thread threadSocket;
 
-        public Manager()
+        public Manager(Config config)
         {
+            this.config = config;
             bots = new List<Bot>();
             OnlineBots = new List<Bot>();
+            Servers = new List<GameServer>();
         }
 
         public void Start()
         {
             Running = true;
+
+            StartSocketServer(Int32.Parse(config.TCPServerPort));
+
             while (Running)
             {
                 lock (bots)
@@ -39,10 +50,22 @@ namespace ASteambot
                 }
             }
         }
+        
+        private void StartSocketServer(int port)
+        {
+            Console.WriteLine("Starting TCP server on port {0}", port);
+            socketServer = new AsynchronousSocketListener(port, config.TCPPassword);
+            threadSocket = new Thread(new ThreadStart(socketServer.StartListening));
+            threadSocket.Start();
+        }
 
         public void Stop()
         {
             Running = false;
+
+            socketServer.Stop();
+            threadSocket.Abort();
+
             foreach (Bot bot in bots)
                 bot.Disconnect();
         }
@@ -64,9 +87,9 @@ namespace ASteambot
                 case "rename":
                     Rename(args);
                     break;
-                case "createto":
+                /*case "createto":
                     CreateTradeOffer(args);
-                    break;
+                    break;*/
                 case "help":
                     ShowHelp();
                     break;
@@ -93,7 +116,7 @@ namespace ASteambot
             Console.WriteLine("list - List all the bots and there index.");
             Console.WriteLine("select - select a bot to execute commands on.");
             Console.WriteLine("rename - rename a bot through steam.");
-            Console.WriteLine("createto - create a thread offer.");
+            //Console.WriteLine("createto - create a thread offer.");
             Console.WriteLine("help - show this text.");
             Console.WriteLine("linkauthenticator - link a mobile authenticator through the bot, required to do trade offers correctly.");
             Console.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
@@ -121,7 +144,7 @@ namespace ASteambot
             SelectedBot.DeactivateAuthenticator();
         }
 
-        public void CreateTradeOffer(string[] args)
+        /*public void CreateTradeOffer(string[] args)
         {
             if (args.Count() < 2)
             {
@@ -130,7 +153,7 @@ namespace ASteambot
             }
 
             SelectedBot.CreateTradeOffer(args[1]);
-        }
+        }*/
 
         public void ShutdownBots()
         {
@@ -208,7 +231,7 @@ namespace ASteambot
 
             if (result == null)
             {
-                result = new Bot(loginInfo);
+                result = new Bot(this, loginInfo, config, socketServer);
                 lock (bots) { bots.Add(result); }
             }
 
