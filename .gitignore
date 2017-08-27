@@ -54,3 +54,4 @@ Version.cpp
 *.auth
 
 !BINARIES/
+BINARIES
