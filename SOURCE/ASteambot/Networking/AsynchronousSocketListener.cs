@@ -1,30 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace ASteambot.Networking
 {
     public class AsynchronousSocketListener
     {
         public int Port { get; private set; }
-        public event EventHandler<EventArgGameServer> MessageReceived;
 
-        private string password;
-
-        protected virtual void OnMessageReceived(EventArgGameServer e)
-        {
-            MessageReceived?.Invoke(this, e);
-        }
-        
         private ManualResetEvent allDone = new ManualResetEvent(false);
-        private bool running = false;
 
-        public AsynchronousSocketListener(int port, string password)
+        public AsynchronousSocketListener(int port)
         {
             Port = port;
-            this.password = password;
         }
         
         public void StartListening()
@@ -40,12 +33,11 @@ namespace ASteambot.Networking
                 listener.Bind(localEndPoint);
                 listener.Listen(100);
 
-                running = true;
-                while (running)
+                while (true)
                 {
                     allDone.Reset();
  
-                    //Console.WriteLine("Waiting for a connection...");
+                    Console.WriteLine("Waiting for a connection...");
                     listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
                     
                     allDone.WaitOne();
@@ -77,50 +69,31 @@ namespace ASteambot.Networking
             StateObject state = (StateObject)ar.AsyncState;
             Socket handler = state.workSocket;
 
-            try
+            int bytesRead = handler.EndReceive(ar);
+
+            if (bytesRead > 0)
             {
-                int bytesRead = handler.EndReceive(ar);
-
-                if (bytesRead > 0)
+                state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
+ 
+                content = state.sb.ToString();
+                Console.WriteLine(content);
+                if (content.IndexOf("<EOF>") > -1)
                 {
-                    state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
-
-                    content = state.sb.ToString();
-                    HandleMessage(handler, content);
-                    if (content.IndexOf("<EOF>") > -1)
-                    {
-                        Send(handler, content);
-                    }
-                    else
-                    {
-                        handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReadCallback), state);
-                    }
+                    Console.WriteLine("Read {0} bytes from socket. \n Data : {1}", content.Length, content);
+                    Send(handler, content);
+                }
+                else
+                {
+                    handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                    new AsyncCallback(ReadCallback), state);
                 }
             }
-            catch(Exception e)
-            {
-
-            }
-        }
-
-        private void HandleMessage(Socket handler, string content)
-        {
-            if (!content.StartsWith(password))
-                return;
-
-            content = content.Replace(password, "");
-            string[] codeargs = content.Split('|');
-
-            codeargs[1] = codeargs[1].Replace("\0", string.Empty);
-
-            EventArgGameServer arg = new EventArgGameServer(handler, codeargs[0], codeargs[1]);
-            OnMessageReceived(arg);
         }
 
         private void Send(Socket handler, String data)
         {
             byte[] byteData = Encoding.ASCII.GetBytes(data);
+            
             handler.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), handler);
         }
 
@@ -131,6 +104,7 @@ namespace ASteambot.Networking
                 Socket handler = (Socket)ar.AsyncState;
                 
                 int bytesSent = handler.EndSend(ar);
+                Console.WriteLine("Sent {0} bytes to client.", bytesSent);
 
                 handler.Shutdown(SocketShutdown.Both);
                 handler.Close();
@@ -139,12 +113,6 @@ namespace ASteambot.Networking
             {
                 Console.WriteLine(e.ToString());
             }
-        }
-
-        public void Stop()
-        {
-            running = false;
-            allDone.Set();
         }
     }
 }

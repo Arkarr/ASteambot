@@ -80,7 +80,6 @@ namespace SteamTrade
         public class ItemDescription
         {
             public string name { get; set; }
-            public string market_hash_name { get; set; }
             public string type { get; set; }
             public bool tradable { get; set; }
             public bool marketable { get; set; }
@@ -189,7 +188,6 @@ namespace SteamTrade
                                 new ItemDescription()
                                 {
                                     name = class_instance.name,
-                                    market_hash_name = class_instance.market_hash_name,
                                     type = class_instance.type,
                                     marketable = (bool)class_instance.marketable,
                                     tradable = (bool)class_instance.tradable,

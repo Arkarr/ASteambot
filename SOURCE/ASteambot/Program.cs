@@ -12,11 +12,12 @@ namespace ASteambot
     class Program
     {
         //Private var
-        private static Config config;
         private static LoginInfo logininfo;
         private static Manager steambotManager;
+        private static AsynchronousSocketListener socketServer;
 
         private static Thread threadManager;
+        private static Thread threadSocket;
 
         static void Main(string[] args)
         {
@@ -24,24 +25,19 @@ namespace ASteambot
 
             PrintWelcomeMessage();
 
-            config = new Config();
-            if(!config.LoadConfig())
-            {
-                Console.WriteLine("Config file (config.cfg) can't be found or is corrupted ! Bot can't start.");
-                Console.ReadKey();
-                return;
-            }
+            StartSocketServer(4567);
 
-            steambotManager = new Manager(config);
+            steambotManager = new Manager();
             threadManager = new Thread(new ThreadStart(steambotManager.Start));
             threadManager.Start();
 
-            AttemptLoginBot(config.SteamUsername, config.SteamPassword, config.SteamAPIKey);
+            if (args.Length >= 3)
+                AttemptLoginBot(args[0], args[1], args[2]);
+            else
+                AttemptLoginBot();
 
             while (steambotManager.OnlineBots.Count < 1)
                 Thread.Sleep(TimeSpan.FromSeconds(3));
-
-            steambotManager.SelectFirstBot();
 
             string command = "";
             while(command != "quit")
@@ -50,24 +46,24 @@ namespace ASteambot
                 command = Console.ReadLine();
                 steambotManager.Command(command);
             }
+
+            int seconds = 5;
+            while (seconds != 0)
+            {
+                Console.WriteLine("{0}...", seconds);
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+                seconds--;
+            }
         }
 
-        private static void AttemptLoginBot(string username = "", string password = "", string api = "")
+        private static void AttemptLoginBot(string username="", string password="", string api="")
         {
-            if (username.Length == 0)
-            { 
+            if (username.Length == 0 && password.Length == 0)
+            {
                 Console.WriteLine("Bot's steam username :");
                 username = Console.ReadLine();
-            }
-
-            if (password.Length == 0)
-            {
                 Console.WriteLine("Bot's steam password :");
                 password = Console.ReadLine();
-            }
-
-            if (api.Length == 0)
-            {
                 Console.WriteLine("Bot's steam API :");
                 api = Console.ReadLine();
             }
@@ -79,32 +75,16 @@ namespace ASteambot
 
         private static void PrintWelcomeMessage()
         {
-            for(int i = 0; i < Console.WindowWidth; i++)
-                Console.Write("*");
+            Console.WriteLine("Welcome message");
+            Console.WriteLine("Lauching bot...");
+        }
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            string centerText = "ASteambot - Arkarr's steambot";
-            Console.SetCursorPosition((Console.WindowWidth - centerText.Length) / 2, Console.CursorTop);
-            Console.WriteLine(centerText);
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("");
-            Console.WriteLine("\tAll informations related to this software can be found here :");
-            Console.WriteLine("\thttps://forums.alliedmods.net/showthread.php?t=273091");
-            Console.WriteLine("");
-            Console.WriteLine("\tVersion 1.3.2 - PUBLIC");
-            Console.WriteLine("");
-            Console.WriteLine("");
-            Console.Write("\tI would like you not to remove this text ");
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.Write("<3 ");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("!");
-            Console.WriteLine("");
-            Console.WriteLine("");
-            Console.WriteLine("\tArkarr's Steam profile : http://steamcommunity.com/id/arkarr");
-
-            for (int i = 0; i < Console.WindowWidth; i++)
-                Console.Write("*");
+        private static void StartSocketServer(int port)
+        {
+            Console.WriteLine("Starting TCP server on port {0}", port);
+            socketServer = new AsynchronousSocketListener(4567);
+            threadSocket = new Thread(new ThreadStart(socketServer.StartListening));
+            threadSocket.Start();
         }
     }
 }
