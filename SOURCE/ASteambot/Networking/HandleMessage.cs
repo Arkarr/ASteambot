@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,24 +12,26 @@ namespace ASteambot.Networking
     {
         public HandleMessage() { }
 
-        public void Execute(Bot bot, IPAddress ip, int port, string code, string args)
+        public void Execute(Bot bot, Socket socket, string code, string args)
         {
             switch(code)
             {
                 case "0x0000":
-                    RegisterBot(bot, ip, port, args);
+                    RegisterBot(bot, socket, args);
                 break;
             }
         }
 
-        private void RegisterBot(Bot bot, IPAddress ip, int port, string args)
+        private void RegisterBot(Bot bot, Socket socket, string args)
         {
-            int index = bot.botManager.Servers.FindIndex(f => f.IP == ip);
+            IPEndPoint ipendpoint = ((IPEndPoint)socket.RemoteEndPoint);
+            
+            int index = bot.botManager.Servers.FindIndex(f => f.IP == ipendpoint.Address);
 
             if (index >= 0)
                 return;
 
-            GameServer gameserver = new GameServer(args, ip, port);
+            GameServer gameserver = new GameServer(socket, args);
             bot.botManager.Servers.Add(gameserver);
         }
     }

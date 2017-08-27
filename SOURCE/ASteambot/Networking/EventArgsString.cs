@@ -10,20 +10,23 @@ namespace ASteambot.Networking
 {
     public class EventArgGameServer : EventArgs
     {
-        private readonly int port;
         private readonly string code;
         private readonly string args;
-        private readonly IPAddress ip;
+        private readonly Socket socket;
+
+        //private readonly int port;
+        //private readonly IPAddress ip;
 
         public EventArgGameServer(Socket socket, string code, string args)
         {
             this.code = code;
             this.args = args;
+            this.socket = socket;
 
-            IPEndPoint ipendpoint = ((IPEndPoint)socket.RemoteEndPoint);
+            /*IPEndPoint ipendpoint = ((IPEndPoint)socket.RemoteEndPoint);
 
             ip = ipendpoint.Address;
-            port = ipendpoint.Port;
+            port = ipendpoint.Port;*/
         }
 
         public string GetNetworkCode
@@ -35,13 +38,17 @@ namespace ASteambot.Networking
         {
             get { return args; }
         }
-        public IPAddress GetIP
+        public Socket GetSocket
+        {
+            get { return socket; }
+        }
+        /*public IPAddress GetIP
         {
             get { return ip; }
         }
         public int GetPort
         {
             get { return port; }
-        }
+        }*/
     }
 }

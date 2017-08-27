@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SteamKit2;
+using ASteambot.Networking;
+using System.Threading;
 
 namespace ASteambot
 {
@@ -11,19 +13,28 @@ namespace ASteambot
     {
         public Bot SelectedBot { get; private set; }
         public List<Bot> OnlineBots { get; private set; }
+        public List<GameServer> Servers { get; private set; }
 
         private bool Running;
+        private Config config;
         private List<Bot> bots;
+        private AsynchronousSocketListener socketServer;
+        private Thread threadSocket;
 
-        public Manager()
+        public Manager(Config config)
         {
+            this.config = config;
             bots = new List<Bot>();
             OnlineBots = new List<Bot>();
+            Servers = new List<GameServer>();
         }
 
         public void Start()
         {
             Running = true;
+
+            StartSocketServer(Int32.Parse(config.TCPServerPort));
+
             while (Running)
             {
                 lock (bots)
@@ -39,15 +50,27 @@ namespace ASteambot
                 }
             }
         }
+        
+        private void StartSocketServer(int port)
+        {
+            Console.WriteLine("Starting TCP server on port {0}", port);
+            socketServer = new AsynchronousSocketListener(port, config.TCPPassword);
+            threadSocket = new Thread(new ThreadStart(socketServer.StartListening));
+            threadSocket.Start();
+        }
 
         public void Stop()
         {
             Running = false;
+
+            socketServer.Stop();
+            threadSocket.Abort();
+
             foreach (Bot bot in bots)
                 bot.Disconnect();
         }
         
-        public void Command(string command)
+        public bool Command(string command)
         {
             string[] args = command.Split(' ');
             switch (args[0])
@@ -64,16 +87,64 @@ namespace ASteambot
                 case "rename":
                     Rename(args);
                     break;
-                case "createto":
+                /*case "createto":
                     CreateTradeOffer(args);
+                    break;*/
+                case "help":
+                    ShowHelp();
+                    break;
+                case "linkauthenticator":
+                    LinkAuthenticator();
+                    break;
+                case "unlinkauthenticator":
+                    UnlinkAuthenticator();
+                    break;
+                case "withdrawn":
+                    WithDrawn(args);
                     break;
                 default:
-                    Console.WriteLine("Command \"" + command + "\" not found !");
+                    Console.WriteLine("Command \"{0}\" not found ! Use 'help' !", command);
                 break;
             }
+
+            return true;
         }
 
-        public void CreateTradeOffer(string[] args)
+        public void ShowHelp()
+        {
+            Console.WriteLine("quit - Shutdown all the bots, the TCP server and everything else.");
+            Console.WriteLine("list - List all the bots and there index.");
+            Console.WriteLine("select - select a bot to execute commands on.");
+            Console.WriteLine("rename - rename a bot through steam.");
+            //Console.WriteLine("createto - create a thread offer.");
+            Console.WriteLine("help - show this text.");
+            Console.WriteLine("linkauthenticator - link a mobile authenticator through the bot, required to do trade offers correctly.");
+            Console.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
+            Console.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
+        }
+
+        public void WithDrawn(string[] args)
+        {
+            if (args.Count() < 2)
+            {
+                Console.WriteLine("Usage : withdrawn [STEAM ID]");
+                return;
+            }
+
+            SelectedBot.WithDrawn(args[1]);
+        }
+
+        public void LinkAuthenticator()
+        {
+            SelectedBot.LinkMobileAuth();
+        }
+
+        public void UnlinkAuthenticator()
+        {
+            SelectedBot.DeactivateAuthenticator();
+        }
+
+        /*public void CreateTradeOffer(string[] args)
         {
             if (args.Count() < 2)
             {
@@ -82,7 +153,7 @@ namespace ASteambot
             }
 
             SelectedBot.CreateTradeOffer(args[1]);
-        }
+        }*/
 
         public void ShutdownBots()
         {
@@ -102,10 +173,10 @@ namespace ASteambot
             for (int i = 1; i < args.Count(); i++)
                 newname += args[i] + " ";
             newname.Substring(0, newname.Length - 2);
-
-            SelectedBot.ChangeName(newname);
             
             Console.WriteLine("Renaming steambot...");
+
+            SelectedBot.ChangeName(newname);
         }
 
         public void Select(string[] args)
@@ -116,7 +187,7 @@ namespace ASteambot
                 return;
             }
 
-            int index = Int32.Parse(args[1]);
+            int index = Int32.Parse(args[1])-1;
 
             if(index < 0 || index > bots.Count)
             {
@@ -144,6 +215,15 @@ namespace ASteambot
                 Console.WriteLine("\t[{0}] Name : [{1}] | Logged in : [{2}]", i+1, bots[i].Name, bots[i].LoggedIn);
             Console.WriteLine("----------------------------", bots.Count);
         }
+        
+
+        public void SelectFirstBot()
+        {
+            string[] data = new string[2];
+            data[0] = "select";
+            data[1] = "1";
+            Select(data);
+        }
 
         public void Auth(LoginInfo loginInfo)
         {
@@ -151,7 +231,7 @@ namespace ASteambot
 
             if (result == null)
             {
-                result = new Bot(loginInfo);
+                result = new Bot(this, loginInfo, config, socketServer);
                 lock (bots) { bots.Add(result); }
             }
 
@@ -159,7 +239,7 @@ namespace ASteambot
 
             if (SelectedBot == null)
             {
-                SelectedBot = result;
+                //SelectedBot = result;
                 Console.Title = "Akarr's steambot - [NO STEAMBOT SELECTED USE 'select']";
             }
         }
