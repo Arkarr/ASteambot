@@ -75,7 +75,7 @@ namespace ASteambot
             Console.WriteLine("\tAll informations related to this software can be found here :");
             Console.WriteLine("\thttps://forums.alliedmods.net/showthread.php?t=273091");
             Console.WriteLine("");
-            Console.WriteLine("\tVersion 1.4.1 - PUBLIC");
+            Console.WriteLine("\tVersion 1.5.0 - PUBLIC");
             Console.WriteLine("");
             Console.WriteLine("");
             Console.Write("\tI would like you not to remove this text ");
