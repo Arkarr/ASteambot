@@ -102,6 +102,9 @@ namespace ASteambot
                 case "withdrawn":
                     WithDrawn(args);
                     break;
+                case "testtcp":
+                    testTCP(args);
+                    break;
                 default:
                     Console.WriteLine("Command \"{0}\" not found ! Use 'help' !", command);
                 break;
@@ -121,6 +124,26 @@ namespace ASteambot
             Console.WriteLine("linkauthenticator - link a mobile authenticator through the bot, required to do trade offers correctly.");
             Console.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
             Console.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
+            Console.WriteLine("testtcp - Send a small packet to all TCP clients.");
+        }
+
+        private void testTCP(string[] args)
+        {
+            int count = 0;
+            string test = (int)NetworkCode.ASteambotCode.Simple+"|";
+            foreach (string arg in args)
+                test += arg + " ";
+
+            foreach(Bot bot in bots)
+            {
+                foreach (GameServer gs in bot.botManager.Servers)
+                {
+                    gs.Send(test);
+                    count++;
+                }
+            }
+
+            Console.WriteLine("Sent {0} to {1} connected servers ! ", test, count);
         }
 
         public void WithDrawn(string[] args)

@@ -24,6 +24,7 @@ namespace ASteambot
         public bool WebLoggedIn { get; private set; }
         public Manager botManager { get; private set; }
         public SteamFriends SteamFriends { get; private set; }
+        public HandleSteamChat steamchatHandler { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
 
         enum Games
@@ -51,7 +52,6 @@ namespace ASteambot
         private BackgroundWorker botThread;
         private HandleMessage messageHandler;
         private SteamTrade.SteamWeb steamWeb;
-        private HandleSteamChat steamchatHandler;
         private AsynchronousSocketListener socket;
         private TradeOfferManager tradeOfferManager;
         private SteamGuardAccount steamGuardAccount;
@@ -88,11 +88,12 @@ namespace ASteambot
 
         private void Socket_MessageReceived(object sender, EventArgGameServer e)
         {
-            string code = e.GetNetworkCode;
+            int srvid = e.GetServerID;
+            int code = e.GetNetworkCode;
             string args = e.GetArguments;
             Socket socket = e.GetSocket;
 
-            messageHandler.Execute(this, socket, code, args);
+            messageHandler.Execute(this, socket, srvid, code, args);
         }
 
         private void ScanMarket()
@@ -162,7 +163,7 @@ namespace ASteambot
 
         private void SaveMarketInDB(List<SteamMarketPrices.Item> list)
         {
-            SteamFriends.SetPersonaState(EPersonaState.Busy);
+            /*SteamFriends.SetPersonaState(EPersonaState.Busy);
             BackgroundWorker bw = new BackgroundWorker();
 
             bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args)
@@ -248,10 +249,9 @@ namespace ASteambot
 
                 SteamFriends.SetPersonaState(EPersonaState.Online);
             });
-            bw.RunWorkerAsync();
+            bw.RunWorkerAsync();*/
         }
-
-
+        
         private void UpdateMarketItems(object sender, ElapsedEventArgs e)
         {
             ScanMarket();

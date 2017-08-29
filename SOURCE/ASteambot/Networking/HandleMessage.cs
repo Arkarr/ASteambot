@@ -12,18 +12,25 @@ namespace ASteambot.Networking
     {
         public HandleMessage() { }
 
-        public void Execute(Bot bot, Socket socket, string code, string args)
+        private int serverID;
+
+        public void Execute(Bot bot, Socket socket, int srvid, int code, string args)
         {
-            switch(code)
+            switch((NetworkCode.ASteambotCode)code)
             {
-                case "0x0000":
+                case NetworkCode.ASteambotCode.Core:
                     RegisterBot(bot, socket, args);
+                break;
+                case NetworkCode.ASteambotCode.HookChat:
+                    HookChat(bot, socket, srvid, args);
                 break;
             }
         }
 
         private void RegisterBot(Bot bot, Socket socket, string args)
         {
+            bot.botManager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
+
             IPEndPoint ipendpoint = ((IPEndPoint)socket.RemoteEndPoint);
             
             int index = bot.botManager.Servers.FindIndex(f => f.IP == ipendpoint.Address);
@@ -31,8 +38,14 @@ namespace ASteambot.Networking
             if (index >= 0)
                 return;
 
-            GameServer gameserver = new GameServer(socket, args);
+            serverID++;
+            GameServer gameserver = new GameServer(socket, serverID, args);
             bot.botManager.Servers.Add(gameserver);
+        }
+
+        private void HookChat(Bot bot, Socket socket, int serverid, string args)
+        {
+            bot.steamchatHandler.ServerMessage(serverid, args);
         }
     }
 }

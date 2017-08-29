@@ -40,18 +40,21 @@ namespace SteamTrade
 
                     //items = data.response.items;
 
-                    foreach (Item item in data.response.items)
+                    lock (Items)
                     {
-                        var obj = Items.FirstOrDefault(x => x.name == item.name);
-                        if (obj != null)
+                        foreach (Item item in data.response.items)
                         {
-                            obj.last_updated = item.last_updated;
-                            obj.quantity = item.quantity;
-                            obj.value = item.value;
-                        }
-                        else
-                        {
-                            Items.Add(item);
+                            var obj = Items.FirstOrDefault(x => x.name == item.name);
+                            if (obj != null)
+                            {
+                                obj.last_updated = item.last_updated;
+                                obj.quantity = item.quantity;
+                                obj.value = item.value;
+                            }
+                            else
+                            {
+                                Items.Add(item);
+                            }
                         }
                     }
 

@@ -52,28 +52,12 @@ namespace ASteambot
             }
         }
 
-        private static void AttemptLoginBot(string username = "", string password = "", string api = "")
+        private static void AttemptLoginBot(string username, string password, string api)
         {
-            if (username.Length == 0)
-            { 
-                Console.WriteLine("Bot's steam username :");
-                username = Console.ReadLine();
-            }
-
-            if (password.Length == 0)
-            {
-                Console.WriteLine("Bot's steam password :");
-                password = Console.ReadLine();
-            }
-
-            if (api.Length == 0)
-            {
-                Console.WriteLine("Bot's steam API :");
-                api = Console.ReadLine();
-            }
-
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Username : {0}  Password : X  API : {1}", username, api.Substring(api.Length - 10) + "**********");
+            Console.ForegroundColor = ConsoleColor.White;
             logininfo = new LoginInfo(username, password, api);
-
             steambotManager.Auth(logininfo);
         }
 

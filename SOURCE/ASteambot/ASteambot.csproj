@@ -59,7 +59,7 @@
   <ItemGroup>
     <Compile Include="Bot.cs" />
     <Compile Include="Config.cs" />
-    <Compile Include="GameServer.cs" />
+    <Compile Include="Networking\GameServer.cs" />
     <Compile Include="HandleSteamChat.cs" />
     <Compile Include="Manager.cs" />
     <Compile Include="LoginInfo.cs" />
@@ -67,6 +67,7 @@
     <Compile Include="Networking\Database.cs" />
     <Compile Include="Networking\EventArgsString.cs" />
     <Compile Include="Networking\HandleMessage.cs" />
+    <Compile Include="Networking\NetworkCode.cs" />
     <Compile Include="Networking\StateObject.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

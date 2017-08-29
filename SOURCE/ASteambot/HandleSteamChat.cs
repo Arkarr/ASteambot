@@ -11,9 +11,12 @@ namespace ASteambot
     {
         private Bot bot;
 
+        private Dictionary<SteamID, int> ChatListener;
+
         public HandleSteamChat(Bot bot)
         {
             this.bot = bot;
+            ChatListener = new Dictionary<SteamID, int>();
         }
 
         public void HandleMessage(SteamID partenar, string message)
@@ -33,10 +36,30 @@ namespace ASteambot
                     HookGameServerChat(partenar, message);
                 break;
 
+                case "STOPHOOK":
+                    StopHook(partenar);
+                break;
+
                 default:
                     bot.SteamFriends.SendChatMessage(partenar, EChatEntryType.ChatMsg, "Sorry I don't understand you. Yet.");
                 break;
             }            
+        }
+
+        public void StopHook(SteamID partenar)
+        {
+            int serverID = ChatListener[partenar];
+            ChatListener.Remove(partenar);
+            SendChatMessage(partenar, "Disconnecting to server...");
+
+            foreach (KeyValuePair<SteamID, int> value in ChatListener)
+            {
+                if (value.Value == serverID && value.Key != partenar)
+                    return;
+            }
+
+            GameServer server = bot.botManager.Servers[serverID-1];
+            server.Send(Networking.NetworkCode.ASteambotCode.Unhookchat.ToString());
         }
 
         public void PrintHelp(SteamID partenar)
@@ -64,8 +87,23 @@ namespace ASteambot
             }
         }
 
+        public void ServerMessage(int serverid, string message)
+        {
+            foreach(KeyValuePair<SteamID, int> value in ChatListener)
+            {
+                if (value.Value == serverid)
+                    SendChatMessage(value.Key, message);
+            }
+        }
+
         public void HookGameServerChat(SteamID partenar, string message)
         {
+            if(ChatListener.ContainsKey(partenar))
+            {
+                SendChatMessage(partenar, "You are already hooking a chat ! Use : STOPHOOK");
+                return;
+            }
+
             message = message.Replace("HOOKCHAT ", String.Empty);
 
             int serverID = -1;
@@ -79,9 +117,11 @@ namespace ASteambot
 
             GameServer gs = bot.botManager.Servers[serverID - 1];
 
+            ChatListener.Add(partenar, serverID);
+
             SendChatMessage(partenar, "Connecting to server...");
 
-            gs.SendMessage("0x0001");
+            gs.Send(((int)Networking.NetworkCode.ASteambotCode.HookChat).ToString());
         }
 
         private void SendChatMessage(SteamID partenar, string message)
