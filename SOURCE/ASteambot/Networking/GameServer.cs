@@ -17,17 +17,19 @@ namespace ASteambot
         public int ServerID { get; private set; }
 
         private Socket socket;
+        private string tcppasswd;
 
-        public GameServer(Socket socket, int serverid, string ipportname)
+        public GameServer(Socket socket, string tcppaswd, int serverid, string ipportname)
         {
             string[] srvinfos = ipportname.Split('|');
             Name = srvinfos[2];
+            tcppasswd = tcppaswd;
             IP = IPAddress.Parse(srvinfos[0]);
             Port = Int32.Parse(srvinfos[1]);
             this.socket = socket;
             ServerID = serverid;
 
-            Send("SRVID|" + ServerID);
+            Send(tcppaswd + "SRVID|" + ServerID);
         }
         
         public bool SocketConnected()
@@ -42,10 +44,12 @@ namespace ASteambot
 
         public void Send(string data)
         {
-            byte[] byteData = Encoding.ASCII.GetBytes(data);
-            
-            socket.BeginSend(byteData, 0, byteData.Length, 0,
-                new AsyncCallback(SendCallback), socket);
+            string finaldata = tcppasswd + "" + data;
+
+            Console.WriteLine(finaldata);
+
+            byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
+            socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
         }
 
         private void SendCallback(IAsyncResult ar)

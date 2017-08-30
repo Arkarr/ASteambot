@@ -39,7 +39,7 @@ namespace ASteambot.Networking
                 return;
 
             serverID++;
-            GameServer gameserver = new GameServer(socket, serverID, args);
+            GameServer gameserver = new GameServer(socket, bot.botManager.Config.TCPPassword, serverID, args);
             bot.botManager.Servers.Add(gameserver);
         }
 

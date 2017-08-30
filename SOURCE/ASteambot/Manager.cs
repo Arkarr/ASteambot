@@ -14,16 +14,16 @@ namespace ASteambot
         public Bot SelectedBot { get; private set; }
         public List<Bot> OnlineBots { get; private set; }
         public List<GameServer> Servers { get; private set; }
+        public Config Config { get; private set; }
 
         private bool Running;
-        private Config config;
         private List<Bot> bots;
         private AsynchronousSocketListener socketServer;
         private Thread threadSocket;
 
-        public Manager(Config config)
+        public Manager(Config Config)
         {
-            this.config = config;
+            this.Config = Config;
             bots = new List<Bot>();
             OnlineBots = new List<Bot>();
             Servers = new List<GameServer>();
@@ -33,7 +33,7 @@ namespace ASteambot
         {
             Running = true;
 
-            StartSocketServer(Int32.Parse(config.TCPServerPort));
+            StartSocketServer(Int32.Parse(Config.TCPServerPort));
 
             while (Running)
             {
@@ -54,7 +54,7 @@ namespace ASteambot
         private void StartSocketServer(int port)
         {
             Console.WriteLine("Starting TCP server on port {0}", port);
-            socketServer = new AsynchronousSocketListener(port, config.TCPPassword);
+            socketServer = new AsynchronousSocketListener(port, Config.TCPPassword);
             threadSocket = new Thread(new ThreadStart(socketServer.StartListening));
             threadSocket.Start();
         }
@@ -254,7 +254,7 @@ namespace ASteambot
 
             if (result == null)
             {
-                result = new Bot(this, loginInfo, config, socketServer);
+                result = new Bot(this, loginInfo, Config, socketServer);
                 lock (bots) { bots.Add(result); }
             }
 

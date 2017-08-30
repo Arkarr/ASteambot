@@ -139,8 +139,6 @@ namespace ASteambot
             }
             else
             {
-                Console.WriteLine("Item list updated !");
-
                 string[] rows = new string[1];                
                 rows[0] = "tradeOfferID";
 
@@ -163,7 +161,7 @@ namespace ASteambot
 
         private void SaveMarketInDB(List<SteamMarketPrices.Item> list)
         {
-            /*SteamFriends.SetPersonaState(EPersonaState.Busy);
+            SteamFriends.SetPersonaState(EPersonaState.Busy);
             BackgroundWorker bw = new BackgroundWorker();
 
             bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args)
@@ -245,11 +243,10 @@ namespace ASteambot
                 }
 
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("Done !");
 
                 SteamFriends.SetPersonaState(EPersonaState.Online);
             });
-            bw.RunWorkerAsync();*/
+            bw.RunWorkerAsync();
         }
         
         private void UpdateMarketItems(object sender, ElapsedEventArgs e)

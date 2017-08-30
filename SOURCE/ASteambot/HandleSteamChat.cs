@@ -22,6 +22,13 @@ namespace ASteambot
         public void HandleMessage(SteamID partenar, string message)
         {
             string command = message.Split(' ')[0];
+
+            if (!command.Equals("STOPHOOK") && ChatListener.ContainsKey(partenar))
+            {
+                SendMessageToGameServer(partenar, message);
+                return;
+            }
+
             switch(command)
             {
                 case "help":
@@ -46,6 +53,16 @@ namespace ASteambot
             }            
         }
 
+        private void SendMessageToGameServer(SteamID partenar, string message)
+        {
+            int serverID = ChatListener[partenar];
+            GameServer gs = bot.botManager.Servers[serverID - 1];
+
+            string name = bot.SteamFriends.GetFriendPersonaName(partenar);
+            string data = string.Format("{0}|{1} : {2}", (int)Networking.NetworkCode.ASteambotCode.Simple, name, message);
+            gs.Send(data);
+        }
+
         public void StopHook(SteamID partenar)
         {
             int serverID = ChatListener[partenar];
@@ -59,13 +76,15 @@ namespace ASteambot
             }
 
             GameServer server = bot.botManager.Servers[serverID-1];
-            server.Send(Networking.NetworkCode.ASteambotCode.Unhookchat.ToString());
+            server.Send(((int)Networking.NetworkCode.ASteambotCode.Unhookchat).ToString());
         }
 
         public void PrintHelp(SteamID partenar)
         {
+            SendChatMessage(partenar, "help - Print this message.");
             SendChatMessage(partenar, "SERVER - Print all servers connected to me.");
             SendChatMessage(partenar, "HOOKCHAT - Listen to what's being sent in the game server.");
+            SendChatMessage(partenar, "STOPHOOK - Stop listening to what's being sent in the game server.");
         }
 
         public void PrintServer(SteamID partenar)
