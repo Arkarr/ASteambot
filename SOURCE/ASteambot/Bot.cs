@@ -103,7 +103,7 @@ namespace ASteambot
 
         private void ScanMarket()
         {
-            /*switch(gameScan)
+            switch(gameScan)
             {
                 case 0:
                     gameScan++;
@@ -161,7 +161,7 @@ namespace ASteambot
                 }
 
                 SaveMarketInDB(smp.Items);
-            }*/
+            }
         }
 
         private void SaveMarketInDB(List<SteamMarketPrices.Item> list)
