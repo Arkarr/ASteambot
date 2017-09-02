@@ -87,9 +87,9 @@ namespace ASteambot
                 case "rename":
                     Rename(args);
                     break;
-                /*case "createto":
+                case "createto":
                     CreateTradeOffer(args);
-                    break;*/
+                    break;
                 case "help":
                     ShowHelp();
                     break;
@@ -104,6 +104,9 @@ namespace ASteambot
                     break;
                 case "testtcp":
                     testTCP(args);
+                    break;
+                case "scan":
+                    scan(args);
                     break;
                 default:
                     Console.WriteLine("Command \"{0}\" not found ! Use 'help' !", command);
@@ -125,6 +128,11 @@ namespace ASteambot
             Console.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
             Console.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
             Console.WriteLine("testtcp - Send a small packet to all TCP clients.");
+        }
+
+        private void scan(string[] args)
+        {
+            SelectedBot.ScanInventory(1, "STEAM_0:1:42047781", false);
         }
 
         private void testTCP(string[] args)
@@ -167,7 +175,7 @@ namespace ASteambot
             SelectedBot.DeactivateAuthenticator();
         }
 
-        /*public void CreateTradeOffer(string[] args)
+        public void CreateTradeOffer(string[] args)
         {
             if (args.Count() < 2)
             {
@@ -176,7 +184,7 @@ namespace ASteambot
             }
 
             SelectedBot.CreateTradeOffer(args[1]);
-        }*/
+        }
 
         public void ShutdownBots()
         {

@@ -47,7 +47,6 @@ namespace ASteambot
             string finaldata = tcppasswd + "" + data;
 
             Console.WriteLine(finaldata);
-
             byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
             socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
         }

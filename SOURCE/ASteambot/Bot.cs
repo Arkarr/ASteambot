@@ -14,6 +14,7 @@ using System.Timers;
 using ASteambot.Networking;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace ASteambot
 {
@@ -26,6 +27,7 @@ namespace ASteambot
         public SteamFriends SteamFriends { get; private set; }
         public HandleSteamChat steamchatHandler { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
+        public GenericInventory OtherGenericInventory { get; private set; }
 
         enum Games
         {
@@ -56,6 +58,7 @@ namespace ASteambot
         private TradeOfferManager tradeOfferManager;
         private SteamGuardAccount steamGuardAccount;
         private CallbackManager steamCallbackManager;
+        private Dictionary<string, double> tradeOfferValue;
 
         public Bot(Manager botManager, LoginInfo loginInfo, Config config, AsynchronousSocketListener socket)
         {
@@ -68,7 +71,9 @@ namespace ASteambot
             steamWeb = new SteamTrade.SteamWeb();
             manager = new CallbackManager(steamClient);
             steamchatHandler = new HandleSteamChat(this);
+            tradeOfferValue = new Dictionary<string, double>();
             MyGenericInventory = new GenericInventory(steamWeb);
+            OtherGenericInventory = new GenericInventory(steamWeb);
             steamCallbackManager = new CallbackManager(steamClient);
 
             DB = new Database(config.DatabaseServer, config.DatabaseUser, config.DatabasePassword, config.DatabaseName, config.DatabasePort);
@@ -98,7 +103,7 @@ namespace ASteambot
 
         private void ScanMarket()
         {
-            switch(gameScan)
+            /*switch(gameScan)
             {
                 case 0:
                     gameScan++;
@@ -156,7 +161,7 @@ namespace ASteambot
                 }
 
                 SaveMarketInDB(smp.Items);
-            }
+            }*/
         }
 
         private void SaveMarketInDB(List<SteamMarketPrices.Item> list)
@@ -199,7 +204,7 @@ namespace ASteambot
                     foreach (SteamMarketPrices.Item item in list)
                     {
                         string[] values = new string[5];
-                        values[0] = item.name.Replace(@"\", string.Empty);
+                        values[0] = item.name.Replace('\"', ' ');
                         values[1] = item.last_updated.ToString();
                         values[2] = item.value.ToString();
                         values[3] = item.quantity.ToString();
@@ -435,7 +440,7 @@ namespace ASteambot
         }
 
         /// ///////////////////////////////////////////////////////////////
-        /*public void CreateTradeOffer(string otherSteamID)
+        public void CreateTradeOffer(string otherSteamID)
         {
             List<long> contextId = new List<long>();
             contextId.Add(2);
@@ -454,7 +459,7 @@ namespace ASteambot
             Console.WriteLine("Offer ID : {0}", offerId);
 
             AcceptMobileTradeConfirmation(offerId);
-        }*/
+        }
         ////////////////////////////////////////////////////////////////////
         public void AcceptMobileTradeConfirmation(string offerId)
         {
@@ -489,6 +494,108 @@ namespace ASteambot
                 steamGuardAccount.DeactivateAuthenticator();
                 Console.WriteLine("Done !");
             }
+        }
+
+        public void ScanInventory(int serverID, string strsteamID, bool send=true)
+        {
+            GameServer gameServer = null;
+            foreach (GameServer gs in botManager.Servers)
+            {
+                if (gs.ServerID == serverID)
+                    gameServer = gs;
+            }
+
+            SteamID steamID = new SteamID(strsteamID);
+
+            if (!friends.Contains(steamID))
+            {
+                gameServer.Send((int)NetworkCode.ASteambotCode.NotFriends + "|"+ strsteamID);
+                return;
+            }
+
+            string items = strsteamID+"/";
+            
+            items += AddInventoryItems(Games.TF2, steamID) + "/";
+            items += AddInventoryItems(Games.CSGO, steamID) + "/";
+            items += AddInventoryItems(Games.Dota2, steamID);
+
+            string final = (int)NetworkCode.ASteambotCode.ScanInventory + "|" + items;
+
+            if (!send)
+                return;
+
+            gameServer.Send(final);
+        }
+
+        public void TCPCreateTradeOffer(int serverID, string message)
+        {
+            string[] steamIDitems = message.Split('/');
+            SteamID steamid = new SteamID(steamIDitems[0]);
+            string[] assetIDs = steamIDitems[2].Split(',');
+            GameServer gameServer = null;
+
+            foreach(GameServer gs in botManager.Servers)
+            {
+                if(gs.ServerID == serverID)
+                    gameServer = gs;
+            }
+
+            Games game = (Games)Int32.Parse(steamIDitems[1]);
+
+            List<long> contextId = new List<long>();
+            contextId.Add(2);
+            OtherGenericInventory.load((int)game, contextId, steamid);
+            
+            TradeOffer to = tradeOfferManager.NewOffer(steamid);
+
+            foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
+            {
+                if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
+                {
+                    GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
+                    to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                }
+            }
+            
+            string offerId;
+            to.Send(out offerId, String.Format("In exchange for points on server {0} the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("hh:mm")));
+
+            AcceptMobileTradeConfirmation(offerId);
+        }
+
+        private string AddInventoryItems(Games game, SteamID steamID)
+        {
+            string items = "";
+
+            long[] contextID = new long[1];
+            contextID[0] = 2;
+
+            OtherGenericInventory.load((int)game, contextID,steamID);
+
+            if (OtherGenericInventory.errors.Count > 0)
+            {
+                Console.WriteLine("Error while inventory scan :");
+                foreach (string error in OtherGenericInventory.errors)
+                {
+                    Console.WriteLine(error);
+                }
+                return "ERROR";
+            }
+
+            foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
+            {
+                GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
+                double value = GetItemValue(description, item.assetid);
+                if (description.tradable && value != 0.0)
+                {
+                    items += item.assetid + "=" + description.market_hash_name + "=" + value + ",";
+                }
+            }
+
+            if (items.Length == 0)
+                return "EMPTY";
+
+            return items.Remove(items.Length - 1);
         }
 
         public void WithDrawn(string steamid)
@@ -898,9 +1005,7 @@ namespace ASteambot
 
         private void TradeOfferUpdated(TradeOffer offer)
         {
-            double cent = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
-
-            UpdateTradeOfferInDatabase(offer, cent);
+            //UpdateTradeOfferInDatabase(offer, cent);
 
             if (offer.IsOurOffer)
                 OwnTradeOfferUpdated(offer);
@@ -908,25 +1013,65 @@ namespace ASteambot
                 PartenarTradeOfferUpdated(offer);
         }
 
+        public void InviteFriend(string steamid)
+        {
+            SteamID steamID = new SteamID(steamid);
+            SteamFriends.AddFriend(steamID);
+        }
+
         private void OwnTradeOfferUpdated(TradeOffer offer)
         {
-            Console.WriteLine("Sent offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
-            
-            if(offer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation)
+            //Console.WriteLine("Sent offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
+
+            if (offer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation)
+            {
                 AcceptMobileTradeConfirmation(offer.TradeOfferId);
+            }
+
+            if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
+            {
+                double value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
+                tradeOfferValue.Add(offer.TradeOfferId, value);
+            }
+
+            if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && tradeOfferValue.ContainsKey(offer.TradeOfferId))
+            {
+                string msg = (int)NetworkCode.ASteambotCode.TradeOfferSuccess + "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
+                SendTradeOfferConfirmationToGameServers(msg);
+            }
         }
 
         private void PartenarTradeOfferUpdated(TradeOffer offer)
         {
-            Console.WriteLine("Received offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
+            //Console.WriteLine("Received offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
             {
+                double value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetMyItems());
+
+                string msg = "";
+
                 if (offer.Items.GetMyItems().Count == 0)
+                {
                     offer.Accept();
+                    msg += ((int)NetworkCode.ASteambotCode.TradeOfferSuccess).ToString();
+                }
                 else
+                {
                     offer.Decline();
+                    msg += ((int)NetworkCode.ASteambotCode.TradeOfferDecline).ToString();
+                }
+                
+                msg += "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + value;
+
+                SendTradeOfferConfirmationToGameServers(msg);
             }
+        }
+
+        private void SendTradeOfferConfirmationToGameServers(string data)
+        {
+            foreach (GameServer gs in botManager.Servers)
+                gs.Send(data);
         }
 
         private void UpdateTradeOfferInDatabase(TradeOffer to, double value)
@@ -957,17 +1102,14 @@ namespace ASteambot
 
         private double GetTradeOfferValue(SteamID partenar, List<TradeOffer.TradeStatusUser.TradeAsset> list)
         {
-            if (list.Count > 0)
-                Console.WriteLine(list.Count);
-
             double cent = 0;
             long[] contextID = new long[1];
             contextID[0] = 2;
 
             List<long> appIDs = new List<long>();
             GenericInventory gi = new GenericInventory(steamWeb);
-            
-            foreach(TradeOffer.TradeStatusUser.TradeAsset item in list)
+
+            foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
             {
                 if (!appIDs.Contains(item.AppId))
                     appIDs.Add(item.AppId);
@@ -992,10 +1134,32 @@ namespace ASteambot
                         SteamMarketPrices.Item itemInfo = smp.Items.Find(i => i.name == ides.market_hash_name);
                         if (itemInfo != null)
                             cent += (itemInfo.value / 100.0);
-                        else
-                            Console.WriteLine("Item " + ides.market_hash_name + " not found !");
+                        /*else
+                            Console.WriteLine("Item " + ides.market_hash_name + " not found !");*/
                     }
                 }
+            }
+
+            return cent;
+        }
+
+        private double GetItemValue(GenericInventory.ItemDescription ides, ulong assetID)
+        {
+            double cent = 0;
+            long[] contextID = new long[1];
+            contextID[0] = 2;
+            
+            if (ides == null)
+            {
+                Console.WriteLine("Warning, items description for item {0} not found !", assetID);
+            }
+            else
+            {
+                SteamMarketPrices.Item itemInfo = smp.Items.Find(i => i.name == ides.market_hash_name);
+                if (itemInfo != null)
+                    cent += (itemInfo.value / 100.0);
+                else
+                    Console.WriteLine("Item " + ides.market_hash_name + " not found !");
             }
 
             return cent;

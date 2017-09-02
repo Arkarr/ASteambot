@@ -13,7 +13,14 @@ namespace ASteambot.Networking
             Core = 0,
             HookChat = 1,
             Unhookchat = 2,
-            Simple = 3
+            Simple = 3,
+            TradeOfferSuccess = 4,
+            TradeOfferDecline = 5,
+            ScanInventory = 6,
+            CreateTradeOffer = 7,
+            NotFriends = 8,
+            TradeToken = 9,
+            FriendInvite = 10
         }
     }
 }

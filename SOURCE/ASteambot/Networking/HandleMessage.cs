@@ -22,7 +22,16 @@ namespace ASteambot.Networking
                     RegisterBot(bot, socket, args);
                 break;
                 case NetworkCode.ASteambotCode.HookChat:
-                    HookChat(bot, socket, srvid, args);
+                    HookChat(bot, srvid, args);
+                break;
+                case NetworkCode.ASteambotCode.ScanInventory:
+                    ScanInventory(bot, srvid, args);
+                break;
+                case NetworkCode.ASteambotCode.CreateTradeOffer:
+                    CreateTradeOffer(bot, srvid, args);
+                break;
+                case NetworkCode.ASteambotCode.FriendInvite:
+                    SendFriendInvitation(bot, srvid, args);
                 break;
             }
         }
@@ -43,9 +52,24 @@ namespace ASteambot.Networking
             bot.botManager.Servers.Add(gameserver);
         }
 
-        private void HookChat(Bot bot, Socket socket, int serverid, string args)
+        private void HookChat(Bot bot, int serverid, string args)
         {
             bot.steamchatHandler.ServerMessage(serverid, args);
+        }
+
+        private void ScanInventory(Bot bot, int serverid, string args)
+        {
+            bot.ScanInventory(serverID, args);
+        }
+
+        private void CreateTradeOffer(Bot bot, int serverid, string args)
+        {
+            bot.TCPCreateTradeOffer(serverid, args);
+        }
+
+        private void SendFriendInvitation(Bot bot, int serverid, string args)
+        {
+            bot.InviteFriend(args);
         }
     }
 }

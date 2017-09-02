@@ -124,15 +124,16 @@ namespace ASteambot.Networking
                         HandleMessage(handler, content);
                         state.sb.Clear();
                     }
-               
 
                     handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                     new AsyncCallback(ReadCallback), state);
                 }
             }
-            catch(Exception e)
+            catch (SocketException ex) { }
+            catch (Exception e)
             {
-
+                Console.WriteLine("Error while processing a message sent by the game server!");
+                Console.WriteLine(e.Message);
             }
         }
     }
