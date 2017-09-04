@@ -9,6 +9,7 @@ namespace ASteambot.Networking
     public class AsynchronousSocketListener
     {
         public int Port { get; private set; }
+        public bool Running { get; private set; }
         public event EventHandler<EventArgGameServer> MessageReceived;
 
         private string password;
@@ -20,7 +21,6 @@ namespace ASteambot.Networking
         }
         
         public static ManualResetEvent allDone = new ManualResetEvent(false);
-        private bool running = false;
 
         private void HandleMessage(Socket handler, string content)
         {
@@ -42,9 +42,10 @@ namespace ASteambot.Networking
             EventArgGameServer arg = new EventArgGameServer(handler, idmsgtype[0], idmsgtype[1], codeargs[1]);
             OnMessageReceived(arg);
         }
+
         public void Stop()
         {
-            running = false;
+            Running = false;
             allDone.Set();
         }
 
@@ -69,11 +70,9 @@ namespace ASteambot.Networking
                 while (true)
                 {
                     allDone.Reset();
-                    
-                    Console.WriteLine("Waiting for a connection...");
-                    listener.BeginAccept(
-                        new AsyncCallback(AcceptCallback),
-                        listener);
+                    Running = true;
+
+                    listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
                     
                     allDone.WaitOne();
                 }
@@ -83,10 +82,6 @@ namespace ASteambot.Networking
             {
                 Console.WriteLine(e.ToString());
             }
-
-            Console.WriteLine("\nPress ENTER to continue...");
-            Console.Read();
-
         }
 
         public void AcceptCallback(IAsyncResult ar)

@@ -262,6 +262,9 @@ namespace ASteambot
 
             if (result == null)
             {
+                while (socketServer == null || !socketServer.Running)
+                    Thread.Sleep(2000);
+
                 result = new Bot(this, loginInfo, Config, socketServer);
                 lock (bots) { bots.Add(result); }
             }

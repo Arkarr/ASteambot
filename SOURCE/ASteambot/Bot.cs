@@ -57,7 +57,7 @@ namespace ASteambot
         private AsynchronousSocketListener socket;
         private TradeOfferManager tradeOfferManager;
         private SteamGuardAccount steamGuardAccount;
-        private CallbackManager steamCallbackManager;
+        //private CallbackManager steamCallbackManager;
         private Dictionary<string, double> tradeOfferValue;
 
         public Bot(Manager botManager, LoginInfo loginInfo, Config config, AsynchronousSocketListener socket)
@@ -74,7 +74,7 @@ namespace ASteambot
             tradeOfferValue = new Dictionary<string, double>();
             MyGenericInventory = new GenericInventory(steamWeb);
             OtherGenericInventory = new GenericInventory(steamWeb);
-            steamCallbackManager = new CallbackManager(steamClient);
+            //steamCallbackManager = new CallbackManager(steamClient);
 
             DB = new Database(config.DatabaseServer, config.DatabaseUser, config.DatabasePassword, config.DatabaseName, config.DatabasePort);
             DB.InitialiseDatabase();
@@ -144,7 +144,7 @@ namespace ASteambot
             }
             else
             {
-                string[] rows = new string[1];                
+                 string[] rows = new string[1];                
                 rows[0] = "tradeOfferID";
 
                 List<Dictionary<string, string>> list = DB.SELECT(rows, "tradeoffers");//, "WHERE `tradeStatus`=\"" + TradeOfferState.TradeOfferStateActive + "\"");
@@ -265,8 +265,6 @@ namespace ASteambot
             {
                 try
                 {
-                    steamCallbackManager.RunCallbacks();
-
                     if (tradeOfferManager != null)
                     {
                         tradeOfferManager.HandleNextPendingTradeOfferUpdate();
@@ -320,7 +318,16 @@ namespace ASteambot
                 steamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(authFile));
                 return steamGuardAccount.GenerateSteamGuardCode();
             }
-            return string.Empty;
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
+                Console.WriteLine("Bot will stop now.");
+                stop = true;
+
+                Disconnect();
+                return string.Empty;
+            }
         }
 
         public void SubscribeToEvents()
@@ -936,9 +943,10 @@ namespace ASteambot
                 case EResult.TwoFactorCodeMismatch:
                 case EResult.TwoFactorActivationCodeMismatch:
                     stop = true;
-                    Console.WriteLine("The 2 factor auth code is wrong ! Asking it again : ");
-                    loginInfo.SetTwoFactorCode(Console.ReadLine());
-                break;
+                    Console.WriteLine("The 2 factor auth code is wrong ! Reloading...");
+                    loginInfo.SetTwoFactorCode(GetMobileAuthCode());
+
+                    break;
 
                 case EResult.InvalidLoginAuthCode:
                     stop = true;

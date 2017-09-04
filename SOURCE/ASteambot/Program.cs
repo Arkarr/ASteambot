@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -18,8 +19,27 @@ namespace ASteambot
 
         private static Thread threadManager;
 
+        private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
+        {
+            Exception ex = default(Exception);
+            ex = (Exception)e.ExceptionObject;
+
+            using (var file = File.Exists("./SEND_TO_ARKARR.log") ? File.Open("./SEND_TO_ARKARR.log", FileMode.Append) : File.Open("./SEND_TO_ARKARR.log", FileMode.CreateNew))
+            using (var stream = new StreamWriter(file))
+                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + "\n*************************\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Log file (" + "SEND_TO_ARKARR.log" + ") generated ! Send it to Arkarr !!");
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+
+
         static void Main(string[] args)
         {
+            AppDomain currentDomain = default(AppDomain);
+            currentDomain = AppDomain.CurrentDomain;
+            currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
+
             Console.Title = "Akarr's steambot";
 
             PrintWelcomeMessage();
