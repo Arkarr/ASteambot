@@ -33,6 +33,9 @@ namespace ASteambot.Networking
                 case NetworkCode.ASteambotCode.FriendInvite:
                     SendFriendInvitation(bot, srvid, args);
                 break;
+                case NetworkCode.ASteambotCode.ReportPlayer:
+                    ReportPlayer(bot, srvid, args);
+                break;
             }
         }
 
@@ -50,6 +53,11 @@ namespace ASteambot.Networking
             serverID++;
             GameServer gameserver = new GameServer(socket, bot.botManager.Config.TCPPassword, serverID, args);
             bot.botManager.Servers.Add(gameserver);
+        }
+
+        private void ReportPlayer(Bot bot, int sererid, string args)
+        {
+            bot.ReportPlayer(serverID, args);
         }
 
         private void HookChat(Bot bot, int serverid, string args)

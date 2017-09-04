@@ -73,6 +73,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SteamGroups\CMsgGroupInviteAction.cs" />
     <Compile Include="SteamGroups\CMsgInviteUserToGroup.cs" />
+    <Compile Include="SteamProfile.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

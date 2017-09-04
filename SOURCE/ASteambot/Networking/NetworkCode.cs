@@ -20,7 +20,8 @@ namespace ASteambot.Networking
             CreateTradeOffer = 7,
             NotFriends = 8,
             TradeToken = 9,
-            FriendInvite = 10
+            FriendInvite = 10,
+            ReportPlayer = 11
         }
     }
 }

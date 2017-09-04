@@ -15,6 +15,7 @@ using ASteambot.Networking;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using static ASteambot.SteamProfile;
 
 namespace ASteambot
 {
@@ -503,14 +504,48 @@ namespace ASteambot
             }
         }
 
-        public void ScanInventory(int serverID, string strsteamID, bool send=true)
+        private GameServer getServerByID(int serverID)
         {
-            GameServer gameServer = null;
             foreach (GameServer gs in botManager.Servers)
             {
                 if (gs.ServerID == serverID)
-                    gameServer = gs;
+                    return gs;
             }
+
+            return null;
+        }
+        
+        public void ReportPlayer(int serverID, string args)
+        {
+            GameServer gs = getServerByID(serverID);
+
+            string[] ids = args.Split('/');
+            SteamID steamID = new SteamID(ids[0]);
+            SteamID reportedDude = new SteamID(ids[1]);
+
+            SteamProfileInfos spGuy = LoadSteamProfile(steamWeb, steamID);
+            SteamProfileInfos spDude = LoadSteamProfile(steamWeb, reportedDude);
+
+            string firstMsg = String.Format("{0} ({1}) reported {2} ({3}) for \"{4}\" @ {5} ({6}) !", spGuy.Name, steamID.ToString(), spDude.Name, reportedDude.ToString(), ids[2], DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm"));
+            string secondMsg = String.Format("Name of server : {0}", gs.Name);
+            string thirdMsg = String.Format("Direct URL : steam://connect/{0}:{1}", gs.IP, gs.Port);
+
+            foreach (SteamID steamid in friends)
+            {
+                if (config.SteamAdmins.Contains(steamid.ToString()))
+                {
+                    SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, firstMsg);
+                    Thread.Sleep(100);
+                    SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, secondMsg);
+                    Thread.Sleep(100);
+                    SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, thirdMsg);
+                }
+            }
+        }
+
+        public void ScanInventory(int serverID, string strsteamID, bool send=true)
+        {
+            GameServer gameServer = getServerByID(serverID);
 
             SteamID steamID = new SteamID(strsteamID);
 
@@ -539,13 +574,8 @@ namespace ASteambot
             string[] steamIDitems = message.Split('/');
             SteamID steamid = new SteamID(steamIDitems[0]);
             string[] assetIDs = steamIDitems[2].Split(',');
-            GameServer gameServer = null;
 
-            foreach(GameServer gs in botManager.Servers)
-            {
-                if(gs.ServerID == serverID)
-                    gameServer = gs;
-            }
+            GameServer gameServer = getServerByID(serverID);
 
             Games game = (Games)Int32.Parse(steamIDitems[1]);
 
@@ -1177,7 +1207,7 @@ namespace ASteambot
         {
             tradeOfferManager.OnTradeOfferUpdated += TradeOfferUpdated;
         }
-        
+
         protected void SpawnTradeOfferPollingThread()
         {
             if (tradeOfferThread == null)
