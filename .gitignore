@@ -14,7 +14,6 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-*.dll
 /build/
 /obj/
 *.suo
@@ -25,6 +24,7 @@ bin/
 obj/
 Debug/
 Release/
+packages/
 *.opensdf
 *.tlog
 *.log
@@ -45,13 +45,9 @@ Version.cpp
 *.lib
 
 # Executables
-*.exe
 *.out
 *.app
 
 #steam related
 *.bin
 *.auth
-
-!BINARIES/
-BINARIES
