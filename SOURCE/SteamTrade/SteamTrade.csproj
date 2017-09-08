@@ -56,10 +56,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="EventArgItemScanned.cs" />
     <Compile Include="Exceptions\TradeException.cs" />
     <Compile Include="ForeignInventory.cs" />
     <Compile Include="GenericInventory.cs" />
-    <Compile Include="SteamMarketPrices.cs" />
+    <Compile Include="SteamMarket\OLDSteamMarketPrices.cs" />
+    <Compile Include="SteamMarket\Item.cs" />
+    <Compile Include="SteamMarket\SteamMarketPrices.cs" />
+    <Compile Include="SteamMarket\TradeTF.cs" />
     <Compile Include="Tf2Value.cs" />
     <Compile Include="Trade.cs" />
     <Compile Include="Schema.cs" />

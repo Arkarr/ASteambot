@@ -10,11 +10,9 @@ using SteamTrade.TradeOffer;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using ASteambot.SteamGroups;
-using System.Timers;
 using ASteambot.Networking;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using static ASteambot.SteamProfile;
 
 namespace ASteambot
@@ -83,11 +81,6 @@ namespace ASteambot
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
             botThread.DoWork += BackgroundWorkerOnDoWork;
             botThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
-
-            System.Timers.Timer refreshMarket = new System.Timers.Timer(421000);//15*1000*60);
-            refreshMarket.Elapsed += UpdateMarketItems;
-            refreshMarket.AutoReset = true;
-            refreshMarket.Enabled = true;
             
             socket.MessageReceived += Socket_MessageReceived;
         }
@@ -102,164 +95,11 @@ namespace ASteambot
             messageHandler.Execute(this, socket, srvid, code, args);
         }
 
-        private void ScanMarket()
-        {
-            switch(gameScan)
-            {
-                case 0:
-                    gameScan++;
-                    smp.ScanMarket(config.BackpacktfAPIKey, (int)Games.CSGO);
-                    currentGame = Games.CSGO;
-                    break;
-                case 1:
-                    gameScan++;
-                    smp.ScanMarket(config.BackpacktfAPIKey, (int)Games.TF2);
-                    currentGame = Games.TF2;
-                    break;
-                case 2:
-                    gameScan = 0;
-                    smp.ScanMarket(config.BackpacktfAPIKey, (int)Games.Dota2);
-                    currentGame = Games.Dota2;
-                    break;
-            }
-
-            if (smp.Items.Count == 0 && smp.ResponseCode == 0)
-            {
-                Console.WriteLine(">>> ERROR while scanning market :");
-                Console.WriteLine(smp.ErrorMessage);
-                Console.WriteLine(">>> Prices NOT updated.");
-                string[] row = new string[4];
-                row[0] = "itemName";
-                row[1] = "last_updated";
-                row[2] = "value";
-                row[3] = "quantity";
-                List<Dictionary<string, string>> items = DB.SELECT(row, "smitems");
-                if (items != null)
-                {
-                    foreach (Dictionary<string, string> item in items)
-                    {
-                        smp.AddItem(new SteamMarketPrices.Item(item["itemName"], Int32.Parse(item["last_updated"]), Int32.Parse(item["quantity"]), Double.Parse(item["value"])));
-                    }
-                }
-                Console.WriteLine("Found " + items.Count + " backup items in database !");
-            }
-            else
-            {
-                 string[] rows = new string[1];                
-                rows[0] = "tradeOfferID";
-
-                List<Dictionary<string, string>> list = DB.SELECT(rows, "tradeoffers");//, "WHERE `tradeStatus`=\"" + TradeOfferState.TradeOfferStateActive + "\"");
-                foreach (Dictionary<string, string> tradeInfo in list)
-                {
-                    TradeOffer to;
-                    tradeOfferManager.TryGetOffer(tradeInfo["tradeOfferID"], out to);
-
-                    if (to != null)
-                    {
-                        double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
-                        UpdateTradeOfferInDatabase(to, cent);
-                    }
-                }
-
-                SaveMarketInDB(smp.Items);
-            }
+        private void SaveItemInDB(SteamTrade.SteamMarket.Item item)
+        {            
+            DB.QUERY("UPDATE smitems SET value='" + item.Value + "',quantity='" + item.Quantity + "',last_updated = '" + item.LastUpdated + "' WHERE itemName=\"" + item.Name + "\"" + ";");
         }
-
-        private void SaveMarketInDB(List<SteamMarketPrices.Item> list)
-        {
-            SteamFriends.SetPersonaState(EPersonaState.Busy);
-            BackgroundWorker bw = new BackgroundWorker();
-
-            bw.DoWork += new DoWorkEventHandler(delegate (object o, DoWorkEventArgs args)
-            {
-                BackgroundWorker b = o as BackgroundWorker;
-
-                if (list == null || list.Count == 0)
-                    return;
-
-                Console.WriteLine("Saving steam market items into database...");
-                Console.WriteLine("This may take severals minutes !");
-
-                string[] rows = new string[5];
-                rows[0] = "itemName";
-                rows[1] = "last_updated";
-                rows[2] = "value";
-                rows[3] = "quantity";
-                rows[4] = "gameid";
-
-                List<Dictionary<string, string>> items = null;
-                do
-                {
-                    items = DB.SELECT(rows, "smitems");
-                    if (items == null)
-                    {
-                        Thread.Sleep(3000);
-                        Console.WriteLine("You should put more delay between steam market scan.");
-                    }
-                }
-                while (items == null);
-
-                int itemCount = 0;
-                lock (list)
-                {
-                    foreach (SteamMarketPrices.Item item in list)
-                    {
-                        string[] values = new string[5];
-                        values[0] = item.name.Replace('\"', ' ');
-                        values[1] = item.last_updated.ToString();
-                        values[2] = item.value.ToString();
-                        values[3] = item.quantity.ToString();
-                        values[4] = ((int)currentGame).ToString();
-
-                        if (items.Count > 0)// && BotGameUsage == Int32.Parse(items[0]["gameid"]))
-                        {
-                            if (!items.Any(tr => tr["itemName"].Equals(item.name)))
-                            {
-                                DB.INSERT("smitems", rows, values);
-                            }
-                            else
-                            {
-                                Dictionary<string, string> fitem = items.Find(tr => tr["itemName"].Equals(item.name));
-                                if (Double.Parse(fitem["last_updated"]) != item.last_updated)
-                                    DB.QUERY("UPDATE smitems SET value='" + item.value + "',quantity='" + item.quantity + "',last_updated = '" + item.last_updated + "' WHERE itemName=\"" + item.name + "\"" + ";");
-                            }
-                        }
-                        else
-                        {
-                            DB.INSERT("smitems", rows, values);
-                        }
-                        itemCount++;
-
-                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
-                        string strItem = String.Format("{0} / {1} - {2}", itemCount, list.Count, values[0]);
-                        int length = Console.WindowWidth - strItem.Length - 1;
-                        if (length < 0)
-                        {
-                            strItem = strItem.Substring(0, Console.WindowWidth - 4) + "...";
-                            length = 0;
-                        }
-                        Console.WriteLine(strItem + new string(' ', length));
-                        if (itemCount != list.Count)
-                        {
-                            int pos = Console.CursorTop - 1;
-                            if (pos < 0) pos = 0;
-                            Console.SetCursorPosition(0, pos);
-                        }
-                    }
-                }
-
-                Console.ForegroundColor = ConsoleColor.White;
-
-                SteamFriends.SetPersonaState(EPersonaState.Online);
-            });
-            bw.RunWorkerAsync();
-        }
-        
-        private void UpdateMarketItems(object sender, ElapsedEventArgs e)
-        {
-            ScanMarket();
-        }
-
+            
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
         {
             while (!botThread.CancellationPending)
@@ -543,6 +383,11 @@ namespace ASteambot
             }
         }
 
+        public void GenerateCode()
+        {
+            Console.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
+        }
+
         public void ScanInventory(int serverID, string strsteamID, bool send=true)
         {
             GameServer gameServer = getServerByID(serverID);
@@ -619,13 +464,27 @@ namespace ASteambot
                 return "ERROR";
             }
 
-            foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
+            bool allItemsFound = false;
+            while (!allItemsFound)
             {
-                GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
-                double value = GetItemValue(description, item.assetid);
-                if (description.tradable && value != 0.0)
+                allItemsFound = true;
+                foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
                 {
-                    items += item.assetid + "=" + description.market_hash_name + "=" + value + ",";
+                    GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
+                    double value = GetItemValue(description, item.assetid);
+                    if (value == -1.0)
+                    {
+                        Thread.Sleep(3000);
+                        allItemsFound = false;
+                        break;
+                    }
+                    else
+                    {
+                        if (description.tradable && value != 0.0)
+                        {
+                            items += item.assetid + "=" + description.market_hash_name + "=" + value + ",";
+                        }
+                    }
                 }
             }
 
@@ -787,6 +646,7 @@ namespace ASteambot
         public void Disconnect()
         {
             stop = true;
+            smp.Stop();
             steamUser.LogOff();
             steamClient.Disconnect();
             CancelTradeOfferPollingThread();
@@ -835,8 +695,6 @@ namespace ASteambot
 
             if (!botThread.IsBusy)
                 botThread.RunWorkerAsync();
-
-            ScanMarket();
         }
 
         private void OnSteamNameChange(SteamFriends.PersonaChangeCallback callback)
@@ -1018,27 +876,49 @@ namespace ASteambot
 
             Console.WriteLine("User Authenticated!");
 
-            smp = new SteamMarketPrices(steamWeb);
+            smp = new SteamMarketPrices(config.TradeTFAPIKey);
+            smp.ItemUpdated += Smp_ItemUpdated;
 
             string[] row = new string[4];
             row[0] = "itemName";
             row[1] = "last_updated";
             row[2] = "value";
             row[3] = "quantity";
-            List<Dictionary<string, string>> items = DB.SELECT(row, "smitems");
+            List<Dictionary<string, string>> items = DB.SELECT(row, "smitems", "WHERE gameID=" + (int)Games.CSGO);
             if (items != null)
             {
                 foreach (Dictionary<string, string> item in items)
                 {
-                    smp.AddItem(new SteamMarketPrices.Item(item["itemName"], Int32.Parse(item["last_updated"]), Int32.Parse(item["quantity"]), Double.Parse(item["value"])));
+                    smp.AddCSGOItem(item["itemName"], item["last_updated"], Int32.Parse(item["quantity"]), Double.Parse(item["value"]));
                 }
             }
 
             tradeOfferManager = new TradeOfferManager(loginInfo.API, steamWeb);
             SubscribeTradeOffer(tradeOfferManager);
-
-            // Success, check trade offers which we have received while we were offline
+            
             SpawnTradeOfferPollingThread();
+        }
+
+        private void Smp_ItemUpdated(object sender, EventArgItemScanned e)
+        {
+            SteamTrade.SteamMarket.Item i = e.GetItem;
+            string[] rows = new string[1];
+            rows[0] = "tradeOfferID";
+
+            List<Dictionary<string, string>> list = DB.SELECT(rows, "tradeoffers", "WHERE `tradeStatus`=\"" + TradeOfferState.TradeOfferStateActive + "\"");
+            foreach (Dictionary<string, string> tradeInfo in list)
+            {
+                TradeOffer to;
+                tradeOfferManager.TryGetOffer(tradeInfo["tradeOfferID"], out to);
+
+                if (to != null && to.OfferState == TradeOfferState.TradeOfferStateActive)
+                {
+                    double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
+                    UpdateTradeOfferInDatabase(to, cent);
+                }
+            }
+
+            SaveItemInDB(i);
         }
 
         private void TradeOfferUpdated(TradeOffer offer)
@@ -1085,7 +965,7 @@ namespace ASteambot
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
             {
-                double value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetMyItems());
+                double value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
 
                 string msg = "";
 
@@ -1141,42 +1021,58 @@ namespace ASteambot
         private double GetTradeOfferValue(SteamID partenar, List<TradeOffer.TradeStatusUser.TradeAsset> list)
         {
             double cent = 0;
-            long[] contextID = new long[1];
-            contextID[0] = 2;
 
-            List<long> appIDs = new List<long>();
-            GenericInventory gi = new GenericInventory(steamWeb);
-
-            foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
+            new Thread(() =>
             {
-                if (!appIDs.Contains(item.AppId))
-                    appIDs.Add(item.AppId);
-            }
+                Thread.CurrentThread.IsBackground = true;
+                long[] contextID = new long[1];
+                contextID[0] = 2;
 
-            foreach (int appID in appIDs)
-            {
-                gi.load(appID, contextID, partenar);
+                List<long> appIDs = new List<long>();
+                GenericInventory gi = new GenericInventory(steamWeb);
+
                 foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
                 {
-                    if (item.AppId != appID)
-                        continue;
+                    if (!appIDs.Contains(item.AppId))
+                        appIDs.Add(item.AppId);
+                }
 
-                    GenericInventory.ItemDescription ides = gi.getDescription((ulong)item.AssetId);
+                bool itemNotFound = false;
+                while (itemNotFound)
+                {
+                    cent = 0;
+                    foreach (int appID in appIDs)
+                    {
+                        gi.load(appID, contextID, partenar);
+                        foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
+                        {
+                            if (item.AppId != appID)
+                                continue;
 
-                    if (ides == null)
-                    {
-                        Console.WriteLine("Warning, items description for item {0} not found !", item.AssetId);
-                    }
-                    else
-                    {
-                        SteamMarketPrices.Item itemInfo = smp.Items.Find(i => i.name == ides.market_hash_name);
-                        if (itemInfo != null)
-                            cent += (itemInfo.value / 100.0);
-                        /*else
-                            Console.WriteLine("Item " + ides.market_hash_name + " not found !");*/
+                            GenericInventory.ItemDescription ides = gi.getDescription((ulong)item.AssetId);
+
+                            if (ides == null)
+                            {
+                                Console.WriteLine("Warning, items description for item {0} not found !", item.AssetId);
+                            }
+                            else
+                            {
+                                SteamTrade.SteamMarket.Item itemInfo = smp.Items.Find(i => i.Name == ides.market_hash_name);
+                                if (itemInfo != null)
+                                {
+                                    cent += (itemInfo.Value / 100.0);
+                                }
+                                else if (itemInfo.AppID == (int)Games.CSGO)
+                                {
+                                    smp.AddItemToCSGOscan(ides.market_hash_name);
+                                    itemNotFound = true;
+                                }
+                            }
+                        }
                     }
                 }
-            }
+
+            }).Start();
 
             return cent;
         }
@@ -1184,21 +1080,30 @@ namespace ASteambot
         private double GetItemValue(GenericInventory.ItemDescription ides, ulong assetID)
         {
             double cent = 0;
-            long[] contextID = new long[1];
-            contextID[0] = 2;
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                long[] contextID = new long[1];
+                contextID[0] = 2;
             
-            if (ides == null)
-            {
-                Console.WriteLine("Warning, items description for item {0} not found !", assetID);
-            }
-            else
-            {
-                SteamMarketPrices.Item itemInfo = smp.Items.Find(i => i.name == ides.market_hash_name);
-                if (itemInfo != null)
-                    cent += (itemInfo.value / 100.0);
+                if (ides == null)
+                {
+                    Console.WriteLine("Warning, items description for item {0} not found !", assetID);
+                }
                 else
-                    Console.WriteLine("Item " + ides.market_hash_name + " not found !");
-            }
+                {
+                    SteamTrade.SteamMarket.Item itemInfo = smp.Items.Find(i => i.Name == ides.market_hash_name);
+                    if (itemInfo != null)
+                    {
+                        cent += (itemInfo.Value / 100.0);
+                    }
+                    else
+                    {
+                        if (itemInfo.AppID == (int)Games.CSGO)
+                            smp.AddItemToCSGOscan(ides.market_hash_name);
+                    }
+                }
+            }).Start();
 
             return cent;
         }

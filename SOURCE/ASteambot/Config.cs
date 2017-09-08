@@ -15,6 +15,7 @@ namespace ASteambot
         public string SteamAPIKey { get; private set; }
         public string SteamAdmins { get; private set; }
         public string BackpacktfAPIKey { get; private set; }
+        public string TradeTFAPIKey { get; private set; }
         public string DatabaseServer { get; private set; }
         public string DatabaseUser { get; private set; }
         public string DatabasePassword { get; private set; }
@@ -50,6 +51,8 @@ namespace ASteambot
                     SteamAdmins = line.Replace("steam_admins=", "");
                 else if (line.StartsWith("backpacktf_apikey="))
                     BackpacktfAPIKey = line.Replace("backpacktf_apikey=", "");
+                else if (line.StartsWith("tradetf_apikey="))
+                    TradeTFAPIKey = line.Replace("tradetf_apikey=", "");
                 else if (line.StartsWith("database_server="))
                     DatabaseServer = line.Replace("database_server=", "");
                 else if (line.StartsWith("database_user="))

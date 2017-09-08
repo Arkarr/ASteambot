@@ -105,8 +105,8 @@ namespace ASteambot
                 case "testtcp":
                     testTCP(args);
                     break;
-                case "scan":
-                    scan(args);
+                case "getsteamcode":
+                    GenerateCode();
                     break;
                 default:
                     Console.WriteLine("Command \"{0}\" not found ! Use 'help' !", command);
@@ -128,11 +128,12 @@ namespace ASteambot
             Console.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
             Console.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
             Console.WriteLine("testtcp - Send a small packet to all TCP clients.");
+            Console.WriteLine("getsteamcode - Generate an authenticator code.");
         }
 
-        private void scan(string[] args)
+        private void GenerateCode()
         {
-            SelectedBot.ScanInventory(1, "STEAM_0:1:42047781", false);
+            SelectedBot.GenerateCode();
         }
 
         private void testTCP(string[] args)

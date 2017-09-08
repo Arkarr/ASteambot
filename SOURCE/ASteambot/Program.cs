@@ -1,4 +1,5 @@
 ﻿using ASteambot.Networking;
+using SteamTrade.SteamMarket;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,12 +13,12 @@ namespace ASteambot
 {
     class Program
     {
-        //Private var
         private static Config config;
         private static LoginInfo logininfo;
         private static Manager steambotManager;
-
         private static Thread threadManager;
+
+        private static string BUILD_VERSION = "1.8.0";
 
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
@@ -26,7 +27,7 @@ namespace ASteambot
 
             using (var file = File.Exists("./SEND_TO_ARKARR.log") ? File.Open("./SEND_TO_ARKARR.log", FileMode.Append) : File.Open("./SEND_TO_ARKARR.log", FileMode.CreateNew))
             using (var stream = new StreamWriter(file))
-                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + "\n*************************\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
+                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_VERSION + ")" + "\n*************************\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
 
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Log file (" + "SEND_TO_ARKARR.log" + ") generated ! Send it to Arkarr !!");
@@ -34,8 +35,14 @@ namespace ASteambot
         }
 
 
+        private static void test()
+        {
+            //Do test here
+        }
+
         static void Main(string[] args)
         {
+            test();
             AppDomain currentDomain = default(AppDomain);
             currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
@@ -95,7 +102,13 @@ namespace ASteambot
             Console.WriteLine("\tAll informations related to this software can be found here :");
             Console.WriteLine("\thttps://forums.alliedmods.net/showthread.php?t=273091");
             Console.WriteLine("");
-            Console.WriteLine("\tVersion 1.7.2 - PUBLIC");
+            Console.WriteLine("\tVersion "+ BUILD_VERSION + " - PUBLIC");
+            Console.WriteLine("");
+            Console.WriteLine("");
+            Console.WriteLine("\tArkarr's message for you :");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\tEverything is operational. CSGO item's price are refreshed every 8 houres due to market restriction. Make sure you have insterted the items names in the database !");
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("");
             Console.WriteLine("");
             Console.Write("\tI would like you not to remove this text ");

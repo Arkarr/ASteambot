@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ASteambot.Networking
 {
-    class Database
+    public class Database
     {
         private string connectionString;
         
