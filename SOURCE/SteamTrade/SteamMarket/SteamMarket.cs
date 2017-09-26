@@ -140,7 +140,17 @@ namespace SteamTrade.SteamMarket
                             {
                                 IDomObject test = element.LastChild;
                                 IDomObject prices = test.FirstChild;
-                                price = Double.Parse(prices.LastChild.InnerText.Replace("$", "").Replace(" USD", ""));
+                                try
+                                {
+                                    price = Double.Parse(prices.LastChild.InnerText.Replace("$", "").Replace(" USD", "").Replace(",", ""));
+                                }
+                                catch(Exception e)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine("Couldn't parse price : " + prices.LastChild.InnerText + " item : "+ itemName);
+                                    Console.ForegroundColor = ConsoleColor.White;
+                                    price = 0.0;
+                                }
                             }
                             else if (element.HasClass("market_listing_item_name_block"))
                             {

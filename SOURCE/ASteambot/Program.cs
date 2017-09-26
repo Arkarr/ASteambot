@@ -18,7 +18,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.0.0 - F*CK YEAH!";
+        private static string BUILD_VERSION = "2.0.1 - F*CK YEAH!";
 
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
