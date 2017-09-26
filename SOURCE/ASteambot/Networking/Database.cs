@@ -208,8 +208,8 @@ namespace ASteambot.Networking
             string table2 = "CREATE TABLE IF NOT EXISTS `smitems` (" +
                              "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
                              "`itemName` varchar(125) CHARACTER SET utf8mb4 NOT NULL," +
-                             "`last_updated` int(35) NOT NULL," +
-                             "`value` int(15) NOT NULL," +
+                             "`last_updated` varchar(125) NOT NULL," +
+                             "`value` float(15) NOT NULL," +
                              "`quantity` int(15) NOT NULL," +
                              "`gameid` int(15) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
             QUERY(table2);

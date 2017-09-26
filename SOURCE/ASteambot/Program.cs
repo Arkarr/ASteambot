@@ -18,7 +18,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "1.8.0";
+        private static string BUILD_VERSION = "2.0.0 - F*CK YEAH!";
 
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
@@ -34,15 +34,8 @@ namespace ASteambot
             Console.ForegroundColor = ConsoleColor.White;
         }
 
-
-        private static void test()
-        {
-            //Do test here
-        }
-
         static void Main(string[] args)
         {
-            test();
             AppDomain currentDomain = default(AppDomain);
             currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
@@ -102,12 +95,12 @@ namespace ASteambot
             Console.WriteLine("\tAll informations related to this software can be found here :");
             Console.WriteLine("\thttps://forums.alliedmods.net/showthread.php?t=273091");
             Console.WriteLine("");
-            Console.WriteLine("\tVersion "+ BUILD_VERSION + " - PUBLIC");
+            Console.WriteLine("\tVersion "+ BUILD_VERSION);
             Console.WriteLine("");
             Console.WriteLine("");
             Console.WriteLine("\tArkarr's message for you :");
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("\tEverything is operational. CSGO item's price are refreshed every 8 houres due to market restriction. Make sure you have insterted the items names in the database !");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("\tIf you plain to use any module that is related to steam market, please let the bot run at least 30 minutes to let him download the steam market's prices. (CSGO > TF2 > DOTA2 > CSGO ...)");
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("");
             Console.WriteLine("");
