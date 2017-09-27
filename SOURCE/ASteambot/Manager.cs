@@ -108,8 +108,11 @@ namespace ASteambot
                 case "getsteamcode":
                     GenerateCode();
                     break;
+                case "debug":
+                    SetDebugMode();
+                    break;
                 default:
-                    Console.WriteLine("Command \"{0}\" not found ! Use 'help' !", command);
+                    Program.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
                 break;
             }
 
@@ -129,6 +132,12 @@ namespace ASteambot
             Console.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
             Console.WriteLine("testtcp - Send a small packet to all TCP clients.");
             Console.WriteLine("getsteamcode - Generate an authenticator code.");
+            Console.WriteLine("debug - Toggle debug mode.");
+        }
+
+        private void SetDebugMode()
+        {
+            Program.DEBUG = !Program.DEBUG;
         }
 
         private void GenerateCode()
@@ -152,14 +161,14 @@ namespace ASteambot
                 }
             }
 
-            Console.WriteLine("Sent {0} to {1} connected servers ! ", test, count);
+            Program.WriteLine("Sent "+test+" to "+ count + " connected servers ! ");
         }
 
         public void WithDrawn(string[] args)
         {
             if (args.Count() < 2)
             {
-                Console.WriteLine("Usage : withdrawn [STEAM ID]");
+                Program.WriteLine("Usage : withdrawn [STEAM ID]");
                 return;
             }
 
@@ -180,7 +189,7 @@ namespace ASteambot
         {
             if (args.Count() < 2)
             {
-                Console.WriteLine("Usage : createto [STEAM ID]");
+                Program.WriteLine("Usage : createto [STEAM ID]");
                 return;
             }
 
@@ -189,7 +198,7 @@ namespace ASteambot
 
         public void ShutdownBots()
         {
-            Console.WriteLine("Shutting down steambots...");
+            Program.WriteLine("Shutting down steambots...");
             Stop();
         }
 
@@ -197,7 +206,7 @@ namespace ASteambot
         {
             if (args.Count() < 2)
             {
-                Console.WriteLine("Usage : rename [NEW NAME]");
+                Program.WriteLine("Usage : rename [NEW NAME]");
                 return;
             }
 
@@ -205,8 +214,8 @@ namespace ASteambot
             for (int i = 1; i < args.Count(); i++)
                 newname += args[i] + " ";
             newname.Substring(0, newname.Length - 2);
-            
-            Console.WriteLine("Renaming steambot...");
+
+            Program.WriteLine("Renaming steambot...");
 
             SelectedBot.ChangeName(newname);
         }
@@ -215,7 +224,7 @@ namespace ASteambot
         {
             if(args.Count() < 2)
             {
-                Console.WriteLine("Usage : select [STEAMBOT INDEX]");
+                Program.WriteLine("Usage : select [STEAMBOT INDEX]");
                 return;
             }
 
@@ -223,20 +232,20 @@ namespace ASteambot
 
             if(index < 0 || index > bots.Count)
             {
-                Console.WriteLine("No steambot found with index '{0}'", index);
+                Program.WriteLine("No steambot found with index '"+ index + "'");
                 return;
             }
 
             if (bots.Count-1 < index || index > bots.Count - 1)
             {
-                Console.WriteLine("Index {0} is invalid !", index);
+                Program.WriteLine("Index "+ index + " is invalid !");
             }
             else
             {
                 SelectedBot = bots[index];
                 Console.Title = "Akarr's steambot - [" + SelectedBot.Name + "]";
 
-                Console.WriteLine("[{0}] selected as current bot. Command will be executed from this steambot.", SelectedBot.Name);
+                Program.WriteLine("["+ SelectedBot.Name + "] selected as current bot. Command will be executed from this steambot.");
             }
         }
 

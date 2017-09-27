@@ -124,12 +124,13 @@ namespace ASteambot
                 }
                 catch (WebException e)
                 {
-                    Console.WriteLine("URI: {0} >> {1}", (e.Response != null && e.Response.ResponseUri != null ? e.Response.ResponseUri.ToString() : "unknown"), e.ToString());
+                    string data = String.Format("URI: {0} >> {1}", (e.Response != null && e.Response.ResponseUri != null ? e.Response.ResponseUri.ToString() : "unknown"), e.ToString());
+                    Program.WriteLine(data);
                     System.Threading.Thread.Sleep(45000);//Steam is down, retry in 45 seconds.
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Unhandled exception occurred in bot: " + e);
+                    Program.WriteLine("Unhandled exception occurred in bot: " + e);
                 }
             }
         }
@@ -140,9 +141,9 @@ namespace ASteambot
             {
                 Exception ex = runWorkerCompletedEventArgs.Error;
 
-                Console.WriteLine("Unhandled exceptions in bot {0} callback thread: {1} {2}", Name, Environment.NewLine, ex);
+                Program.WriteLine("Unhandled exceptions in bot "+ Name + " callback thread: "+ Environment.NewLine + ex);
 
-                Console.WriteLine("This bot died. Stopping it..");
+                Program.WriteLine("This bot died. Stopping it..");
 
                 Disconnect();
             }
@@ -156,7 +157,7 @@ namespace ASteambot
             SteamFriends = steamClient.GetHandler<SteamFriends>();
 
             SubscribeToEvents();
-
+            
             steamClient.Connect();
         }
 
@@ -171,8 +172,8 @@ namespace ASteambot
             else
             {
                 Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.WriteLine("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
-                Console.WriteLine("Bot will stop now.");
+                Program.WriteLine("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
+                Program.WriteLine("Bot will stop now.");
                 stop = true;
 
                 Disconnect();
@@ -313,7 +314,7 @@ namespace ASteambot
             string offerId;
             to.Send(out offerId, "Test trade offer");
 
-            Console.WriteLine("Offer ID : {0}", offerId);
+            Program.WriteLine("Offer ID : "+ offerId);
 
             AcceptMobileTradeConfirmation(offerId);
         }
@@ -330,7 +331,7 @@ namespace ASteambot
                     {
                         long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
                         if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
-                            Console.WriteLine("Confirmed {0}. (Confirmation ID #{1})", confirmation.Description, confirmation.ID);
+                            Program.WriteLine("Confirmed "+ confirmation.Description + ". (Confirmation ID #"+ confirmation.ID + ")");
                     }
                 }
             }
@@ -419,9 +420,9 @@ namespace ASteambot
 
             string items = strsteamID+"/";
             
-            items += AddInventoryItems(SteamTrade.SteamMarket.Games.TF2, steamID) + "/";
-            items += AddInventoryItems(SteamTrade.SteamMarket.Games.CSGO, steamID) + "/";
-            items += AddInventoryItems(SteamTrade.SteamMarket.Games.Dota2, steamID);
+            items += AddInventoryItems(Games.TF2, steamID) + "/";
+            items += AddInventoryItems(Games.CSGO, steamID) + "/";
+            items += AddInventoryItems(Games.Dota2, steamID);
 
             string final = (int)NetworkCode.ASteambotCode.ScanInventory + "|" + items;
 
@@ -932,7 +933,16 @@ namespace ASteambot
 
         private void Smp_ItemUpdated(object sender, EventArgItemScanned e)
         {
-            SteamTrade.SteamMarket.Item i = e.GetItem;
+            Item i = e.GetItem;
+
+            if (ASteambot.Program.DEBUG)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Program.WriteLine("Item " + i.Name + " updated (Price : " + i.Value + ") !");
+                Program.WriteLine("Item count : " + smp.Items.Count);
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+
             string[] rows = new string[1];
             rows[0] = "tradeOfferID";
 
@@ -1084,7 +1094,7 @@ namespace ASteambot
 
                             if (ides == null)
                             {
-                                Console.WriteLine("Warning, items description for item {0} not found !", item.AssetId);
+                                Program.WriteLine("Warning, items description for item "+ item.AssetId + " not found !");
                             }
                             else
                             {
@@ -1121,7 +1131,7 @@ namespace ASteambot
             
             if (ides == null)
             {
-                Console.WriteLine("Warning, items description for item {0} not found !", assetID);
+                Program.WriteLine("Warning, items description for item "+ assetID + " not found !");
             }
             else
             {
@@ -1197,11 +1207,11 @@ namespace ASteambot
                 catch (Exception e)
                 {
                     //Sucks
-                    Console.WriteLine("Error while polling trade offers: ");
+                    Program.WriteLine("Error while polling trade offers: ");
                     if(e.Message.Contains("403"))
-                        Console.WriteLine("Access not allowed. Check your steam API key.");
+                        Program.WriteLine("Access not allowed. Check your steam API key.");
                     else
-                        Console.WriteLine(e.Message);
+                        Program.WriteLine(e.Message);
                 }
 
                 Thread.Sleep(30 * 1000);//tradeOfferPollingIntervalSecs * 1000);

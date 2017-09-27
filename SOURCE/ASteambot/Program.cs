@@ -18,7 +18,9 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.0.1 - F*CK YEAH!";
+        private static string BUILD_VERSION = "2.1.0 - PUBLIC";
+
+        public static bool DEBUG;
 
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
@@ -72,10 +74,28 @@ namespace ASteambot
             }
         }
 
+        public static void WriteLine(string data)
+        {
+            int currentTopCursor = Console.CursorTop;
+            int currentLeftCursor = Console.CursorLeft;
+
+            Console.MoveBufferArea(0, currentTopCursor, Console.WindowWidth, 1, 0, currentTopCursor + 1);
+
+            Console.CursorTop = currentTopCursor;
+
+            Console.CursorLeft = 0;
+
+            Console.WriteLine(data);
+
+            Console.CursorTop = currentTopCursor + 1;
+            Console.CursorLeft = currentLeftCursor;
+        }
+
         private static void AttemptLoginBot(string username, string password, string api)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Username : {0}  Password : X  API : {1}", username, api.Substring(api.Length - 10) + "**********");
+            string data = String.Format("Username : {0}  Password : X  API : {1}", username, api.Substring(api.Length - 10) + "**********");
+            WriteLine(data);
             Console.ForegroundColor = ConsoleColor.White;
             logininfo = new LoginInfo(username, password, api);
             steambotManager.Auth(logininfo);

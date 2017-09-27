@@ -45,6 +45,7 @@ namespace SteamTrade.SteamMarket
             if (ItemUpdated != null)
                 ItemUpdated(this, e);
         }
+
         protected virtual void OnScanFinished(EventArgs e)
         {
             if (ScanFinished != null)
@@ -66,7 +67,7 @@ namespace SteamTrade.SteamMarket
 
         public Item GetItem(string itemMarketHashName)
         {
-            return Items.Find(x => x.Name == itemMarketHashName);
+            return Items.FirstOrDefault(x => x.Name == itemMarketHashName);
         }
 
         public void ScanMarket()
@@ -84,16 +85,27 @@ namespace SteamTrade.SteamMarket
             else
                 nextGame++;
 
+            //Cancel thread on quit ---> HAVE TO BE DONE !!
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
 
+                int pause = 30000;
                 string url = "http://steamcommunity.com/market/search/render/?query=&start=" + itemScanned + "&count=100&appid=" + (int)game;
                 while (!ProcessJSON(Fetch(url, "GET")))
                 {
                     itemScanned += 100;
                     url = "http://steamcommunity.com/market/search/render/?query=&start=" + itemScanned + "&count=100&appid=" + (int)game;
-                    Thread.Sleep(10000);
+
+                    if (itemScanned % 2500 == 0)
+                    {
+                        Thread.Sleep(pause);
+                        pause += pause;
+                    }
+                    else
+                    {
+                        Thread.Sleep(10000);
+                    }
                 }
                 itemScanned = 0;
                 OnScanFinished(new EventArgs());
@@ -147,7 +159,7 @@ namespace SteamTrade.SteamMarket
                                 catch(Exception e)
                                 {
                                     Console.ForegroundColor = ConsoleColor.Red;
-                                    Console.WriteLine("Couldn't parse price : " + prices.LastChild.InnerText + " item : "+ itemName);
+                                    WriteLine("Couldn't parse price : " + prices.LastChild.InnerText + " item : "+ itemName);
                                     Console.ForegroundColor = ConsoleColor.White;
                                     price = 0.0;
                                 }
@@ -166,12 +178,28 @@ namespace SteamTrade.SteamMarket
                             case "Team Fortress 2": appID = 440; break;
                             case "Counter-Strike: Global Offensive": appID = 730; break;
                             case "PLAYERUNKNOWN'S BATTLEGROUNDS": appID = 999; break;
-                            case "Dota 2": appID = 999; break;
+                            case "Dota 2": appID = 570; break;
                             default: appID = 0; break;
                         }
                         item = new Item(itemName, DateTime.Now.ToString("dd/MM/yyyy") + "@" + DateTime.Now.ToString("HH:mm"), 1, price, appID);
-                        Items.Add(item);
-                        OnItemUpdate(new EventArgItemScanned(item));
+
+                        Item inList = GetItem(item.Name);
+                        if(inList != null)
+                        {
+                            if (inList.Value != item.Value)
+                            {
+                                Items.Remove(inList);
+                                Items.Add(item);
+
+                                OnItemUpdate(new EventArgItemScanned(item));
+                            }
+                        }
+                        else
+                        {
+                            Items.Add(item);
+
+                            OnItemUpdate(new EventArgItemScanned(item));
+                        }
                     }
                 }
             }
@@ -216,7 +244,7 @@ namespace SteamTrade.SteamMarket
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
             request.Referer = string.IsNullOrEmpty(referer) ? "http://steamcommunity.com/trade/1" : referer;
-            request.Timeout = 3000;
+            request.Timeout = 15000;
             request.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.Revalidate);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
 
@@ -266,6 +294,23 @@ namespace SteamTrade.SteamMarket
                 }
                 throw;
             }
+        }
+
+        public void WriteLine(string data)
+        {
+            int currentTopCursor = Console.CursorTop;
+            int currentLeftCursor = Console.CursorLeft;
+
+            Console.MoveBufferArea(0, currentTopCursor, Console.WindowWidth, 1, 0, currentTopCursor + 1);
+
+            Console.CursorTop = currentTopCursor;
+
+            Console.CursorLeft = 0;
+
+            Console.WriteLine(data);
+
+            Console.CursorTop = currentTopCursor + 1;
+            Console.CursorLeft = currentLeftCursor;
         }
     }
 }

@@ -30,7 +30,7 @@ namespace ASteambot.Networking
                 QUERY("CREATE DATABASE IF NOT EXISTS `" + database + "` DEFAULT CHARSET=utf8");
 
                 connection.Close();
-                connectionString += ";Database = " + database;
+                connectionString += "Database = " + database;
 
                 Console.WriteLine("Connection to database successfully done !");
                 IsConnected = true;
