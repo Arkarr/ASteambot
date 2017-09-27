@@ -403,7 +403,7 @@ namespace ASteambot
         {
             if(smp == null)
             {
-                smp = new SteamMarket();
+                smp = new SteamMarket(config.SteamMarket_CSGO, config.SteamMarket_TF2, config.SteamMarket_DOTA2);
                 smp.ItemUpdated += Smp_ItemUpdated;
 
                 smp.ScanMarket();
@@ -904,7 +904,7 @@ namespace ASteambot
 
             SmartConsole.WriteLine("User Authenticated!");
 
-            smp = new SteamMarket();
+            smp = new SteamMarket(config.SteamMarket_CSGO, config.SteamMarket_TF2, config.SteamMarket_DOTA2);
             smp.ItemUpdated += Smp_ItemUpdated;
 
             string[] row = new string[5];
@@ -913,7 +913,7 @@ namespace ASteambot
             row[2] = "value";
             row[3] = "quantity";
             row[4] = "gameid";
-            List<Dictionary<string, string>> items = DB.SELECT(row, "smitems", "WHERE gameID=" + (int)SteamTrade.SteamMarket.Games.CSGO);
+            List<Dictionary<string, string>> items = DB.SELECT(row, "smitems");
             if (items != null)
             {
                 foreach (Dictionary<string, string> item in items)
@@ -937,8 +937,8 @@ namespace ASteambot
             if (Program.DEBUG)
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                SmartConsole.WriteLine("Item " + i.Name + " updated (Price : " + i.Value + ") !");
-                SmartConsole.WriteLine("Item count : " + smp.Items.Count);
+                Console.WriteLine("Item " + i.Name + " updated (Price : " + i.Value + ") !");
+                Console.WriteLine("Item count : " + smp.Items.Count);
                 Console.ForegroundColor = ConsoleColor.White;
             }
 
@@ -995,6 +995,11 @@ namespace ASteambot
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && tradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
                 string msg = (int)NetworkCode.ASteambotCode.TradeOfferSuccess + "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
+                SendTradeOfferConfirmationToGameServers(msg);
+            }
+            else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && tradeOfferValue.ContainsKey(offer.TradeOfferId))
+            {
+                string msg = (int)NetworkCode.ASteambotCode.TradeOfferDecline + "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
                 SendTradeOfferConfirmationToGameServers(msg);
             }
         }
@@ -1134,43 +1139,9 @@ namespace ASteambot
             }
             else
             {
-                int timeout = 1000*20;
-                SteamTrade.SteamMarket.Item itemInfo = smp.Items.Find(i => i.Name == ides.market_hash_name);
+                Item itemInfo = smp.Items.Find(i => i.Name == ides.market_hash_name);
                 if (itemInfo != null)
-                {
-                    /*if (itemInfo.AppID == (int)Games.CSGO)
-                    {
-                        string[] datetime = itemInfo.LastUpdated.Split('@');
-                        DateTime date = DateTime.Parse(datetime[0] + " " + datetime[1]);
-                        TimeSpan duration = DateTime.Today - date;
-                        /*if (duration.Hours >= 3)
-                        {
-                            SteamTrade.SteamMarket.Item item = smp.ScanCSGOItem(ides.market_hash_name);
-                            while (item == null)
-                            {
-                                Thread.Sleep(timeout);
-                                item = smp.ScanCSGOItem(ides.market_hash_name);
-                                //timeout += timeout + 1000;
-                            }
-                            return item.Value;
-                        }
-                    }*/
                     cent = itemInfo.Value;
-                }
-                /*else
-                {
-                    if (appid == (int)Games.CSGO)
-                    {
-                        SteamTrade.SteamMarket.Item item = smp.ScanCSGOItem(ides.market_hash_name);
-                        while (item == null)
-                        {
-                            Thread.Sleep(timeout);
-                            item = smp.ScanCSGOItem(ides.market_hash_name);
-                            //timeout += timeout + 1000;
-                        }
-                        return item.Value;
-                    }
-                }*/
             }
 
             return cent;

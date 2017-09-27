@@ -23,9 +23,7 @@ namespace SteamTrade
         public int ResponseCode { get; private set; }
 
         private TradeTFBACKUP tf;
-        private string baseURL;
         private string tradetfapikey;
-        private int CSGO_ItemScanned = 0;
 
         public event EventHandler<EventArgItemScanned> ItemUpdated;
         
@@ -49,8 +47,6 @@ namespace SteamTrade
             cooldown.AutoReset = true;
             cooldown.Enabled = true;
             cooldown.Start();
-
-            baseURL = "http://steamcommunity.com/market/priceoverview/?currency=1&appid=730&market_hash_name=";
         }
 
         private void Tf_ScanFinished(object sender, EventArgs e)

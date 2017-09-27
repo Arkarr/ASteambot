@@ -128,7 +128,7 @@ namespace ASteambot.Networking
                     new AsyncCallback(ReadCallback), state);
                 }
             }
-            catch (SocketException ex) { }
+            catch (SocketException ex) { SmartConsole.WriteLine(ex.Message); }
             catch (Exception e)
             {
                 SmartConsole.WriteLine("Error while processing a message sent by the game server!");

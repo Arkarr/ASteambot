@@ -23,7 +23,10 @@ namespace ASteambot
         public string DatabasePort { get; private set; }
         public string TCPServerPort { get; private set; }
         public string TCPPassword { get; private set; }
-        
+        public bool SteamMarket_CSGO { get; private set; }
+        public bool SteamMarket_TF2 { get; private set; }
+        public bool SteamMarket_DOTA2 { get; private set; }
+
 
         public Config() { }
 
@@ -67,6 +70,12 @@ namespace ASteambot
                     TCPServerPort = line.Replace("TCP_ServerPort=", "");
                 else if (line.StartsWith("TCP_Password="))
                     TCPPassword = line.Replace("TCP_Password=", "");
+                else if (line.StartsWith("SteamMarket_CSGO="))
+                    SteamMarket_CSGO = line.Replace("SteamMarket_CSGO=", "").Equals("YES");
+                else if (line.StartsWith("SteamMarket_TF2="))
+                    SteamMarket_TF2 = line.Replace("SteamMarket_TF2=", "").Equals("YES");
+                else if (line.StartsWith("SteamMarket_DOTA2="))
+                    SteamMarket_DOTA2 = line.Replace("SteamMarket_DOTA2=", "").Equals("YES");
             }
 
             file.Close();

@@ -22,6 +22,7 @@ namespace SteamTrade.SteamMarket
 {
     public enum Games
     {
+        None = -1,
         TF2 = 440,
         CSGO = 730,
         Dota2 = 570,
@@ -37,6 +38,9 @@ namespace SteamTrade.SteamMarket
 
         private int itemScanned = 0;
         private int nextGame = 0;
+        private bool scanCSGO = false;
+        private bool scanTF2 = false;
+        private bool scanDota2 = false;
 
         public event EventHandler<EventArgItemScanned> ItemUpdated;
         public event EventHandler<EventArgs> ScanFinished;
@@ -52,11 +56,16 @@ namespace SteamTrade.SteamMarket
             if (ScanFinished != null)
                 ScanFinished(this, e);
 
+            itemScanned = 0;
             ScanMarket();
         }
 
-        public SteamMarket()
+        public SteamMarket(bool scanCSGO, bool scanTF2, bool scanDota2)
         {
+            this.scanCSGO = scanCSGO;
+            this.scanTF2 = scanTF2;
+            this.scanDota2 = scanDota2;
+
             Items = new List<Item>();
         }
 
@@ -73,44 +82,55 @@ namespace SteamTrade.SteamMarket
 
         public void ScanMarket()
         {
-            Games game = Games.CSGO;
-            if (nextGame == 1)
-                game = Games.TF2;
-            if (nextGame == 2)
-                game = Games.Dota2;
-            /*if (nextGame == 3)
-                game = Games.PUBG;*/
+            if (!scanCSGO && !scanTF2 && !scanDota2)
+                return;
 
+            Games game = Games.None;
+
+            if (nextGame == 0 && scanCSGO)
+                game = Games.CSGO;
+            else
+                nextGame++;
+
+            if (nextGame == 1 && scanTF2)
+                game = Games.TF2;
+            else
+                nextGame++;
+
+            if (nextGame == 2 && scanDota2)
+                game = Games.Dota2;
+            else
+                nextGame++;
+            
             if (nextGame == 2)
                 nextGame = 0;
             else
                 nextGame++;
-
-            //Cancel thread on quit ---> HAVE TO BE DONE !!
+            
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-
-                int pause = 30000;
+                
                 string url = "http://steamcommunity.com/market/search/render/?query=&start=" + itemScanned + "&count=100&appid=" + (int)game;
-                while (!ProcessJSON(Fetch(url, "GET")))
+
+                while (ProcessJSON(Handle429(url)))
                 {
                     itemScanned += 100;
                     url = "http://steamcommunity.com/market/search/render/?query=&start=" + itemScanned + "&count=100&appid=" + (int)game;
-
-                    if (itemScanned % 2500 == 0)
-                    {
-                        Thread.Sleep(pause);
-                        pause += pause;
-                    }
-                    else
-                    {
-                        Thread.Sleep(10000);
-                    }
+                    Handle429(url);
                 }
-                itemScanned = 0;
-                OnScanFinished(new EventArgs());
             }).Start();
+        }
+        
+        private string Handle429(string url)
+        {
+            string json = Fetch(url, "GET");
+            while (json.Contains("Too Many Requests"))
+            {
+                Thread.Sleep(TimeSpan.FromMinutes(5));
+                json = Fetch(url, "GET");
+            }
+            return json;
         }
 
         private bool ProcessJSON(string json)
@@ -161,6 +181,7 @@ namespace SteamTrade.SteamMarket
                                 {
                                     Console.ForegroundColor = ConsoleColor.Red;
                                     SmartConsole.WriteLine("Couldn't parse price : " + prices.LastChild.InnerText + " item : "+ itemName);
+                                    SmartConsole.WriteLine(e);
                                     Console.ForegroundColor = ConsoleColor.White;
                                     price = 0.0;
                                 }
@@ -206,12 +227,17 @@ namespace SteamTrade.SteamMarket
             }
 
             if (itemScanned >= nbrItems)
-                return true;
-            else
+            {
+                OnScanFinished(new EventArgs());
                 return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
-        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
+        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = true)
         {
             using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError))
             {
@@ -219,6 +245,9 @@ namespace SteamTrade.SteamMarket
                 {
                     if (responseStream == null)
                         return "";
+                    
+                    if (response.StatusCode != HttpStatusCode.OK)
+                        return response.StatusDescription;
 
                     using (StreamReader reader = new StreamReader(responseStream))
                     {

@@ -112,7 +112,7 @@ namespace ASteambot
                     SetDebugMode();
                     break;
                 default:
-                    SmartConsole.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
+                    Console.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
                 break;
             }
 
