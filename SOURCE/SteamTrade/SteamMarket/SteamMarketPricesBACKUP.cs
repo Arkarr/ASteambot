@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using ArkarrUtilitys;
+using Newtonsoft.Json.Linq;
 using SteamTrade.SteamMarket;
 using System;
 using System.Collections.Generic;
@@ -82,7 +83,7 @@ namespace SteamTrade
             {
                 case "k": value = item.Value.Middle * TradeTFBACKUP.KeyValue; break;
                 case "r": value = (TradeTFBACKUP.KeyValue / tf.MannCoKey.Value.Middle) * item.Value.Middle * 100; break;
-                case "b": Console.ForegroundColor = ConsoleColor.Red; Console.WriteLine("Move yo @ss Arkarr, you got something to fix."); Console.ForegroundColor = ConsoleColor.White; break;
+                case "b": Console.ForegroundColor = ConsoleColor.Red; SmartConsole.WriteLine("Move yo @ss Arkarr, you got something to fix."); Console.ForegroundColor = ConsoleColor.White; break;
             }
 
             Item newItem = Items.Find(x => x.Name == item.Name);
@@ -128,9 +129,9 @@ namespace SteamTrade
             }
             catch (Exception e)
             {
-                Console.WriteLine(response);
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
+                SmartConsole.WriteLine(response);
+                SmartConsole.WriteLine(e.Message);
+                SmartConsole.WriteLine(e.StackTrace);
                 return null;
             }
 

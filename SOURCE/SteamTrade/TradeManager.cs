@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade.Exceptions;
+using ArkarrUtilitys;
 
 namespace SteamTrade
 {
@@ -368,12 +369,12 @@ namespace SteamTrade
             // print using the console directly. To enable this for debugging put this:
             // #define DEBUG_TRADE_MANAGER
             // at the first line of this file.
-            System.Console.WriteLine (output);
+            SmartConsole.WriteLine (output);
         }
 
         private static void DebugError(string output)
         {
-            System.Console.WriteLine(output);
+            SmartConsole.WriteLine(output);
         }
     }
 }

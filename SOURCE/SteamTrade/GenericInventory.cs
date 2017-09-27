@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SteamKit2;
 using SteamTrade.TradeWebAPI;
+using ArkarrUtilitys;
 
 namespace SteamTrade
 {
@@ -91,18 +92,18 @@ namespace SteamTrade
 
             public void debug_app_data()
             {
-                Console.WriteLine("\n\"" + name + "\"");
+                SmartConsole.WriteLine("\n\"" + name + "\"");
                 if (app_data == null)
                 {
-                    Console.WriteLine("Doesn't have app_data");
+                    SmartConsole.WriteLine("Doesn't have app_data");
                     return;
                 }
 
                 foreach (var value in app_data)
                 {
-                    Console.WriteLine(string.Format("{0} = {1}", value.Key, value.Value));
+                    SmartConsole.WriteLine(string.Format("{0} = {1}", value.Key, value.Value));
                 }
-                Console.WriteLine("");
+                SmartConsole.WriteLine("");
             }
         }
 
@@ -206,7 +207,7 @@ namespace SteamTrade
             }//end try
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                SmartConsole.WriteLine(e.Message);
                 _errors.Add("Exception: " + e.Message);
             }
             isLoaded = true;

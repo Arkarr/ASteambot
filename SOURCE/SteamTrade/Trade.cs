@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade.Exceptions;
 using SteamTrade.TradeWebAPI;
+using ArkarrUtilitys;
 
 namespace SteamTrade
 {
@@ -548,7 +549,7 @@ namespace SteamTrade
                 {
                     // TODO: log to SteamBot.Log but... see issue #394
                     // realistically we should not throw anymore
-                    Console.WriteLine(ex);
+                    SmartConsole.WriteLine(ex);
                 }
 
                 if(i != WEB_REQUEST_MAX_RETRIES)
@@ -748,7 +749,7 @@ namespace SteamTrade
                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
                     if(schemaItem == null)
                     {
-                        Console.WriteLine("User added an unknown item to the trade.");
+                        SmartConsole.WriteLine("User added an unknown item to the trade.");
                     }
 
                     OnUserAddItem(schemaItem, item);
@@ -761,7 +762,7 @@ namespace SteamTrade
                         AppId = asset.appid,
                         ContextId = asset.contextid
                     };
-                    //Console.WriteLine("User added a non TF2 item to the trade.");
+                    //SmartConsole.WriteLine("User added a non TF2 item to the trade.");
                     OnUserAddItem(null, item);
                 }
             }
@@ -770,7 +771,7 @@ namespace SteamTrade
                 var schemaItem = GetItemFromPrivateBp(asset);
                 if(schemaItem == null)
                 {
-                    Console.WriteLine("User added an unknown item to the trade.");
+                    SmartConsole.WriteLine("User added an unknown item to the trade.");
                 }
 
                 OnUserAddItem(schemaItem, null);

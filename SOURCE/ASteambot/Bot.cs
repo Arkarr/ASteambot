@@ -13,8 +13,9 @@ using ASteambot.SteamGroups;
 using ASteambot.Networking;
 using System.Net;
 using System.Net.Sockets;
-using static ASteambot.SteamProfile;
 using SteamTrade.SteamMarket;
+using ArkarrUtilitys;
+using static ASteambot.SteamProfile;
 
 namespace ASteambot
 {
@@ -125,12 +126,12 @@ namespace ASteambot
                 catch (WebException e)
                 {
                     string data = String.Format("URI: {0} >> {1}", (e.Response != null && e.Response.ResponseUri != null ? e.Response.ResponseUri.ToString() : "unknown"), e.ToString());
-                    Program.WriteLine(data);
-                    System.Threading.Thread.Sleep(45000);//Steam is down, retry in 45 seconds.
+                    SmartConsole.WriteLine(data);
+                    Thread.Sleep(45000);//Steam is down, retry in 45 seconds.
                 }
                 catch (Exception e)
                 {
-                    Program.WriteLine("Unhandled exception occurred in bot: " + e);
+                    SmartConsole.WriteLine("Unhandled exception occurred in bot: " + e);
                 }
             }
         }
@@ -141,9 +142,9 @@ namespace ASteambot
             {
                 Exception ex = runWorkerCompletedEventArgs.Error;
 
-                Program.WriteLine("Unhandled exceptions in bot "+ Name + " callback thread: "+ Environment.NewLine + ex);
+                SmartConsole.WriteLine("Unhandled exceptions in bot "+ Name + " callback thread: "+ Environment.NewLine + ex);
 
-                Program.WriteLine("This bot died. Stopping it..");
+                SmartConsole.WriteLine("This bot died. Stopping it..");
 
                 Disconnect();
             }
@@ -172,8 +173,8 @@ namespace ASteambot
             else
             {
                 Console.ForegroundColor = ConsoleColor.DarkRed;
-                Program.WriteLine("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
-                Program.WriteLine("Bot will stop now.");
+                SmartConsole.WriteLine("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
+                SmartConsole.WriteLine("Bot will stop now.");
                 stop = true;
 
                 Disconnect();
@@ -240,11 +241,11 @@ namespace ASteambot
                 }
             }
 
-            Console.WriteLine("Recorded steam friends : {0} / {1}", SteamFriends.GetFriendCount(), getMaxFriends());
+            SmartConsole.WriteLine("Recorded steam friends : {0} / {1}", SteamFriends.GetFriendCount(), getMaxFriends());
 
             if (SteamFriends.GetFriendCount() == getMaxFriends())
             {
-                Console.WriteLine("Too much friends. Removing one.");
+                SmartConsole.WriteLine("Too much friends. Removing one.");
 
                 Random rnd = new Random();
                 int unluckyDude = 0;
@@ -314,7 +315,7 @@ namespace ASteambot
             string offerId;
             to.Send(out offerId, "Test trade offer");
 
-            Program.WriteLine("Offer ID : "+ offerId);
+            SmartConsole.WriteLine("Offer ID : "+ offerId);
 
             AcceptMobileTradeConfirmation(offerId);
         }
@@ -331,13 +332,13 @@ namespace ASteambot
                     {
                         long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
                         if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
-                            Program.WriteLine("Confirmed "+ confirmation.Description + ". (Confirmation ID #"+ confirmation.ID + ")");
+                            SmartConsole.WriteLine("Confirmed "+ confirmation.Description + ". (Confirmation ID #"+ confirmation.ID + ")");
                     }
                 }
             }
             catch (SteamGuardAccount.WGTokenInvalidException)
             {
-                Console.WriteLine("Invalid session when trying to fetch trade confirmations.");
+                SmartConsole.WriteLine("Invalid session when trying to fetch trade confirmations.");
             }
         }
 
@@ -345,12 +346,12 @@ namespace ASteambot
         {
             if (steamGuardAccount == null)
             {
-                Console.WriteLine("Unable to unlink mobile authenticator, is it really linked ?");
+                SmartConsole.WriteLine("Unable to unlink mobile authenticator, is it really linked ?");
             }
             else
             {
                 steamGuardAccount.DeactivateAuthenticator();
-                Console.WriteLine("Done !");
+                SmartConsole.WriteLine("Done !");
             }
         }
 
@@ -395,7 +396,7 @@ namespace ASteambot
 
         public void GenerateCode()
         {
-            Console.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
+            SmartConsole.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
         }
 
         public void ScanInventory(int serverID, string strsteamID, bool send=true)
@@ -477,10 +478,10 @@ namespace ASteambot
 
                 if (OtherGenericInventory.errors.Count > 0)
                 {
-                    Console.WriteLine("Error while inventory scan :");
+                    SmartConsole.WriteLine("Error while inventory scan :");
                     foreach (string error in OtherGenericInventory.errors)
                     {
-                        Console.WriteLine(error);
+                        SmartConsole.WriteLine(error);
                     }
                     items = "ERROR";
                 }
@@ -506,7 +507,7 @@ namespace ASteambot
                                 {
                                     items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + value + ",";
                                 }
-                                Console.WriteLine(description.market_hash_name + " | " + value);
+                                SmartConsole.WriteLine(description.market_hash_name + " | " + value);
                             }
                         }
                     }
@@ -529,24 +530,24 @@ namespace ASteambot
             SteamID steamID = new SteamID(steamid);
             if (!friends.Contains(steamID))
             {
-                Console.WriteLine("This user is not in your friend list, unable to send trade offer.");
+                SmartConsole.WriteLine("This user is not in your friend list, unable to send trade offer.");
                 return;
             }
 
             SteamProfileInfos sp = SteamProfile.LoadSteamProfile(steamWeb, steamID);
 
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("You are about to send ALL the bot's items to");
+            SmartConsole.Write("You are about to send ALL the bot's items to");
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.Write(" {0} ({1}) ", sp.Name, steamid);
+            SmartConsole.Write(" {0} ({1}) ", sp.Name, steamid);
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("via a trade offer, do you confirm ? (YES / NO)");
-            Console.WriteLine();
+            SmartConsole.Write("via a trade offer, do you confirm ? (YES / NO)");
+            SmartConsole.WriteLine();
             string answer = Console.ReadLine();
 
             if (!answer.Equals("YES"))
             {
-                Console.WriteLine("Operation cancelled. Nothing traded.");
+                SmartConsole.WriteLine("Operation cancelled. Nothing traded.");
                 return;
             }
             
@@ -581,7 +582,7 @@ namespace ASteambot
             if (to.Items.GetMyItems().Count <= 0)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Couldn't send trade offer, inventory is empty.");
+                SmartConsole.WriteLine("Couldn't send trade offer, inventory is empty.");
                 Console.ForegroundColor = ConsoleColor.White;
             }
             else
@@ -591,7 +592,7 @@ namespace ASteambot
 
                 AcceptMobileTradeConfirmation(offerId);
 
-                Console.WriteLine("Whitdrawn offer sent !");
+                SmartConsole.WriteLine("Whitdrawn offer sent !");
             }
         }
 
@@ -603,7 +604,7 @@ namespace ASteambot
             {
                 while (loginResult == LoginResult.NeedEmail)
                 {
-                    Console.WriteLine("Enter Steam Guard code from email :");
+                    SmartConsole.WriteLine("Enter Steam Guard code from email :");
                     var emailCode = Console.ReadLine();
                     login.EmailCode = emailCode;
                     loginResult = login.DoLogin();
@@ -611,14 +612,14 @@ namespace ASteambot
             }
             if (loginResult == SteamAuth.LoginResult.LoginOkay)
             {
-                Console.WriteLine("Linking mobile authenticator...");
+                SmartConsole.WriteLine("Linking mobile authenticator...");
                 var authLinker = new SteamAuth.AuthenticatorLinker(login.Session);
                 var addAuthResult = authLinker.AddAuthenticator();
                 if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
                 {
                     while (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
                     {
-                        Console.WriteLine("Enter phone number with country code, e.g. +1XXXXXXXXXXX :");
+                        SmartConsole.WriteLine("Enter phone number with country code, e.g. +1XXXXXXXXXXX :");
                         var phoneNumber = Console.ReadLine();
                         authLinker.PhoneNumber = phoneNumber;
                         addAuthResult = authLinker.AddAuthenticator();
@@ -632,37 +633,37 @@ namespace ASteambot
                         var authFile = String.Format("{0}.auth", loginInfo.Username);
                         Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "authfiles"));
                         File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(steamGuardAccount));
-                        Console.WriteLine("Enter SMS code :");
+                        SmartConsole.WriteLine("Enter SMS code :");
                         var smsCode = Console.ReadLine();
                         var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
                         if (authResult == SteamAuth.AuthenticatorLinker.FinalizeResult.Success)
                         {
-                            Console.WriteLine("Linked authenticator.");
+                            SmartConsole.WriteLine("Linked authenticator.");
                         }
                         else
                         {
-                            Console.WriteLine("Error linking authenticator: " + authResult);
+                            SmartConsole.WriteLine("Error linking authenticator: " + authResult);
                         }
                     }
                     catch (IOException)
                     {
-                        Console.WriteLine("Failed to save auth file. Aborting authentication.");
+                        SmartConsole.WriteLine("Failed to save auth file. Aborting authentication.");
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Error adding authenticator: " + addAuthResult);
+                    SmartConsole.WriteLine("Error adding authenticator: " + addAuthResult);
                 }
             }
             else
             {
                 if (loginResult == SteamAuth.LoginResult.Need2FA)
                 {
-                    Console.WriteLine("Mobile authenticator has already been linked!");
+                    SmartConsole.WriteLine("Mobile authenticator has already been linked!");
                 }
                 else
                 {
-                    Console.WriteLine("Error performing mobile login: " + loginResult);
+                    SmartConsole.WriteLine("Error performing mobile login: " + loginResult);
                 }
             }
         }
@@ -681,10 +682,8 @@ namespace ASteambot
             CancelTradeOfferPollingThread();
 
             botThread.CancelAsync();
-            while (botThread.IsBusy)
-                Thread.Yield();
 
-            Console.WriteLine("stopping bot {0} ...", Name);
+            SmartConsole.WriteLine("stopping bot {0} ...", Name);
         }
 
         //Events :
@@ -700,7 +699,7 @@ namespace ASteambot
         
         private void WebAPIUserNonce(SteamUser.WebAPIUserNonceCallback callback)
         {
-            Console.WriteLine("Received new WebAPIUserNonce.");
+            SmartConsole.WriteLine("Received new WebAPIUserNonce.");
 
             if (callback.Result == EResult.OK)
             {
@@ -709,7 +708,7 @@ namespace ASteambot
             }
             else
             {
-                Console.WriteLine("WebAPIUserNonce Error: " + callback.Result);
+                SmartConsole.WriteLine("WebAPIUserNonce Error: " + callback.Result);
             }
         }
 
@@ -718,7 +717,7 @@ namespace ASteambot
             myUniqueId = callback.UniqueID.ToString();
             UserWebLogOn();
 
-            Console.WriteLine("Steam Bot Logged In Completely!");
+            SmartConsole.WriteLine("Steam Bot Logged In Completely!");
 
             LoggedIn = true;
 
@@ -733,7 +732,7 @@ namespace ASteambot
                 renaming = false;
                 Name = SteamFriends.GetPersonaName();
                 Console.Title = "Akarr's steambot - [" + Name + "]";
-                Console.WriteLine("Steambot renamed sucessfully !");
+                SmartConsole.WriteLine("Steambot renamed sucessfully !");
             }
         }
 
@@ -745,7 +744,7 @@ namespace ASteambot
         
         private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
         {
-            Console.WriteLine("Updating sentryfile...");
+            SmartConsole.WriteLine("Updating sentryfile...");
             int fileSize;
             byte[] sentryHash;
             using (var fs = File.Open(loginInfo.SentryFileName, FileMode.OpenOrCreate, FileAccess.ReadWrite))
@@ -777,14 +776,14 @@ namespace ASteambot
                 SentryFileHash = sentryHash,
             });
 
-            Console.WriteLine("Done!");
+            SmartConsole.WriteLine("Done!");
         }
 
         public void OnSteambotDisconnected(SteamClient.DisconnectedCallback callback)
         {
             if (stop == false)
             {
-                Console.WriteLine("Disconnected from Steam, reconnecting in 5 seconds...");
+                SmartConsole.WriteLine("Disconnected from Steam, reconnecting in 5 seconds...");
                 Thread.Sleep(TimeSpan.FromSeconds(5));
 
                 steamClient.Connect();
@@ -795,8 +794,8 @@ namespace ASteambot
         {
             if (callback.Result == EResult.OK)
             {
-                Console.WriteLine("Connected to steam network !");
-                Console.WriteLine("Logging in...");
+                SmartConsole.WriteLine("Connected to steam network !");
+                SmartConsole.WriteLine("Logging in...");
 
                 byte[] test = null;
                 if (File.Exists(loginInfo.SentryFileName))
@@ -816,11 +815,11 @@ namespace ASteambot
             }
             else
             {
-                Console.WriteLine("Unable to connect to steamnetwork !");
+                SmartConsole.WriteLine("Unable to connect to steamnetwork !");
                 stop = true;
             }
 
-            Console.WriteLine("Return code : {0}", callback.Result);
+            SmartConsole.WriteLine("Return code : {0}", callback.Result);
         }
 
         public void OnSteambotLoggedIn(SteamUser.LoggedOnCallback callback)
@@ -829,7 +828,7 @@ namespace ASteambot
             {
                 case EResult.OK:
                     myUserNonce = callback.WebAPIUserNonce;
-                    Console.WriteLine("Logged in to steam !");
+                    SmartConsole.WriteLine("Logged in to steam !");
                     break;
 
                 case EResult.AccountLoginDeniedNeedTwoFactor:
@@ -840,18 +839,18 @@ namespace ASteambot
 
                     if (isSteamGuard || is2FA)
                     {
-                        Console.WriteLine("This account is SteamGuard protected!");
+                        SmartConsole.WriteLine("This account is SteamGuard protected!");
 
                         if (is2FA)
                         {
-                            Console.WriteLine("Generating 2 factor auth code...");
+                            SmartConsole.WriteLine("Generating 2 factor auth code...");
 
                             string authCode = GetMobileAuthCode();
                             loginInfo.SetTwoFactorCode(authCode);
                         }
                         else
                         {
-                            Console.WriteLine("Please enter the auth code sent to the email at {0}: ", callback.EmailDomain);
+                            SmartConsole.WriteLine("Please enter the auth code sent to the email at {0}: ", callback.EmailDomain);
                             loginInfo.SetAuthCode(Console.ReadLine());
                         }
                     }
@@ -860,20 +859,20 @@ namespace ASteambot
                 case EResult.TwoFactorCodeMismatch:
                 case EResult.TwoFactorActivationCodeMismatch:
                     stop = true;
-                    Console.WriteLine("The 2 factor auth code is wrong ! Reloading...");
+                    SmartConsole.WriteLine("The 2 factor auth code is wrong ! Reloading...");
                     loginInfo.SetTwoFactorCode(GetMobileAuthCode());
 
                     break;
 
                 case EResult.InvalidLoginAuthCode:
                     stop = true;
-                    Console.WriteLine("The auth code (email) is wrong ! Asking it again : ");
+                    SmartConsole.WriteLine("The auth code (email) is wrong ! Asking it again : ");
                     loginInfo.SetAuthCode(Console.ReadLine());
                 break;
 
                 default:
                     loginInfo.LoginFailCount++;
-                    Console.WriteLine("Loggin failed ({0} times) ! {1}", loginInfo.LoginFailCount, callback.Result);
+                    SmartConsole.WriteLine("Loggin failed ({0} times) ! {1}", loginInfo.LoginFailCount, callback.Result);
 
                     if (loginInfo.LoginFailCount == 3)
                         stop = true;
@@ -885,7 +884,7 @@ namespace ASteambot
         {
             stop = true;
             LoggedIn = false;
-            Console.WriteLine("Logged off of Steam: {0}", callback.Result);
+            SmartConsole.WriteLine("Logged off of Steam: {0}", callback.Result);
         }
         #endregion
 
@@ -898,12 +897,12 @@ namespace ASteambot
 
                 if (!WebLoggedIn)
                 {
-                    Console.WriteLine("Authentication failed, retrying in 2s...");
+                    SmartConsole.WriteLine("Authentication failed, retrying in 2s...");
                     Thread.Sleep(2000);
                 }
             } while (!WebLoggedIn);
 
-            Console.WriteLine("User Authenticated!");
+            SmartConsole.WriteLine("User Authenticated!");
 
             smp = new SteamMarket();
             smp.ItemUpdated += Smp_ItemUpdated;
@@ -935,11 +934,11 @@ namespace ASteambot
         {
             Item i = e.GetItem;
 
-            if (ASteambot.Program.DEBUG)
+            if (Program.DEBUG)
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Program.WriteLine("Item " + i.Name + " updated (Price : " + i.Value + ") !");
-                Program.WriteLine("Item count : " + smp.Items.Count);
+                SmartConsole.WriteLine("Item " + i.Name + " updated (Price : " + i.Value + ") !");
+                SmartConsole.WriteLine("Item count : " + smp.Items.Count);
                 Console.ForegroundColor = ConsoleColor.White;
             }
 
@@ -980,7 +979,7 @@ namespace ASteambot
 
         private void OwnTradeOfferUpdated(TradeOffer offer)
         {
-            //Console.WriteLine("Sent offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
+            //SmartConsole.WriteLine("Sent offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation)
             {
@@ -1002,7 +1001,7 @@ namespace ASteambot
 
         private void PartenarTradeOfferUpdated(TradeOffer offer)
         {
-            //Console.WriteLine("Received offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
+            //SmartConsole.WriteLine("Received offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
             {
@@ -1094,7 +1093,7 @@ namespace ASteambot
 
                             if (ides == null)
                             {
-                                Program.WriteLine("Warning, items description for item "+ item.AssetId + " not found !");
+                                SmartConsole.WriteLine("Warning, items description for item "+ item.AssetId + " not found !");
                             }
                             else
                             {
@@ -1131,7 +1130,7 @@ namespace ASteambot
             
             if (ides == null)
             {
-                Program.WriteLine("Warning, items description for item "+ assetID + " not found !");
+                SmartConsole.WriteLine("Warning, items description for item "+ assetID + " not found !");
             }
             else
             {
@@ -1207,11 +1206,11 @@ namespace ASteambot
                 catch (Exception e)
                 {
                     //Sucks
-                    Program.WriteLine("Error while polling trade offers: ");
+                    SmartConsole.WriteLine("Error while polling trade offers: ");
                     if(e.Message.Contains("403"))
-                        Program.WriteLine("Access not allowed. Check your steam API key.");
+                        SmartConsole.WriteLine("Access not allowed. Check your steam API key.");
                     else
-                        Program.WriteLine(e.Message);
+                        SmartConsole.WriteLine(e.Message);
                 }
 
                 Thread.Sleep(30 * 1000);//tradeOfferPollingIntervalSecs * 1000);

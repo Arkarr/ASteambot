@@ -3,6 +3,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Net.Sockets;
+using ArkarrUtilitys;
 
 namespace ASteambot.Networking
 {
@@ -46,7 +47,6 @@ namespace ASteambot.Networking
         public void Stop()
         {
             Running = false;
-            allDone.Set();
         }
 
         public AsynchronousSocketListener(int port, string password)
@@ -67,20 +67,24 @@ namespace ASteambot.Networking
                 listener.Bind(localEndPoint);
                 listener.Listen(100);
 
-                while (true)
+                Running = true;
+                while (Running)
                 {
                     allDone.Reset();
-                    Running = true;
 
                     listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
                     
-                    allDone.WaitOne();
+                    while (!allDone.WaitOne(3000) && Running)
+                    {
+                        if (!Running)
+                            break;
+                    }
                 }
 
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                SmartConsole.WriteLine(e.ToString());
             }
         }
 
@@ -127,10 +131,10 @@ namespace ASteambot.Networking
             catch (SocketException ex) { }
             catch (Exception e)
             {
-                Console.WriteLine("Error while processing a message sent by the game server!");
-                Console.WriteLine(e.Message);
-                Console.WriteLine("Command : " + content);
-                Console.WriteLine(e.StackTrace);
+                SmartConsole.WriteLine("Error while processing a message sent by the game server!");
+                SmartConsole.WriteLine(e.Message);
+                SmartConsole.WriteLine("Command : " + content);
+                SmartConsole.WriteLine(e.StackTrace);
 
                 handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                 new AsyncCallback(ReadCallback), state);

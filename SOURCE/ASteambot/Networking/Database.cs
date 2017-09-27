@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using ArkarrUtilitys;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,25 +20,25 @@ namespace ASteambot.Networking
 
             try
             {
-                Console.WriteLine("Connecting to database server...");
+                SmartConsole.WriteLine("Connecting to database server...");
 
                 MySqlConnection connection = new MySqlConnection(connectionString);
                 connection.Open();
-                Console.WriteLine("Success.");
+                SmartConsole.WriteLine("Success.");
 
-                Console.WriteLine("Attempt to connect to database...");
+                SmartConsole.WriteLine("Attempt to connect to database...");
 
                 QUERY("CREATE DATABASE IF NOT EXISTS `" + database + "` DEFAULT CHARSET=utf8");
 
                 connection.Close();
                 connectionString += "Database = " + database;
 
-                Console.WriteLine("Connection to database successfully done !");
+                SmartConsole.WriteLine("Connection to database successfully done !");
                 IsConnected = true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Connection failed ! (" + ex + ")");
+                SmartConsole.WriteLine("Connection failed ! (" + ex + ")");
                 IsConnected = false;
             }
         }
@@ -125,13 +126,13 @@ namespace ASteambot.Networking
             {
                 if (rows.Length > values.Length)
                 {
-                    Console.WriteLine("There is more cols then values to add !");
+                    SmartConsole.WriteLine("There is more cols then values to add !");
                     return false;
                 }
 
                 if (rows.Length < values.Length)
                 {
-                    Console.WriteLine("There is more values then cols to add !");
+                    SmartConsole.WriteLine("There is more values then cols to add !");
                     return false;
                 }
             }

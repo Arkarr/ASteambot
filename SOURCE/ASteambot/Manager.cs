@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using SteamKit2;
 using ASteambot.Networking;
 using System.Threading;
+using ArkarrUtilitys;
 
 namespace ASteambot
 {
@@ -64,7 +65,6 @@ namespace ASteambot
             Running = false;
 
             socketServer.Stop();
-            threadSocket.Abort();
 
             foreach (Bot bot in bots)
                 bot.Disconnect();
@@ -112,7 +112,7 @@ namespace ASteambot
                     SetDebugMode();
                     break;
                 default:
-                    Program.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
+                    SmartConsole.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
                 break;
             }
 
@@ -121,20 +121,20 @@ namespace ASteambot
 
         public void ShowHelp()
         {
-            Console.WriteLine("quit - Shutdown all the bots, the TCP server and everything else.");
-            Console.WriteLine("list - List all the bots and there index.");
-            Console.WriteLine("select - select a bot to execute commands on.");
-            Console.WriteLine("rename - rename a bot through steam.");
-            //Console.WriteLine("createto - create a thread offer.");
-            Console.WriteLine("help - show this text.");
-            Console.WriteLine("linkauthenticator - link a mobile authenticator through the bot, required to do trade offers correctly.");
-            Console.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
-            Console.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
-            Console.WriteLine("testtcp - Send a small packet to all TCP clients.");
-            Console.WriteLine("getsteamcode - Generate an authenticator code.");
-            Console.WriteLine("debug - Toggle debug mode.");
+            SmartConsole.WriteLine("quit - Shutdown all the bots, the TCP server and everything else.");
+            SmartConsole.WriteLine("list - List all the bots and there index.");
+            SmartConsole.WriteLine("select - select a bot to execute commands on.");
+            SmartConsole.WriteLine("rename - rename a bot through steam.");
+            //SmartConsole.WriteLine("createto - create a thread offer.");
+            SmartConsole.WriteLine("help - show this text.");
+            SmartConsole.WriteLine("linkauthenticator - link a mobile authenticator through the bot, required to do trade offers correctly.");
+            SmartConsole.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
+            SmartConsole.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
+            SmartConsole.WriteLine("testtcp - Send a small packet to all TCP clients.");
+            SmartConsole.WriteLine("getsteamcode - Generate an authenticator code.");
+            SmartConsole.WriteLine("debug - Toggle debug mode.");
         }
-
+        
         private void SetDebugMode()
         {
             Program.DEBUG = !Program.DEBUG;
@@ -161,14 +161,14 @@ namespace ASteambot
                 }
             }
 
-            Program.WriteLine("Sent "+test+" to "+ count + " connected servers ! ");
+            SmartConsole.WriteLine("Sent "+test+" to "+ count + " connected servers ! ");
         }
 
         public void WithDrawn(string[] args)
         {
             if (args.Count() < 2)
             {
-                Program.WriteLine("Usage : withdrawn [STEAM ID]");
+                SmartConsole.WriteLine("Usage : withdrawn [STEAM ID]");
                 return;
             }
 
@@ -189,7 +189,7 @@ namespace ASteambot
         {
             if (args.Count() < 2)
             {
-                Program.WriteLine("Usage : createto [STEAM ID]");
+                SmartConsole.WriteLine("Usage : createto [STEAM ID]");
                 return;
             }
 
@@ -198,7 +198,7 @@ namespace ASteambot
 
         public void ShutdownBots()
         {
-            Program.WriteLine("Shutting down steambots...");
+            SmartConsole.WriteLine("Shutting down steambots...");
             Stop();
         }
 
@@ -206,7 +206,7 @@ namespace ASteambot
         {
             if (args.Count() < 2)
             {
-                Program.WriteLine("Usage : rename [NEW NAME]");
+                SmartConsole.WriteLine("Usage : rename [NEW NAME]");
                 return;
             }
 
@@ -215,7 +215,7 @@ namespace ASteambot
                 newname += args[i] + " ";
             newname.Substring(0, newname.Length - 2);
 
-            Program.WriteLine("Renaming steambot...");
+            SmartConsole.WriteLine("Renaming steambot...");
 
             SelectedBot.ChangeName(newname);
         }
@@ -224,7 +224,7 @@ namespace ASteambot
         {
             if(args.Count() < 2)
             {
-                Program.WriteLine("Usage : select [STEAMBOT INDEX]");
+                SmartConsole.WriteLine("Usage : select [STEAMBOT INDEX]");
                 return;
             }
 
@@ -232,29 +232,29 @@ namespace ASteambot
 
             if(index < 0 || index > bots.Count)
             {
-                Program.WriteLine("No steambot found with index '"+ index + "'");
+                SmartConsole.WriteLine("No steambot found with index '"+ index + "'");
                 return;
             }
 
             if (bots.Count-1 < index || index > bots.Count - 1)
             {
-                Program.WriteLine("Index "+ index + " is invalid !");
+                SmartConsole.WriteLine("Index "+ index + " is invalid !");
             }
             else
             {
                 SelectedBot = bots[index];
                 Console.Title = "Akarr's steambot - [" + SelectedBot.Name + "]";
 
-                Program.WriteLine("["+ SelectedBot.Name + "] selected as current bot. Command will be executed from this steambot.");
+                SmartConsole.WriteLine("["+ SelectedBot.Name + "] selected as current bot. Command will be executed from this steambot.");
             }
         }
 
         public void ListBots(string[] args)
         {
-            Console.WriteLine("----- Number of bots {0} -----", bots.Count);
+            SmartConsole.WriteLine("----- Number of bots {0} -----", bots.Count);
             for(int i = 0; i < bots.Count; i++)
-                Console.WriteLine("\t[{0}] Name : [{1}] | Logged in : [{2}]", i+1, bots[i].Name, bots[i].LoggedIn);
-            Console.WriteLine("----------------------------", bots.Count);
+                SmartConsole.WriteLine("\t[{0}] Name : [{1}] | Logged in : [{2}]", i+1, bots[i].Name, bots[i].LoggedIn);
+            SmartConsole.WriteLine("----------------------------", bots.Count);
         }
         
 

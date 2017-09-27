@@ -1,4 +1,5 @@
-﻿using CsQuery;
+﻿using ArkarrUtilitys;
+using CsQuery;
 using CsQuery.Implementation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -159,7 +160,7 @@ namespace SteamTrade.SteamMarket
                                 catch(Exception e)
                                 {
                                     Console.ForegroundColor = ConsoleColor.Red;
-                                    WriteLine("Couldn't parse price : " + prices.LastChild.InnerText + " item : "+ itemName);
+                                    SmartConsole.WriteLine("Couldn't parse price : " + prices.LastChild.InnerText + " item : "+ itemName);
                                     Console.ForegroundColor = ConsoleColor.White;
                                     price = 0.0;
                                 }
@@ -294,23 +295,6 @@ namespace SteamTrade.SteamMarket
                 }
                 throw;
             }
-        }
-
-        public void WriteLine(string data)
-        {
-            int currentTopCursor = Console.CursorTop;
-            int currentLeftCursor = Console.CursorLeft;
-
-            Console.MoveBufferArea(0, currentTopCursor, Console.WindowWidth, 1, 0, currentTopCursor + 1);
-
-            Console.CursorTop = currentTopCursor;
-
-            Console.CursorLeft = 0;
-
-            Console.WriteLine(data);
-
-            Console.CursorTop = currentTopCursor + 1;
-            Console.CursorLeft = currentLeftCursor;
         }
     }
 }

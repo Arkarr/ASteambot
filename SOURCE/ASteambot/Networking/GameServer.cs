@@ -1,4 +1,5 @@
-﻿using ASteambot.Networking;
+﻿using ArkarrUtilitys;
+using ASteambot.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,7 +47,7 @@ namespace ASteambot
         {
             string finaldata = tcppasswd + "" + data;
 
-            Console.WriteLine(finaldata);
+            SmartConsole.WriteLine(finaldata);
             byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
             socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
         }
@@ -58,12 +59,12 @@ namespace ASteambot
                 Socket handler = (Socket)ar.AsyncState;
                 
                 int bytesSent = handler.EndSend(ar);
-                Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+                SmartConsole.WriteLine("Sent {0} bytes to client.", bytesSent);
 
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                SmartConsole.WriteLine(e.ToString());
             }
         }
     }
