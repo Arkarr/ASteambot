@@ -29,6 +29,7 @@ namespace ASteambot
         public HandleSteamChat steamchatHandler { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
         public GenericInventory OtherGenericInventory { get; private set; }
+        public SteamMarket ArkarrSteamMarket { get; private set; }
 
         private bool stop;
         private Database DB;
@@ -39,7 +40,6 @@ namespace ASteambot
         private LoginInfo loginInfo;
         private SteamUser steamUser;
         private List<SteamID> friends;
-        private SteamMarket smp;
         private SteamClient steamClient;
         private CallbackManager manager;
         private Thread tradeOfferThread;
@@ -401,13 +401,8 @@ namespace ASteambot
 
         public void ScanInventory(int serverID, string strsteamID, bool send=true)
         {
-            if(smp == null)
-            {
-                smp = new SteamMarket(config.SteamMarket_CSGO, config.SteamMarket_TF2, config.SteamMarket_DOTA2);
-                smp.ItemUpdated += Smp_ItemUpdated;
-
-                smp.ScanMarket();
-            }
+            if(ArkarrSteamMarket == null)
+                ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey);
 
             GameServer gameServer = getServerByID(serverID);
 
@@ -491,24 +486,14 @@ namespace ASteambot
                     while (!allItemsFound)
                     {
                         allItemsFound = true;
+                        
                         foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
                         {
                             GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
-                            double value = GetItemValue(description, item.assetid, item.appid);
-                            if (value == -1.0)
-                            {
-                                Thread.Sleep(3000);
-                                allItemsFound = false;
-                                break;
-                            }
-                            else
-                            {
-                                if (description.tradable && value != 0.0)
-                                {
-                                    items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + value + ",";
-                                }
-                                SmartConsole.WriteLine(description.market_hash_name + " | " + value);
-                            }
+                            
+                            Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                            if (i != null && description.tradable && i.Value != 0)
+                                items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + i.Value + ",";
                         }
                     }
 
@@ -904,10 +889,11 @@ namespace ASteambot
 
             SmartConsole.WriteLine("User Authenticated!");
 
-            smp = new SteamMarket(config.SteamMarket_CSGO, config.SteamMarket_TF2, config.SteamMarket_DOTA2);
-            smp.ItemUpdated += Smp_ItemUpdated;
+            ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey);
 
-            string[] row = new string[5];
+            //smp.ItemUpdated += Smp_ItemUpdated;
+
+            /*string[] row = new string[5];
             row[0] = "itemName";
             row[1] = "last_updated";
             row[2] = "value";
@@ -921,13 +907,12 @@ namespace ASteambot
                     smp.AddItem(item["itemName"], item["last_updated"], Int32.Parse(item["quantity"]), Double.Parse(item["value"]), Int32.Parse(item["gameid"]));
                 }
             }
+            smp.ScanMarket();*/
 
             tradeOfferManager = new TradeOfferManager(loginInfo.API, steamWeb);
             SubscribeTradeOffer(tradeOfferManager);
             
             SpawnTradeOfferPollingThread();
-
-            smp.ScanMarket();
         }
 
         private void Smp_ItemUpdated(object sender, EventArgItemScanned e)
@@ -938,7 +923,6 @@ namespace ASteambot
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("Item " + i.Name + " updated (Price : " + i.Value + ") !");
-                Console.WriteLine("Item count : " + smp.Items.Count);
                 Console.ForegroundColor = ConsoleColor.White;
             }
 
@@ -1066,63 +1050,43 @@ namespace ASteambot
         private double GetTradeOfferValue(SteamID partenar, List<TradeOffer.TradeStatusUser.TradeAsset> list)
         {
             double cent = 0;
+            
+            Thread.CurrentThread.IsBackground = true;
+            long[] contextID = new long[1];
+            contextID[0] = 2;
 
-            new Thread(() =>
+            List<long> appIDs = new List<long>();
+            GenericInventory gi = new GenericInventory(steamWeb);
+
+            foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
             {
-                Thread.CurrentThread.IsBackground = true;
-                long[] contextID = new long[1];
-                contextID[0] = 2;
-
-                List<long> appIDs = new List<long>();
-                GenericInventory gi = new GenericInventory(steamWeb);
-
+                if (!appIDs.Contains(item.AppId))
+                    appIDs.Add(item.AppId);
+            }
+                
+            cent = 0;
+            foreach (int appID in appIDs)
+            {
+                gi.load(appID, contextID, partenar);
                 foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
                 {
-                    if (!appIDs.Contains(item.AppId))
-                        appIDs.Add(item.AppId);
-                }
+                    if (item.AppId != appID)
+                        continue;
 
-                bool itemNotFound = false;
-                while (itemNotFound)
-                {
-                    cent = 0;
-                    foreach (int appID in appIDs)
+                    GenericInventory.ItemDescription ides = gi.getDescription((ulong)item.AssetId);
+
+                    if (ides == null)
                     {
-                        gi.load(appID, contextID, partenar);
-                        foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
-                        {
-                            if (item.AppId != appID)
-                                continue;
-
-                            GenericInventory.ItemDescription ides = gi.getDescription((ulong)item.AssetId);
-
-                            if (ides == null)
-                            {
-                                SmartConsole.WriteLine("Warning, items description for item "+ item.AssetId + " not found !");
-                            }
-                            else
-                            {
-                                SteamTrade.SteamMarket.Item itemInfo = smp.Items.Find(i => i.Name == ides.market_hash_name);
-                                if (itemInfo != null)
-                                {
-                                    if(itemInfo.AppID == (int)SteamTrade.SteamMarket.Games.CSGO)
-                                    {
-                                        string[] datetime = itemInfo.LastUpdated.Split('@');
-                                        DateTime date = DateTime.Parse(datetime[0]);
-                                        DateTime time = DateTime.Parse(datetime[1]);
-                                    }
-                                    cent += (itemInfo.Value / 100.0);
-                                }
-                                else
-                                {
-                                    itemNotFound = true;
-                                }
-                            }
-                        }
+                        SmartConsole.WriteLine("Warning, items description for item "+ item.AssetId + " not found !");
+                    }
+                    else
+                    {
+                        Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name);
+                        if (itemInfo != null)
+                            cent += (itemInfo.Value / 100.0);
                     }
                 }
-
-            }).Start();
+            }
 
             return cent;
         }
@@ -1139,7 +1103,7 @@ namespace ASteambot
             }
             else
             {
-                Item itemInfo = smp.Items.Find(i => i.Name == ides.market_hash_name);
+                Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name);
                 if (itemInfo != null)
                     cent = itemInfo.Value;
             }

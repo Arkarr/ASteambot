@@ -7,6 +7,7 @@ using SteamKit2;
 using ASteambot.Networking;
 using System.Threading;
 using ArkarrUtilitys;
+using System.Web;
 
 namespace ASteambot
 {
@@ -111,6 +112,9 @@ namespace ASteambot
                 case "debug":
                     SetDebugMode();
                     break;
+                case "testapi":
+                    TestAPI(args);
+                    break;
                 default:
                     Console.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
                 break;
@@ -134,7 +138,42 @@ namespace ASteambot
             SmartConsole.WriteLine("getsteamcode - Generate an authenticator code.");
             SmartConsole.WriteLine("debug - Toggle debug mode.");
         }
-        
+
+        private void TestAPI(string[] args)
+        {
+            if(args.Count() < 2)
+            {
+                SmartConsole.WriteLine("Usage : testapi [ITEM NAME]");
+                return;
+            }
+
+            //int index = Int32.Parse(args[1]);
+
+            //SteamTrade.SteamMarket.Item item = SelectedBot.ArkarrSteamMarket.GetItemByID(index);
+            string itemName = "";
+            for (int i = 1; i < args.Length; i++)
+            {
+                if (args.Length - 1 != i)
+                    itemName += args[i] + " ";
+                else
+                    itemName += args[i];
+            }
+            
+            itemName = HttpUtility.HtmlEncode(itemName);
+            SteamTrade.SteamMarket.Item item = SelectedBot.ArkarrSteamMarket.GetItemByName(itemName);
+
+            if (item != null)
+            {
+                SmartConsole.WriteLine("Item name :" + item.Name);
+                SmartConsole.WriteLine("Item price :" + item.Value);
+                SmartConsole.WriteLine("Item app id :" + item.AppID);
+            }
+            else
+            {
+                SmartConsole.WriteLine("Item with name {0} not found", args[1]);
+            }
+        }
+
         private void SetDebugMode()
         {
             Program.DEBUG = !Program.DEBUG;

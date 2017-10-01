@@ -19,7 +19,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.1.2 - PUBLIC";
+        private static string BUILD_VERSION = "2.2.2 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -103,8 +103,8 @@ namespace ASteambot
             Console.WriteLine("");
             Console.WriteLine("");
             Console.WriteLine("\tArkarr's message for you :");
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\tIf you plain to use any module that is related to steam market, please let the bot run at least +-60 minutes to let him download the steam market's prices. (CSGO > TF2 > DOTA2 > CSGO ...)");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\tIf you plain to abuse of my API, I'll remove it. You will punish EVERYBODY. Don't be greedy.");
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("");
             Console.WriteLine("");

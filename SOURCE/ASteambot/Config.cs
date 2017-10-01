@@ -26,6 +26,7 @@ namespace ASteambot
         public bool SteamMarket_CSGO { get; private set; }
         public bool SteamMarket_TF2 { get; private set; }
         public bool SteamMarket_DOTA2 { get; private set; }
+        public string ArkarrAPIKey { get; private set; }
 
 
         public Config() { }
@@ -76,6 +77,8 @@ namespace ASteambot
                     SteamMarket_TF2 = line.Replace("SteamMarket_TF2=", "").Equals("YES");
                 else if (line.StartsWith("SteamMarket_DOTA2="))
                     SteamMarket_DOTA2 = line.Replace("SteamMarket_DOTA2=", "").Equals("YES");
+                else if (line.StartsWith("ArkarrAPIKey="))
+                    ArkarrAPIKey = line.Replace("ArkarrAPIKey=", "");
             }
 
             file.Close();

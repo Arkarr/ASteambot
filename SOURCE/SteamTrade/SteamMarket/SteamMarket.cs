@@ -31,215 +31,79 @@ namespace SteamTrade.SteamMarket
 
     public class SteamMarket
     {
-        public List<Item> Items { get; private set; }
-        public string ErrorMessage { get; private set; }
-        public int ResponseCode { get; private set; }
-        public string LastUpdate { get; private set; }
+        private string APIkey;
+        private List<Item> steamMarketItems;
 
-        private int itemScanned = 0;
-        private int nextGame = 0;
-        private bool scanCSGO = false;
-        private bool scanTF2 = false;
-        private bool scanDota2 = false;
-
-        public event EventHandler<EventArgItemScanned> ItemUpdated;
-        public event EventHandler<EventArgs> ScanFinished;
-
-        protected virtual void OnItemUpdate(EventArgItemScanned e)
+        public SteamMarket(string apikey)
         {
-            if (ItemUpdated != null)
-                ItemUpdated(this, e);
+            APIkey = apikey;
+            steamMarketItems = new List<Item>();
+
+            RefreshMarket();
+
+            System.Timers.Timer timerMarketRefresher = new System.Timers.Timer();
+            timerMarketRefresher.Elapsed += new ElapsedEventHandler(TMR_ResfreshMarkets);
+            timerMarketRefresher.Interval = TimeSpan.FromMinutes(10).TotalMilliseconds;
+            timerMarketRefresher.Enabled = true;
         }
 
-        protected virtual void OnScanFinished(EventArgs e)
+        private void TMR_ResfreshMarkets(object source, ElapsedEventArgs e)
         {
-            if (ScanFinished != null)
-                ScanFinished(this, e);
-
-            itemScanned = 0;
-            ScanMarket();
+            RefreshMarket();
         }
 
-        public SteamMarket(bool scanCSGO, bool scanTF2, bool scanDota2)
+        private void RefreshMarket()
         {
-            this.scanCSGO = scanCSGO;
-            this.scanTF2 = scanTF2;
-            this.scanDota2 = scanDota2;
-
-            Items = new List<Item>();
-        }
-
-        public void AddItem(string name, string lastupdate, int quantity, double value, int appid)
-        {
-            Item item = new Item(name, lastupdate, quantity, value, appid);
-            Items.Add(item);
-        }
-
-        public Item GetItem(string itemMarketHashName)
-        {
-            return Items.FirstOrDefault(x => x.Name == itemMarketHashName);
-        }
-
-        public void ScanMarket()
-        {
-            if (!scanCSGO && !scanTF2 && !scanDota2)
-                return;
-
-            Games game = Games.None;
-
-            if (nextGame == 0 && scanCSGO)
-                game = Games.CSGO;
-            else
-                nextGame++;
-
-            if (nextGame == 1 && scanTF2)
-                game = Games.TF2;
-            else
-                nextGame++;
-
-            if (nextGame == 2 && scanDota2)
-                game = Games.Dota2;
-            else
-                nextGame++;
-            
-            if (nextGame == 2)
-                nextGame = 0;
-            else
-                nextGame++;
-            
             new Thread(() =>
             {
-                Thread.CurrentThread.IsBackground = true;
-                
-                string url = "http://steamcommunity.com/market/search/render/?query=&start=" + itemScanned + "&count=100&appid=" + (int)game;
-
-                while (ProcessJSON(Handle429(url)))
-                {
-                    itemScanned += 100;
-                    url = "http://steamcommunity.com/market/search/render/?query=&start=" + itemScanned + "&count=100&appid=" + (int)game;
-                    Handle429(url);
-                }
+                ScanMarket(Games.TF2);
+                ScanMarket(Games.CSGO);
+                ScanMarket(Games.Dota2);
             }).Start();
         }
+
+        private void ScanMarket(Games game)
+        {
+            string json = Fetch("http://raspberrypimaison.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game, "GET", null, true, "", false, 60000);
+            List<Item> items = JsonConvert.DeserializeObject<RootObject>(json).items;
+
+            List<Item> itemToAdd = new List<Item>();
+            foreach(Item item in items)
+            {
+                Item i = steamMarketItems.FirstOrDefault(x => x.Name == item.Name);
+                if (i != null && i.Value != item.Value)
+                {
+                    i.Value = item.Value;
+                    i.LastUpdated = item.LastUpdated;
+                }
+                else if(i == null)
+                {
+                    itemToAdd.Add(item);
+                }
+            }
+
+            if (itemToAdd.Count != 0)
+            {
+                steamMarketItems.AddRange(itemToAdd);
+                itemToAdd.Clear();
+            } 
+        }
+
+        public class RootObject
+        {
+            public List<Item> items { get; set; }
+        }
         
-        private string Handle429(string url)
+        public Item GetItemByName(string itemName)
         {
-            string json = Fetch(url, "GET");
-            while (json.Contains("Too Many Requests"))
-            {
-                Thread.Sleep(TimeSpan.FromMinutes(5));
-                json = Fetch(url, "GET");
-            }
-            return json;
+            Item i = steamMarketItems.Find(x => x.Name == itemName);
+
+            return i;
         }
 
-        private bool ProcessJSON(string json)
+        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = true, int timeout = 15000)
         {
-            int nbrItems = 0;
-            JObject array = JObject.Parse(json);
-
-            foreach (var x in array)
-            {
-                string name = x.Key;
-                JToken value = x.Value;
-
-                if (name.Equals("success"))
-                {
-                    bool success = value.ToObject<Boolean>();
-                    if (!success)
-                        return false;
-                }
-                else if (name.Equals("total_count"))
-                {
-                    nbrItems = value.ToObject<Int32>();
-                }
-                else if (name.Equals("results_html"))
-                {
-                    string html = value.ToObject<String>();
-
-                    html = html.Replace("\t", "").Replace("\r", "").Replace("\n", "").Replace("\"", "");
-                    CQ finalHtml = html;
-
-                    CQ rows = finalHtml[".market_listing_row"];
-                    foreach (DomElement row in rows)
-                    {
-                        double price = 0.0;
-                        string itemName = null;
-                        string game = null;
-
-                        foreach (DomElement element in row.ChildElements)
-                        {
-                            if (element.HasClass("market_listing_price_listings_block"))
-                            {
-                                IDomObject test = element.LastChild;
-                                IDomObject prices = test.FirstChild;
-                                try
-                                {
-                                    price = Double.Parse(prices.LastChild.InnerText.Replace("$", "").Replace(" USD", "").Replace(",", ""));
-                                }
-                                catch(Exception e)
-                                {
-                                    Console.ForegroundColor = ConsoleColor.Red;
-                                    SmartConsole.WriteLine("Couldn't parse price : " + prices.LastChild.InnerText + " item : "+ itemName);
-                                    SmartConsole.WriteLine(e);
-                                    Console.ForegroundColor = ConsoleColor.White;
-                                    price = 0.0;
-                                }
-                            }
-                            else if (element.HasClass("market_listing_item_name_block"))
-                            {
-                                itemName = HttpUtility.HtmlDecode(element.FirstChild.InnerText);
-                                game = element.LastChild.InnerText;
-                            }
-                        }
-
-                        int appID;
-                        Item item;
-                        switch (game)
-                        {
-                            case "Team Fortress 2": appID = 440; break;
-                            case "Counter-Strike: Global Offensive": appID = 730; break;
-                            case "PLAYERUNKNOWN'S BATTLEGROUNDS": appID = 999; break;
-                            case "Dota 2": appID = 570; break;
-                            default: appID = 0; break;
-                        }
-                        item = new Item(itemName, DateTime.Now.ToString("dd/MM/yyyy") + "@" + DateTime.Now.ToString("HH:mm"), 1, price, appID);
-
-                        Item inList = GetItem(item.Name);
-                        if(inList != null)
-                        {
-                            if (inList.Value != item.Value)
-                            {
-                                Items.Remove(inList);
-                                Items.Add(item);
-
-                                OnItemUpdate(new EventArgItemScanned(item));
-                            }
-                        }
-                        else
-                        {
-                            Items.Add(item);
-
-                            OnItemUpdate(new EventArgItemScanned(item));
-                        }
-                    }
-                }
-            }
-
-            if (itemScanned >= nbrItems)
-            {
-                OnScanFinished(new EventArgs());
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-
-        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = true)
-        {
-            using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError))
+            using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError, timeout))
             {
                 using (Stream responseStream = response.GetResponseStream())
                 {
@@ -257,7 +121,7 @@ namespace SteamTrade.SteamMarket
             }
         }
 
-        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
+        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false, int timeout = 15000)
         {
 
             bool isGetMethod = (method.ToLower() == "get");
@@ -274,7 +138,7 @@ namespace SteamTrade.SteamMarket
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
             request.Referer = string.IsNullOrEmpty(referer) ? "http://steamcommunity.com/trade/1" : referer;
-            request.Timeout = 15000;
+            request.Timeout = timeout;
             request.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.Revalidate);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
 
