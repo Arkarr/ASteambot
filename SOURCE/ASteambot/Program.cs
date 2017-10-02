@@ -19,7 +19,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.2.2 - PUBLIC";
+        private static string BUILD_VERSION = "2.3.0 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -103,8 +103,12 @@ namespace ASteambot
             Console.WriteLine("");
             Console.WriteLine("");
             Console.WriteLine("\tArkarr's message for you :");
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("\tIf you plain to abuse of my API, I'll remove it. You will punish EVERYBODY. Don't be greedy.");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write("\tI... I think it's the first working, stable, version of ASteambot");
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.Write(" <3 ");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("! Thanks so much for debuging it with me !");
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("");
             Console.WriteLine("");

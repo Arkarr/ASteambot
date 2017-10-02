@@ -43,7 +43,7 @@ namespace SteamTrade.SteamMarket
 
             System.Timers.Timer timerMarketRefresher = new System.Timers.Timer();
             timerMarketRefresher.Elapsed += new ElapsedEventHandler(TMR_ResfreshMarkets);
-            timerMarketRefresher.Interval = TimeSpan.FromMinutes(10).TotalMilliseconds;
+            timerMarketRefresher.Interval = TimeSpan.FromHours(1).TotalMilliseconds;
             timerMarketRefresher.Enabled = true;
         }
 
@@ -64,34 +64,56 @@ namespace SteamTrade.SteamMarket
 
         private void ScanMarket(Games game)
         {
-            string json = Fetch("http://raspberrypimaison.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game, "GET", null, true, "", false, 60000);
-            List<Item> items = JsonConvert.DeserializeObject<RootObject>(json).items;
-
-            List<Item> itemToAdd = new List<Item>();
-            foreach(Item item in items)
+            try
             {
-                Item i = steamMarketItems.FirstOrDefault(x => x.Name == item.Name);
-                if (i != null && i.Value != item.Value)
+                int timeout = (int)TimeSpan.FromMinutes(10).TotalMilliseconds;
+                string json = Fetch("http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game, "GET", null, true, "", false, timeout);
+                RootObject ro = JsonConvert.DeserializeObject<RootObject>(json);
+                List<Item> items = ro.items;
+                if (ro.success)
                 {
-                    i.Value = item.Value;
-                    i.LastUpdated = item.LastUpdated;
+                    List<Item> itemToAdd = new List<Item>();
+                    foreach (Item item in items)
+                    {
+                        Item i = steamMarketItems.FirstOrDefault(x => x.Name == item.Name);
+                        if (i != null && i.Value != item.Value)
+                        {
+                            i.Value = item.Value;
+                            i.LastUpdated = item.LastUpdated;
+                        }
+                        else if (i == null)
+                        {
+                            itemToAdd.Add(item);
+                        }
+                    }
+
+                    if (itemToAdd.Count != 0)
+                    {
+                        steamMarketItems.AddRange(itemToAdd);
+                        itemToAdd.Clear();
+                    }
                 }
-                else if(i == null)
+                else
                 {
-                    itemToAdd.Add(item);
+                    SmartConsole.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
+                    SmartConsole.WriteLine(ro.message);
                 }
             }
-
-            if (itemToAdd.Count != 0)
+            catch(Exception e)
             {
-                steamMarketItems.AddRange(itemToAdd);
-                itemToAdd.Clear();
-            } 
+                SmartConsole.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
+                SmartConsole.WriteLine(e.Message);
+            }
         }
 
         public class RootObject
         {
+            [JsonProperty("items")]
             public List<Item> items { get; set; }
+            [JsonProperty("Message")]
+            public string message { get; set; }
+            [JsonProperty("Success")]
+            public Boolean success { get; set; }
         }
         
         public Item GetItemByName(string itemName)
