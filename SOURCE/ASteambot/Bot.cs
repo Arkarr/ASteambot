@@ -298,6 +298,35 @@ namespace ASteambot
             steamClient.Send(DeclineInvite);
         }
 
+        private void InviteUserToGroup(SteamID user, SteamID groupId)
+        {
+            var InviteUser = new ClientMsg<CMsgInviteUserToGroup>((int)EMsg.ClientInviteUserToClan);
+
+            InviteUser.Body.GroupID = groupId.ConvertToUInt64();
+            InviteUser.Body.Invitee = user.ConvertToUInt64();
+            InviteUser.Body.UnknownInfo = true;
+
+            this.steamClient.Send(InviteUser);
+        }
+
+        public void InviteUserToGroup(int serverID, string args)
+        {
+            GameServer gs = getServerByID(serverID);
+
+            string[] steamIDgroupID = args.Split('/');
+
+            if (steamIDgroupID.Length == 2)
+            {
+                SteamID steamID = new SteamID(steamIDgroupID[0]);
+                SteamID groupID = new SteamID(ulong.Parse(steamIDgroupID[1]));
+                if (steamID.IsValid && groupID.IsValid)
+                {
+                    InviteUserToGroup(steamID, groupID);
+                    gs.Send(((int)Networking.NetworkCode.ASteambotCode.InviteSteamGroup).ToString() + "|" + steamID.ToString());
+                }
+            }
+        }
+
         /// ///////////////////////////////////////////////////////////////
         public void CreateTradeOffer(string otherSteamID)
         {

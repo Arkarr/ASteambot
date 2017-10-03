@@ -36,6 +36,9 @@ namespace ASteambot.Networking
                 case NetworkCode.ASteambotCode.ReportPlayer:
                     ReportPlayer(bot, srvid, args);
                 break;
+                case NetworkCode.ASteambotCode.InviteSteamGroup:
+                    InviteToSteamGroup(bot, srvid, args);
+                break;
             }
         }
 
@@ -79,5 +82,11 @@ namespace ASteambot.Networking
         {
             bot.InviteFriend(args);
         }
+
+        private void InviteToSteamGroup(Bot bot, int serverid, string args)
+        {
+            bot.InviteUserToGroup(serverid, args);
+        }
+        
     }
 }

@@ -21,7 +21,8 @@ namespace ASteambot.Networking
             NotFriends = 8,
             TradeToken = 9,
             FriendInvite = 10,
-            ReportPlayer = 11
+            ReportPlayer = 11,
+            InviteSteamGroup = 12
         }
     }
 }
