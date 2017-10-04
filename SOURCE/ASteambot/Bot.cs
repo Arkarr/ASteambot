@@ -319,10 +319,20 @@ namespace ASteambot
             {
                 SteamID steamID = new SteamID(steamIDgroupID[0]);
                 SteamID groupID = new SteamID(ulong.Parse(steamIDgroupID[1]));
-                if (steamID.IsValid && groupID.IsValid)
+                if (steamID.IsValid)
                 {
-                    InviteUserToGroup(steamID, groupID);
-                    gs.Send(((int)Networking.NetworkCode.ASteambotCode.InviteSteamGroup).ToString() + "|" + steamID.ToString());
+                    if (friends.Contains(steamID))
+                    {
+                        if (groupID.IsValid)
+                        {
+                            InviteUserToGroup(steamID, groupID);
+                            gs.Send(((int)Networking.NetworkCode.ASteambotCode.InviteSteamGroup).ToString() + "|" + steamID.ToString());
+                        }
+                    }
+                    else
+                    {
+                        gs.Send((int)NetworkCode.ASteambotCode.NotFriends + "|" + steamIDgroupID[0]);
+                    }
                 }
             }
         }
@@ -987,7 +997,8 @@ namespace ASteambot
         public void InviteFriend(string steamid)
         {
             SteamID steamID = new SteamID(steamid);
-            SteamFriends.AddFriend(steamID);
+            if(steamID.IsValid)
+                SteamFriends.AddFriend(steamID);
         }
 
         private void OwnTradeOfferUpdated(TradeOffer offer)
