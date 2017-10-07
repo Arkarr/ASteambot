@@ -97,44 +97,7 @@ namespace SteamTrade
 
             OnItemUpdate(new EventArgItemScanned(newItem));
         }
-
-        /*public Item ScanCSGOItem(string itemMarketHashName)
-        {
-            Item item = null;
-
-            string response = null;
-
-            try
-            {
-                if (CSGO_ItemScanned == 20)
-                {
-                    Thread.Sleep(60000);
-                    CSGO_ItemScanned = 0;
-                }
-                CSGO_ItemScanned++;
-                response = Fetch(baseURL + itemMarketHashName, "GET");
-                if (!response.Equals("{\"success\":false}"))
-                    item = new Item(itemMarketHashName, 730, response);
-                else
-                    item = new Item(itemMarketHashName, DateTime.Now.ToString("dd/MM/yyyy") + "@" + DateTime.Now.ToString("HH:mm"), 0, 0.0, 730);
-                
-                Thread.Sleep(200);
-
-                if (item != null)
-                    UpdateCSGOItem(item);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(response);
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-                return null;
-            }
-
-            return item;
-        }*/
-
-
+        
         public void AddCSGOItem(string name, string lastupdate, int quantity, double value)
         {
             Item item = new Item(name, lastupdate, quantity, value, 730);

@@ -13,11 +13,11 @@ namespace SteamTrade.SteamMarket
 
         [JsonProperty("market_hash_name")]
         public string Name { get; set; }
-        [JsonProperty("lastUpdate")]
+        [JsonProperty("last_updated")]
         public string LastUpdated { get; set; }
         [JsonProperty("quantity")]
         public int Quantity { get; set; }
-        [JsonProperty("value")]
+        [JsonProperty("normal_price")]
         public double Value { get; set; }
         [JsonProperty("appid")]
         public int AppID { get; set; }
