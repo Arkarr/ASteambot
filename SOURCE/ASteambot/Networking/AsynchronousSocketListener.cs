@@ -3,7 +3,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Net.Sockets;
-using ArkarrUtilitys;
+
 
 namespace ASteambot.Networking
 {
@@ -84,7 +84,7 @@ namespace ASteambot.Networking
             }
             catch (Exception e)
             {
-                SmartConsole.WriteLine(e.ToString());
+                Console.WriteLine(e.ToString());
             }
         }
 
@@ -128,13 +128,13 @@ namespace ASteambot.Networking
                     new AsyncCallback(ReadCallback), state);
                 }
             }
-            catch (SocketException ex) { SmartConsole.WriteLine(ex.Message); }
+            catch (SocketException ex) { Console.WriteLine(ex.Message); }
             catch (Exception e)
             {
-                SmartConsole.WriteLine("Error while processing a message sent by the game server!");
-                SmartConsole.WriteLine(e.Message);
-                SmartConsole.WriteLine("Command : " + content);
-                SmartConsole.WriteLine(e.StackTrace);
+                Console.WriteLine("Error while processing a message sent by the game server!");
+                Console.WriteLine(e.Message);
+                Console.WriteLine("Command : " + content);
+                Console.WriteLine(e.StackTrace);
 
                 handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                 new AsyncCallback(ReadCallback), state);

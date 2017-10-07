@@ -1,4 +1,4 @@
-﻿using ArkarrUtilitys;
+﻿
 using ASteambot.Networking;
 using SteamTrade.SteamMarket;
 using System;
@@ -19,7 +19,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.3.2 - PUBLIC";
+        private static string BUILD_VERSION = "2.3.3 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -33,7 +33,7 @@ namespace ASteambot
                 stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_VERSION + ")" + "\n*************************\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
 
             Console.ForegroundColor = ConsoleColor.Red;
-            SmartConsole.WriteLine("Log file (" + "SEND_TO_ARKARR.log" + ") generated ! Send it to Arkarr !!");
+            Console.WriteLine("Log file (" + "SEND_TO_ARKARR.log" + ") generated ! Send it to Arkarr !!");
             Console.ForegroundColor = ConsoleColor.White;
         }
 
@@ -50,7 +50,7 @@ namespace ASteambot
             config = new Config();
             if(!config.LoadConfig())
             {
-                SmartConsole.WriteLine("Config file (config.cfg) can't be found or is corrupted ! Bot can't start.");
+                Console.WriteLine("Config file (config.cfg) can't be found or is corrupted ! Bot can't start.");
                 Console.ReadKey();
                 return;
             }
@@ -79,7 +79,7 @@ namespace ASteambot
         {
             Console.ForegroundColor = ConsoleColor.Green;
             string data = String.Format("Username : {0}  Password : X  API : {1}", username, api.Substring(api.Length - 10) + "**********");
-            SmartConsole.WriteLine(data);
+            Console.WriteLine(data);
             Console.ForegroundColor = ConsoleColor.White;
             logininfo = new LoginInfo(username, password, api);
             steambotManager.Auth(logininfo);

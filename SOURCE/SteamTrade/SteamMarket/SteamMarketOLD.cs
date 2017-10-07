@@ -1,4 +1,4 @@
-﻿using ArkarrUtilitys;
+﻿
 using CsQuery;
 using CsQuery.Implementation;
 using Newtonsoft.Json;
@@ -180,8 +180,8 @@ namespace SteamTrade.SteamMarketOLD
                                 catch(Exception e)
                                 {
                                     Console.ForegroundColor = ConsoleColor.Red;
-                                    SmartConsole.WriteLine("Couldn't parse price : " + prices.LastChild.InnerText + " item : "+ itemName);
-                                    SmartConsole.WriteLine(e);
+                                    Console.WriteLine("Couldn't parse price : " + prices.LastChild.InnerText + " item : "+ itemName);
+                                    Console.WriteLine(e);
                                     Console.ForegroundColor = ConsoleColor.White;
                                     price = 0.0;
                                 }

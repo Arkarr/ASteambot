@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SteamKit2;
 using ASteambot.Networking;
 using System.Threading;
-using ArkarrUtilitys;
+
 using System.Web;
 
 namespace ASteambot
@@ -125,25 +125,25 @@ namespace ASteambot
 
         public void ShowHelp()
         {
-            SmartConsole.WriteLine("quit - Shutdown all the bots, the TCP server and everything else.");
-            SmartConsole.WriteLine("list - List all the bots and there index.");
-            SmartConsole.WriteLine("select - select a bot to execute commands on.");
-            SmartConsole.WriteLine("rename - rename a bot through steam.");
-            //SmartConsole.WriteLine("createto - create a thread offer.");
-            SmartConsole.WriteLine("help - show this text.");
-            SmartConsole.WriteLine("linkauthenticator - link a mobile authenticator through the bot, required to do trade offers correctly.");
-            SmartConsole.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
-            SmartConsole.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
-            SmartConsole.WriteLine("testtcp - Send a small packet to all TCP clients.");
-            SmartConsole.WriteLine("getsteamcode - Generate an authenticator code.");
-            SmartConsole.WriteLine("debug - Toggle debug mode.");
+            Console.WriteLine("quit - Shutdown all the bots, the TCP server and everything else.");
+            Console.WriteLine("list - List all the bots and there index.");
+            Console.WriteLine("select - select a bot to execute commands on.");
+            Console.WriteLine("rename - rename a bot through steam.");
+            //Console.WriteLine("createto - create a thread offer.");
+            Console.WriteLine("help - show this text.");
+            Console.WriteLine("linkauthenticator - link a mobile authenticator through the bot, required to do trade offers correctly.");
+            Console.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
+            Console.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
+            Console.WriteLine("testtcp - Send a small packet to all TCP clients.");
+            Console.WriteLine("getsteamcode - Generate an authenticator code.");
+            Console.WriteLine("debug - Toggle debug mode.");
         }
 
         private void TestAPI(string[] args)
         {
             if(args.Count() < 2)
             {
-                SmartConsole.WriteLine("Usage : testapi [ITEM NAME]");
+                Console.WriteLine("Usage : testapi [ITEM NAME]");
                 return;
             }
 
@@ -164,13 +164,13 @@ namespace ASteambot
 
             if (item != null)
             {
-                SmartConsole.WriteLine("Item name :" + item.Name);
-                SmartConsole.WriteLine("Item price :" + item.Value);
-                SmartConsole.WriteLine("Item app id :" + item.AppID);
+                Console.WriteLine("Item name :" + item.Name);
+                Console.WriteLine("Item price :" + item.Value);
+                Console.WriteLine("Item app id :" + item.AppID);
             }
             else
             {
-                SmartConsole.WriteLine("Item with name {0} not found", args[1]);
+                Console.WriteLine("Item with name {0} not found", args[1]);
             }
         }
 
@@ -200,14 +200,14 @@ namespace ASteambot
                 }
             }
 
-            SmartConsole.WriteLine("Sent "+test+" to "+ count + " connected servers ! ");
+            Console.WriteLine("Sent "+test+" to "+ count + " connected servers ! ");
         }
 
         public void WithDrawn(string[] args)
         {
             if (args.Count() < 2)
             {
-                SmartConsole.WriteLine("Usage : withdrawn [STEAM ID]");
+                Console.WriteLine("Usage : withdrawn [STEAM ID]");
                 return;
             }
 
@@ -228,7 +228,7 @@ namespace ASteambot
         {
             if (args.Count() < 2)
             {
-                SmartConsole.WriteLine("Usage : createto [STEAM ID]");
+                Console.WriteLine("Usage : createto [STEAM ID]");
                 return;
             }
 
@@ -237,7 +237,7 @@ namespace ASteambot
 
         public void ShutdownBots()
         {
-            SmartConsole.WriteLine("Shutting down steambots...");
+            Console.WriteLine("Shutting down steambots...");
             Stop();
         }
 
@@ -245,7 +245,7 @@ namespace ASteambot
         {
             if (args.Count() < 2)
             {
-                SmartConsole.WriteLine("Usage : rename [NEW NAME]");
+                Console.WriteLine("Usage : rename [NEW NAME]");
                 return;
             }
 
@@ -254,7 +254,7 @@ namespace ASteambot
                 newname += args[i] + " ";
             newname.Substring(0, newname.Length - 2);
 
-            SmartConsole.WriteLine("Renaming steambot...");
+            Console.WriteLine("Renaming steambot...");
 
             SelectedBot.ChangeName(newname);
         }
@@ -263,7 +263,7 @@ namespace ASteambot
         {
             if(args.Count() < 2)
             {
-                SmartConsole.WriteLine("Usage : select [STEAMBOT INDEX]");
+                Console.WriteLine("Usage : select [STEAMBOT INDEX]");
                 return;
             }
 
@@ -271,29 +271,29 @@ namespace ASteambot
 
             if(index < 0 || index > bots.Count)
             {
-                SmartConsole.WriteLine("No steambot found with index '"+ index + "'");
+                Console.WriteLine("No steambot found with index '"+ index + "'");
                 return;
             }
 
             if (bots.Count-1 < index || index > bots.Count - 1)
             {
-                SmartConsole.WriteLine("Index "+ index + " is invalid !");
+                Console.WriteLine("Index "+ index + " is invalid !");
             }
             else
             {
                 SelectedBot = bots[index];
                 Console.Title = "Akarr's steambot - [" + SelectedBot.Name + "]";
 
-                SmartConsole.WriteLine("["+ SelectedBot.Name + "] selected as current bot. Command will be executed from this steambot.");
+                Console.WriteLine("["+ SelectedBot.Name + "] selected as current bot. Command will be executed from this steambot.");
             }
         }
 
         public void ListBots(string[] args)
         {
-            SmartConsole.WriteLine("----- Number of bots {0} -----", bots.Count);
+            Console.WriteLine("----- Number of bots {0} -----", bots.Count);
             for(int i = 0; i < bots.Count; i++)
-                SmartConsole.WriteLine("\t[{0}] Name : [{1}] | Logged in : [{2}]", i+1, bots[i].Name, bots[i].LoggedIn);
-            SmartConsole.WriteLine("----------------------------", bots.Count);
+                Console.WriteLine("\t[{0}] Name : [{1}] | Logged in : [{2}]", i+1, bots[i].Name, bots[i].LoggedIn);
+            Console.WriteLine("----------------------------", bots.Count);
         }
         
 

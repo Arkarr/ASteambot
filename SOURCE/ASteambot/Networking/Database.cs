@@ -1,4 +1,4 @@
-﻿using ArkarrUtilitys;
+﻿
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -20,25 +20,25 @@ namespace ASteambot.Networking
 
             try
             {
-                SmartConsole.WriteLine("Connecting to database server...");
+                Console.WriteLine("Connecting to database server...");
 
                 MySqlConnection connection = new MySqlConnection(connectionString);
                 connection.Open();
-                SmartConsole.WriteLine("Success.");
+                Console.WriteLine("Success.");
 
-                SmartConsole.WriteLine("Attempt to connect to database...");
+                Console.WriteLine("Attempt to connect to database...");
 
                 QUERY("CREATE DATABASE IF NOT EXISTS `" + database + "` DEFAULT CHARSET=utf8");
 
                 connection.Close();
                 connectionString += "Database = " + database;
 
-                SmartConsole.WriteLine("Connection to database successfully done !");
+                Console.WriteLine("Connection to database successfully done !");
                 IsConnected = true;
             }
             catch (Exception ex)
             {
-                SmartConsole.WriteLine("Connection failed ! (" + ex + ")");
+                Console.WriteLine("Connection failed ! (" + ex + ")");
                 IsConnected = false;
             }
         }
@@ -126,13 +126,13 @@ namespace ASteambot.Networking
             {
                 if (rows.Length > values.Length)
                 {
-                    SmartConsole.WriteLine("There is more cols then values to add !");
+                    Console.WriteLine("There is more cols then values to add !");
                     return false;
                 }
 
                 if (rows.Length < values.Length)
                 {
-                    SmartConsole.WriteLine("There is more values then cols to add !");
+                    Console.WriteLine("There is more values then cols to add !");
                     return false;
                 }
             }

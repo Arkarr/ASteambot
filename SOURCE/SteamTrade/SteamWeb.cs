@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using SteamKit2;
-using ArkarrUtilitys;
+
 
 namespace SteamTrade
 {
@@ -206,7 +206,7 @@ namespace SteamTrade
             // Do this while we need a captcha or need email authentification. Probably you have misstyped the captcha or the SteamGaurd code if this comes multiple times.
             do
             {
-                SmartConsole.WriteLine("SteamWeb: Logging In...");
+                Console.WriteLine("SteamWeb: Logging In...");
 
                 bool captcha = loginJson != null && loginJson.captcha_needed;
                 bool steamGuard = loginJson != null && loginJson.emailauth_needed;
@@ -227,9 +227,9 @@ namespace SteamTrade
                 string capText = "";
                 if (captcha)
                 {
-                    SmartConsole.WriteLine("SteamWeb: Captcha is needed.");
+                    Console.WriteLine("SteamWeb: Captcha is needed.");
                     System.Diagnostics.Process.Start("https://steamcommunity.com/public/captcha.php?gid=" + loginJson.captcha_gid);
-                    SmartConsole.WriteLine("SteamWeb: Type the captcha:");
+                    Console.WriteLine("SteamWeb: Type the captcha:");
                     string consoleText = Console.ReadLine();
                     if (!string.IsNullOrEmpty(consoleText))
                     {
@@ -250,8 +250,8 @@ namespace SteamTrade
                 // For further information about SteamGuard see: https://support.steampowered.com/kb_article.php?ref=4020-ALZM-5519&l=english.
                 if (steamGuard)
                 {
-                    SmartConsole.WriteLine("SteamWeb: SteamGuard is needed.");
-                    SmartConsole.WriteLine("SteamWeb: Type the code:");
+                    Console.WriteLine("SteamWeb: SteamGuard is needed.");
+                    Console.WriteLine("SteamWeb: Type the code:");
                     string consoleText = Console.ReadLine();
                     if (!string.IsNullOrEmpty(consoleText))
                     {
@@ -260,7 +260,7 @@ namespace SteamTrade
                     steamGuardId = loginJson.emailsteamid;
 
                     // Adding the machine name to the NameValueCollection, because it is requested by steam.
-                    SmartConsole.WriteLine("SteamWeb: Type your machine name:");
+                    Console.WriteLine("SteamWeb: Type your machine name:");
                     consoleText = Console.ReadLine();
                     var machineName = string.IsNullOrEmpty(consoleText) ? "" : Uri.EscapeDataString(consoleText);
                     data.Add("loginfriendlyname", machineName != "" ? machineName : "defaultSteamBotMachine");
@@ -307,7 +307,7 @@ namespace SteamTrade
             }
             else
             {
-                SmartConsole.WriteLine("SteamWeb Error: " + loginJson.message);
+                Console.WriteLine("SteamWeb Error: " + loginJson.message);
                 return false;
             }
 

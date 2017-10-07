@@ -1,4 +1,4 @@
-﻿using ArkarrUtilitys;
+﻿
 using CsQuery;
 using CsQuery.Implementation;
 using Newtonsoft.Json;
@@ -95,14 +95,14 @@ namespace SteamTrade.SteamMarket
                 }
                 else
                 {
-                    SmartConsole.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
-                    SmartConsole.WriteLine(ro.message);
+                    Console.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
+                    Console.WriteLine(ro.message);
                 }
             }
             catch(Exception e)
             {
-                SmartConsole.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
-                SmartConsole.WriteLine(e.Message);
+                Console.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
+                Console.WriteLine(e.Message);
             }
         }
 
