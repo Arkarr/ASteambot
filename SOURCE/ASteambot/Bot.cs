@@ -80,12 +80,7 @@ namespace ASteambot
 
         private void Socket_MessageReceived(object sender, EventArgGameServer e)
         {
-            int srvid = e.GetServerID;
-            int code = e.GetNetworkCode;
-            string args = e.GetArguments;
-            Socket socket = e.GetSocket;
-
-            messageHandler.Execute(this, socket, srvid, code, args);
+            messageHandler.Execute(this, e.GetGameServerRequest);
         }
 
         private void SaveItemInDB(SteamTrade.SteamMarket.Item item)
@@ -309,7 +304,7 @@ namespace ASteambot
             this.steamClient.Send(InviteUser);
         }
 
-        public void InviteUserToGroup(int serverID, string args)
+        public void InviteUserToGroup(int serverID, int moduleID, string args)
         {
             GameServer gs = getServerByID(serverID);
 
@@ -326,12 +321,12 @@ namespace ASteambot
                         if (groupID.IsValid)
                         {
                             InviteUserToGroup(steamID, groupID);
-                            gs.Send(((int)Networking.NetworkCode.ASteambotCode.InviteSteamGroup).ToString() + "|" + steamID.ToString());
+                            gs.Send(moduleID, ((int)Networking.NetworkCode.ASteambotCode.InviteSteamGroup).ToString() + "|" + steamID.ToString());
                         }
                     }
                     else
                     {
-                        gs.Send((int)NetworkCode.ASteambotCode.NotFriends + "|" + steamIDgroupID[0]);
+                        gs.Send(moduleID, (int)NetworkCode.ASteambotCode.NotFriends + "|" + steamIDgroupID[0]);
                     }
                 }
             }
@@ -438,7 +433,7 @@ namespace ASteambot
             Console.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
         }
 
-        public void ScanInventory(int serverID, string strsteamID, bool send=true)
+        public void ScanInventory(int serverID, int moduleID, string strsteamID, bool send=true)
         {
             if(ArkarrSteamMarket == null)
                 ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey);
@@ -449,7 +444,7 @@ namespace ASteambot
 
             if (!friends.Contains(steamID))
             {
-                gameServer.Send((int)NetworkCode.ASteambotCode.NotFriends + "|"+ strsteamID);
+                gameServer.Send(moduleID, (int)NetworkCode.ASteambotCode.NotFriends + "|"+ strsteamID);
                 return;
             }
 
@@ -464,10 +459,10 @@ namespace ASteambot
             if (!send)
                 return;
 
-            gameServer.Send(final);
+            gameServer.Send(moduleID, final);
         }
 
-        public void TCPCreateTradeOffer(int serverID, string message)
+        public void TCPCreateTradeOffer(int serverID, int moduleID, string message)
         {
             string[] steamIDitems = message.Split('/');
             SteamID steamid = new SteamID(steamIDitems[0]);
@@ -494,6 +489,8 @@ namespace ASteambot
             
             string offerId;
             to.Send(out offerId, String.Format("In exchange for points on server {0} the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("hh:mm")));
+
+            gameServer.Send(moduleID, offerId);
 
             AcceptMobileTradeConfirmation(offerId);
         }
@@ -1058,7 +1055,7 @@ namespace ASteambot
         private void SendTradeOfferConfirmationToGameServers(string data)
         {
             foreach (GameServer gs in botManager.Servers)
-                gs.Send(data);
+                gs.Send(-2, data);
         }
 
         private void UpdateTradeOfferInDatabase(TradeOffer to, double value)

@@ -14,39 +14,39 @@ namespace ASteambot.Networking
 
         private int serverID;
 
-        public void Execute(Bot bot, Socket socket, int srvid, int code, string args)
+        public void Execute(Bot bot, GameServerRequest gsr)
         {
-            switch((NetworkCode.ASteambotCode)code)
+            switch((NetworkCode.ASteambotCode)gsr.NetworkCode)
             {
                 case NetworkCode.ASteambotCode.Core:
-                    RegisterBot(bot, socket, args);
+                    RegisterBot(bot, gsr);
                 break;
                 case NetworkCode.ASteambotCode.HookChat:
-                    HookChat(bot, srvid, args);
+                    HookChat(bot, gsr);
                 break;
                 case NetworkCode.ASteambotCode.ScanInventory:
-                    ScanInventory(bot, srvid, args);
+                    ScanInventory(bot, gsr);
                 break;
                 case NetworkCode.ASteambotCode.CreateTradeOffer:
-                    CreateTradeOffer(bot, srvid, args);
+                    CreateTradeOffer(bot, gsr);
                 break;
                 case NetworkCode.ASteambotCode.FriendInvite:
-                    SendFriendInvitation(bot, srvid, args);
+                    SendFriendInvitation(bot, gsr);
                 break;
                 case NetworkCode.ASteambotCode.ReportPlayer:
-                    ReportPlayer(bot, srvid, args);
+                    ReportPlayer(bot, gsr);
                 break;
                 case NetworkCode.ASteambotCode.InviteSteamGroup:
-                    InviteToSteamGroup(bot, srvid, args);
+                    InviteToSteamGroup(bot, gsr);
                 break;
             }
         }
 
-        private void RegisterBot(Bot bot, Socket socket, string args)
+        private void RegisterBot(Bot bot, GameServerRequest gsr)
         {
             bot.botManager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
 
-            IPEndPoint ipendpoint = ((IPEndPoint)socket.RemoteEndPoint);
+            IPEndPoint ipendpoint = ((IPEndPoint)gsr.Socket.RemoteEndPoint);
             
             int index = bot.botManager.Servers.FindIndex(f => f.IP == ipendpoint.Address);
 
@@ -54,38 +54,38 @@ namespace ASteambot.Networking
                 return;
 
             serverID++;
-            GameServer gameserver = new GameServer(socket, bot.botManager.Config.TCPPassword, serverID, args);
+            GameServer gameserver = new GameServer(gsr.Socket, bot.botManager.Config.TCPPassword, serverID, gsr.Arguments);
             bot.botManager.Servers.Add(gameserver);
         }
 
-        private void ReportPlayer(Bot bot, int sererid, string args)
+        private void ReportPlayer(Bot bot, GameServerRequest gsr)
         {
-            bot.ReportPlayer(serverID, args);
+            bot.ReportPlayer(gsr.ServerID, gsr.Arguments);
         }
 
-        private void HookChat(Bot bot, int serverid, string args)
+        private void HookChat(Bot bot, GameServerRequest gsr)
         {
-            bot.steamchatHandler.ServerMessage(serverid, args);
+            bot.steamchatHandler.ServerMessage(gsr.ServerID, gsr.Arguments);
         }
 
-        private void ScanInventory(Bot bot, int serverid, string args)
+        private void ScanInventory(Bot bot, GameServerRequest gsr)
         {
-            bot.ScanInventory(serverID, args);
+            bot.ScanInventory(gsr.ServerID, gsr.ModuleID, gsr.Arguments);
         }
 
-        private void CreateTradeOffer(Bot bot, int serverid, string args)
+        private void CreateTradeOffer(Bot bot, GameServerRequest gsr)
         {
-            bot.TCPCreateTradeOffer(serverid, args);
+            bot.TCPCreateTradeOffer(gsr.ServerID, gsr.ModuleID, gsr.Arguments);
         }
 
-        private void SendFriendInvitation(Bot bot, int serverid, string args)
+        private void SendFriendInvitation(Bot bot, GameServerRequest gsr)
         {
-            bot.InviteFriend(args);
+            bot.InviteFriend(gsr.Arguments);
         }
 
-        private void InviteToSteamGroup(Bot bot, int serverid, string args)
+        private void InviteToSteamGroup(Bot bot, GameServerRequest gsr)
         {
-            bot.InviteUserToGroup(serverid, args);
+            bot.InviteUserToGroup(gsr.ServerID, gsr.ModuleID, gsr.Arguments);
         }
         
     }

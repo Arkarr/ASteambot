@@ -30,17 +30,19 @@ namespace ASteambot.Networking
 
             content = content.Replace(password, "");
 
-            string[] codeargs = content.Split(new char[] { '&' }, 2);
+            string[] codeargsdata = content.Split(new char[] { '&' }, 2);
 
-            string[] idmsgtype = codeargs[0].Split(new char[] { '|' }, 2);
+            string[] idmsgtype = codeargsdata[0].Split(new char[] { '|' }, 2);
 
-            codeargs[1] = codeargs[1].Replace("\0", string.Empty);
+            codeargsdata[1] = codeargsdata[1].Replace("\0", string.Empty);
 
             //Must be always true :
-            if (codeargs[1].EndsWith("<EOF>"))
-                codeargs[1] = codeargs[1].Substring(0, codeargs[1].Length - 5);
+            if (codeargsdata[1].EndsWith("<EOF>"))
+                codeargsdata[1] = codeargsdata[1].Substring(0, codeargsdata[1].Length - 5);
 
-            EventArgGameServer arg = new EventArgGameServer(handler, idmsgtype[0], idmsgtype[1], codeargs[1]);
+            GameServerRequest gsr = new GameServerRequest(handler, idmsgtype[0], idmsgtype[1], codeargsdata[1]);
+
+            EventArgGameServer arg = new EventArgGameServer(gsr);
             OnMessageReceived(arg);
         }
 

@@ -195,7 +195,7 @@ namespace ASteambot
             {
                 foreach (GameServer gs in bot.botManager.Servers)
                 {
-                    gs.Send(test);
+                    gs.Send(-2, test);
                     count++;
                 }
             }

@@ -25,7 +25,7 @@ namespace ASteambot
 
             if (!command.Equals("STOPHOOK") && ChatListener.ContainsKey(partenar))
             {
-                SendMessageToGameServer(partenar, message);
+                SendMessageToGameServer(0, partenar, message);
                 return;
             }
 
@@ -40,11 +40,11 @@ namespace ASteambot
                 break;
 
                 case "HOOKCHAT":
-                    HookGameServerChat(partenar, message);
+                    HookGameServerChat(-2, partenar, message);
                 break;
 
                 case "STOPHOOK":
-                    StopHook(partenar);
+                    StopHook(-2, partenar);
                 break;
 
                 default:
@@ -53,17 +53,17 @@ namespace ASteambot
             }            
         }
 
-        private void SendMessageToGameServer(SteamID partenar, string message)
+        private void SendMessageToGameServer(int moduleID, SteamID partenar, string message)
         {
             int serverID = ChatListener[partenar];
             GameServer gs = bot.botManager.Servers[serverID - 1];
 
             string name = bot.SteamFriends.GetFriendPersonaName(partenar);
             string data = string.Format("{0}|{1} : {2}", (int)Networking.NetworkCode.ASteambotCode.Simple, name, message);
-            gs.Send(data);
+            gs.Send(moduleID, data);
         }
 
-        public void StopHook(SteamID partenar)
+        public void StopHook(int moduleID, SteamID partenar)
         {
             int serverID = ChatListener[partenar];
             ChatListener.Remove(partenar);
@@ -76,7 +76,7 @@ namespace ASteambot
             }
 
             GameServer server = bot.botManager.Servers[serverID-1];
-            server.Send(((int)Networking.NetworkCode.ASteambotCode.Unhookchat).ToString());
+            server.Send(moduleID, ((int)Networking.NetworkCode.ASteambotCode.Unhookchat).ToString());
         }
 
         public void PrintHelp(SteamID partenar)
@@ -115,7 +115,7 @@ namespace ASteambot
             }
         }
 
-        public void HookGameServerChat(SteamID partenar, string message)
+        public void HookGameServerChat(int moduleID, SteamID partenar, string message)
         {
             if(ChatListener.ContainsKey(partenar))
             {
@@ -140,7 +140,7 @@ namespace ASteambot
 
             SendChatMessage(partenar, "Connecting to server...");
 
-            gs.Send(((int)Networking.NetworkCode.ASteambotCode.HookChat).ToString());
+            gs.Send(moduleID, ((int)Networking.NetworkCode.ASteambotCode.HookChat).ToString());
         }
 
         private void SendChatMessage(SteamID partenar, string message)

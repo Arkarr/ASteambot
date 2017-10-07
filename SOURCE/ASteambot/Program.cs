@@ -1,5 +1,4 @@
-﻿
-using ASteambot.Networking;
+﻿using ASteambot.Networking;
 using SteamTrade.SteamMarket;
 using System;
 using System.Collections.Generic;
@@ -19,7 +18,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.3.3 - PUBLIC";
+        private static string BUILD_VERSION = "2.4.0 - PUBLIC";
 
         public static bool DEBUG;
 

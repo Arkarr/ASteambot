@@ -67,6 +67,7 @@
     <Compile Include="Networking\AsynchronousSocketListener.cs" />
     <Compile Include="Networking\Database.cs" />
     <Compile Include="Networking\EventArgsString.cs" />
+    <Compile Include="Networking\GameServerRequest.cs" />
     <Compile Include="Networking\HandleMessage.cs" />
     <Compile Include="Networking\NetworkCode.cs" />
     <Compile Include="Networking\StateObject.cs" />
