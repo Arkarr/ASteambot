@@ -497,7 +497,7 @@ namespace ASteambot
 
         private string AddInventoryItems(SteamTrade.SteamMarket.Games game, SteamID steamID)
         {
-            string items = "";
+            string items = "EMPTY";
             Thread invScan = new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
@@ -514,7 +514,6 @@ namespace ASteambot
                     {
                         Console.WriteLine(error);
                     }
-                    items = "ERROR";
                 }
                 else
                 {
@@ -533,9 +532,7 @@ namespace ASteambot
                         }
                     }
 
-                    if (items.Length == 0)
-                        items = "EMPTY";
-                    else
+                    if (!items.Equals("EMPTY") && items.Length != 0)
                         items = items.Remove(items.Length - 1);
                 }
             });

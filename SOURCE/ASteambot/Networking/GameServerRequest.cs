@@ -19,13 +19,16 @@ namespace ASteambot.Networking
         {
             string[] idmid = srvid.Split(',');
 
-            Console.WriteLine("Trying to parse " + idmid[0] + " to Int32 !");
+
+            if(Program.DEBUG)
+                Console.WriteLine("Trying to parse " + idmid[0] + " to Int32 !");
 
             int tmpInt;
             Int32.TryParse(idmid[0], out tmpInt);
             ServerID = tmpInt;
 
-            Console.WriteLine("Trying to parse " + idmid[1] + " to Int32 !");
+            if (Program.DEBUG)
+                Console.WriteLine("Trying to parse " + idmid[1] + " to Int32 !");
             Int32.TryParse(idmid[1], out tmpInt);
             ModuleID = tmpInt;
 

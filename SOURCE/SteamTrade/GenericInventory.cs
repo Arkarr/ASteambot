@@ -147,7 +147,8 @@ namespace SteamTrade
             {
                 foreach (long contextId in contextIds)
                 {
-                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, true);
+                    string url = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId);
+                    string response = SteamWeb.Fetch(url, "GET", null, true, "", true);
                     invResponse = JsonConvert.DeserializeObject(response);
 
                     if (invResponse.success == false)

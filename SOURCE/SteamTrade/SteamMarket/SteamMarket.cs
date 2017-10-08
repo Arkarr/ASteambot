@@ -32,12 +32,16 @@ namespace SteamTrade.SteamMarket
     public class SteamMarket
     {
         private string APIkey;
-        private List<Item> steamMarketItems;
+        private List<Item> steamMarketItemsTF2;
+        private List<Item> steamMarketItemsCSGO;
+        private List<Item> steamMarketItemsDOTA2;
 
         public SteamMarket(string apikey)
         {
             APIkey = apikey;
-            steamMarketItems = new List<Item>();
+            steamMarketItemsTF2 = new List<Item>();
+            steamMarketItemsCSGO = new List<Item>();
+            steamMarketItemsDOTA2 = new List<Item>();
 
             RefreshMarket();
 
@@ -56,17 +60,25 @@ namespace SteamTrade.SteamMarket
         {
             new Thread(() =>
             {
+                Console.WriteLine("Fetching market's prices...");
                 ScanMarket(Games.TF2);
                 ScanMarket(Games.CSGO);
                 ScanMarket(Games.Dota2);
+                Console.WriteLine("Done !");
             }).Start();
+        }
+
+        public void ForceRefresh()
+        {
+            Console.WriteLine("Force market refresh...");
+            RefreshMarket();
         }
 
         private void ScanMarket(Games game)
         {
             try
             {
-                int timeout = (int)TimeSpan.FromMinutes(10).TotalMilliseconds;
+                int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
                 string json = Fetch("http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game, "GET", null, true, "", false, timeout);
                 RootObject ro = JsonConvert.DeserializeObject<RootObject>(json);
                 List<Item> items = ro.items;
@@ -75,7 +87,14 @@ namespace SteamTrade.SteamMarket
                     List<Item> itemToAdd = new List<Item>();
                     foreach (Item item in items)
                     {
-                        Item i = steamMarketItems.FirstOrDefault(x => x.Name == item.Name);
+                        Item i = null;
+                        if (game == Games.TF2)
+                            i = steamMarketItemsTF2.FirstOrDefault(x => x.Name == item.Name);
+                        else if (game == Games.CSGO)
+                            i = steamMarketItemsCSGO.FirstOrDefault(x => x.Name == item.Name);
+                        else if (game == Games.Dota2)
+                            i = steamMarketItemsDOTA2.FirstOrDefault(x => x.Name == item.Name);
+
                         if (i != null && i.Value != item.Value)
                         {
                             i.Value = item.Value;
@@ -89,9 +108,17 @@ namespace SteamTrade.SteamMarket
 
                     if (itemToAdd.Count != 0)
                     {
-                        steamMarketItems.AddRange(itemToAdd);
+                        if (game == Games.TF2)
+                            steamMarketItemsTF2.AddRange(itemToAdd);
+                        else if (game == Games.CSGO)
+                            steamMarketItemsCSGO.AddRange(itemToAdd);
+                        else if (game == Games.Dota2)
+                            steamMarketItemsDOTA2.AddRange(itemToAdd);
+
                         itemToAdd.Clear();
                     }
+
+                    Console.WriteLine(game.ToString() + " prices updated !");
                 }
                 else
                 {
@@ -118,7 +145,13 @@ namespace SteamTrade.SteamMarket
         
         public Item GetItemByName(string itemName)
         {
-            Item i = steamMarketItems.Find(x => x.Name == itemName);
+            Item i = steamMarketItemsCSGO.Find(x => x.Name == itemName);
+
+            if (i == null)
+                i = steamMarketItemsTF2.Find(x => x.Name == itemName);
+
+            if (i == null)
+                i = steamMarketItemsDOTA2.Find(x => x.Name == itemName);
 
             return i;
         }

@@ -115,6 +115,9 @@ namespace ASteambot
                 case "testapi":
                     TestAPI(args);
                     break;
+                case "refreshprices":
+                    RefreshPrices();
+                    break;
                 default:
                     Console.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
                 break;
@@ -137,6 +140,11 @@ namespace ASteambot
             Console.WriteLine("testtcp - Send a small packet to all TCP clients.");
             Console.WriteLine("getsteamcode - Generate an authenticator code.");
             Console.WriteLine("debug - Toggle debug mode.");
+        }
+
+        private void RefreshPrices()
+        {
+            SelectedBot.ArkarrSteamMarket.ForceRefresh();
         }
 
         private void TestAPI(string[] args)
