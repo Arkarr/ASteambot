@@ -982,6 +982,15 @@ namespace ASteambot
         {
             //UpdateTradeOfferInDatabase(offer, cent);
 
+            TradeOffer to;
+            tradeOfferManager.TryGetOffer(offer.TradeOfferId, out to);
+
+            if (to != null)
+            {
+                double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
+                UpdateTradeOfferInDatabase(to, cent);
+            }
+
             if (offer.IsOurOffer)
                 OwnTradeOfferUpdated(offer);
             else
@@ -1076,8 +1085,13 @@ namespace ASteambot
             }
             else
             {
-                string query = String.Format("UPDATE tradeoffers SET `tradeStatus`=\"{0}\", `tradeValue`=\"{1}\" WHERE `tradeOfferID`=\"{2}\";", ((int)to.OfferState), value.ToString(), to.TradeOfferId);
-                DB.QUERY(query);
+                if (to.OfferState != TradeOfferState.TradeOfferStateAccepted &&
+                    to.OfferState != TradeOfferState.TradeOfferStateDeclined &&
+                    to.OfferState != TradeOfferState.TradeOfferStateCanceled)
+                {
+                    string query = String.Format("UPDATE tradeoffers SET `tradeStatus`=\"{0}\", `tradeValue`=\"{1}\" WHERE `tradeOfferID`=\"{2}\";", ((int)to.OfferState), value.ToString(), to.TradeOfferId);
+                    DB.QUERY(query);
+                }
             }
         }
 

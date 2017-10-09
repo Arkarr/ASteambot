@@ -18,8 +18,7 @@ namespace ASteambot.Networking
         public GameServerRequest(Socket socket, string srvid, string code, string args)
         {
             string[] idmid = srvid.Split(',');
-
-
+            
             if(Program.DEBUG)
                 Console.WriteLine("Trying to parse " + idmid[0] + " to Int32 !");
 
