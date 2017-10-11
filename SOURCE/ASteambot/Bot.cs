@@ -959,7 +959,7 @@ namespace ASteambot
                 Console.ForegroundColor = ConsoleColor.White;
             }
 
-            string[] rows = new string[1];
+            /*string[] rows = new string[1];
             rows[0] = "tradeOfferID";
 
             List<Dictionary<string, string>> list = DB.SELECT(rows, "tradeoffers", "WHERE `tradeStatus`=\"" + (int)TradeOfferState.TradeOfferStateActive + "\"");
@@ -973,7 +973,7 @@ namespace ASteambot
                     double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
                     UpdateTradeOfferInDatabase(to, cent);
                 }
-            }
+            }*/
 
             SaveItemInDB(i);
         }
@@ -985,7 +985,7 @@ namespace ASteambot
             TradeOffer to;
             tradeOfferManager.TryGetOffer(offer.TradeOfferId, out to);
 
-            if (to != null)
+            if (to != null && ArkarrSteamMarket.IsAvailable())
             {
                 double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
                 UpdateTradeOfferInDatabase(to, cent);

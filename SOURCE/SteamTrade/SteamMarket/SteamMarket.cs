@@ -32,6 +32,9 @@ namespace SteamTrade.SteamMarket
     public class SteamMarket
     {
         private string APIkey;
+        private bool TF2OK;
+        private bool CSGOOK;
+        private bool DOTA2OK;
         private List<Item> steamMarketItemsTF2;
         private List<Item> steamMarketItemsCSGO;
         private List<Item> steamMarketItemsDOTA2;
@@ -39,6 +42,9 @@ namespace SteamTrade.SteamMarket
         public SteamMarket(string apikey)
         {
             APIkey = apikey;
+            TF2OK = false;
+            CSGOOK = false;
+            DOTA2OK = false;
             steamMarketItemsTF2 = new List<Item>();
             steamMarketItemsCSGO = new List<Item>();
             steamMarketItemsDOTA2 = new List<Item>();
@@ -56,16 +62,42 @@ namespace SteamTrade.SteamMarket
             RefreshMarket();
         }
 
-        private void RefreshMarket()
+        private void RefreshMarket(Games game = Games.None)
         {
             new Thread(() =>
             {
-                Console.WriteLine("Fetching market's prices...");
-                ScanMarket(Games.TF2);
-                ScanMarket(Games.CSGO);
-                ScanMarket(Games.Dota2);
-                Console.WriteLine("Done !");
+                if (game == Games.None)
+                {
+                    Console.WriteLine("Fetching market's prices...");
+                    TF2OK = ScanMarket(Games.TF2);
+                    CSGOOK = ScanMarket(Games.CSGO);
+                    DOTA2OK = ScanMarket(Games.Dota2);
+                    Console.WriteLine("Done !");
+                }
+                else
+                { 
+                    Console.WriteLine("Fetching "+game+" prices...");
+                    switch (game)
+                    {
+                        case Games.CSGO: CSGOOK = ScanMarket(game); break;
+                        case Games.TF2: TF2OK = ScanMarket(game); break;
+                        case Games.Dota2: DOTA2OK = ScanMarket(game); break;
+                    }
+                    Console.WriteLine("Done !");
+                }
             }).Start();
+
+            if (CSGOOK == false)
+                RefreshMarket(Games.CSGO);
+            if (TF2OK == false)
+                RefreshMarket(Games.TF2);
+            if (DOTA2OK == false)
+                RefreshMarket(Games.Dota2);
+        }
+
+        public bool IsAvailable()
+        {
+            return CSGOOK && TF2OK && DOTA2OK;
         }
 
         public void ForceRefresh()
@@ -74,7 +106,7 @@ namespace SteamTrade.SteamMarket
             RefreshMarket();
         }
 
-        private void ScanMarket(Games game)
+        private bool ScanMarket(Games game)
         {
             try
             {
@@ -119,17 +151,23 @@ namespace SteamTrade.SteamMarket
                     }
 
                     Console.WriteLine(game.ToString() + " prices updated !");
+
+                    return true;
                 }
                 else
                 {
                     Console.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
                     Console.WriteLine(ro.message);
+
+                    return false;
                 }
             }
             catch(Exception e)
             {
                 Console.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
                 Console.WriteLine(e.Message);
+
+                return false;
             }
         }
 
