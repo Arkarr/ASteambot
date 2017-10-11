@@ -85,14 +85,16 @@ namespace SteamTrade.SteamMarket
                     }
                     Console.WriteLine("Done !");
                 }
-            }).Start();
 
-            if (CSGOOK == false)
-                RefreshMarket(Games.CSGO);
-            if (TF2OK == false)
-                RefreshMarket(Games.TF2);
-            if (DOTA2OK == false)
-                RefreshMarket(Games.Dota2);
+
+
+                if (CSGOOK == false)
+                    RefreshMarket(Games.CSGO);
+                if (TF2OK == false)
+                    RefreshMarket(Games.TF2);
+                if (DOTA2OK == false)
+                    RefreshMarket(Games.Dota2);
+            }).Start();
         }
 
         public bool IsAvailable()
