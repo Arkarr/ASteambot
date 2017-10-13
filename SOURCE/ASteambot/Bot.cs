@@ -163,7 +163,9 @@ namespace ASteambot
             if (File.Exists(authFile))
             {
                 steamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(authFile));
-                return steamGuardAccount.GenerateSteamGuardCode();
+                string code = steamGuardAccount.GenerateSteamGuardCode();
+                Console.WriteLine("2FA code : " + code);
+                return code;
             }
             else
             {
@@ -802,7 +804,7 @@ namespace ASteambot
             if (stop == false)
             {
                 Console.WriteLine("Disconnected from Steam, reconnecting in 5 seconds...");
-                Thread.Sleep(TimeSpan.FromSeconds(5));
+                Thread.Sleep(TimeSpan.FromSeconds(20));
 
                 steamClient.Connect();
             }
