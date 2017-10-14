@@ -171,11 +171,20 @@ namespace ASteambot
             {
                 Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
-                Console.WriteLine("Bot will stop now.");
-                stop = true;
+                Console.WriteLine("Or you can try to input a code now, leave empty to quit : ");
+                string code = Console.ReadLine();
+                if (code.Equals(String.Empty))
+                {
+                    Console.WriteLine("Bot will stop now.");
+                    stop = true;
 
-                Disconnect();
-                return string.Empty;
+                    Disconnect();
+                    return string.Empty;
+                }
+                else
+                {
+                    return code;
+                }
             }
         }
 
