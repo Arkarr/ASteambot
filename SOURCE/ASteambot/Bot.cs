@@ -447,7 +447,7 @@ namespace ASteambot
         public void ScanInventory(int serverID, int moduleID, string strsteamID, bool send=true)
         {
             if(ArkarrSteamMarket == null)
-                ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey);
+                ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey, config.DisableMarketScan);
 
             GameServer gameServer = getServerByID(serverID);
 
@@ -933,7 +933,7 @@ namespace ASteambot
 
             Console.WriteLine("User Authenticated!");
 
-            ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey);
+            ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey, config.DisableMarketScan);
 
             //smp.ItemUpdated += Smp_ItemUpdated;
 

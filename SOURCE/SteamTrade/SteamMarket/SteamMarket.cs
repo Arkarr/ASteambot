@@ -39,7 +39,7 @@ namespace SteamTrade.SteamMarket
         private List<Item> steamMarketItemsCSGO;
         private List<Item> steamMarketItemsDOTA2;
 
-        public SteamMarket(string apikey)
+        public SteamMarket(string apikey, bool disabled)
         {
             APIkey = apikey;
             TF2OK = false;
@@ -49,12 +49,15 @@ namespace SteamTrade.SteamMarket
             steamMarketItemsCSGO = new List<Item>();
             steamMarketItemsDOTA2 = new List<Item>();
 
-            RefreshMarket();
+            if (!disabled)
+            {
+                RefreshMarket();
 
-            System.Timers.Timer timerMarketRefresher = new System.Timers.Timer();
-            timerMarketRefresher.Elapsed += new ElapsedEventHandler(TMR_ResfreshMarkets);
-            timerMarketRefresher.Interval = TimeSpan.FromHours(1).TotalMilliseconds;
-            timerMarketRefresher.Enabled = true;
+                System.Timers.Timer timerMarketRefresher = new System.Timers.Timer();
+                timerMarketRefresher.Elapsed += new ElapsedEventHandler(TMR_ResfreshMarkets);
+                timerMarketRefresher.Interval = TimeSpan.FromHours(1).TotalMilliseconds;
+                timerMarketRefresher.Enabled = true;
+            }
         }
 
         private void TMR_ResfreshMarkets(object source, ElapsedEventArgs e)
