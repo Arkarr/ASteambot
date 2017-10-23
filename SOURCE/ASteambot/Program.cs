@@ -18,18 +18,17 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.5.6 - PUBLIC";
+        private static string BUILD_VERSION = "2.5.7 - PUBLIC";
 
         public static bool DEBUG;
 
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
-            Exception ex = default(Exception);
-            ex = (Exception)e.ExceptionObject;
+            Exception ex = (Exception)e.ExceptionObject;
 
             using (var file = File.Exists("./SEND_TO_ARKARR.log") ? File.Open("./SEND_TO_ARKARR.log", FileMode.Append) : File.Open("./SEND_TO_ARKARR.log", FileMode.CreateNew))
             using (var stream = new StreamWriter(file))
-                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_VERSION + ")" + "\n*************************\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
+                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_VERSION + ")" + "\n*************************\n" + ex.HResult + ex.Source + "\n" + ex.TargetSite + "\n" + ex.InnerException + "\n" + ex.HelpLink + "\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
 
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Log file (" + "SEND_TO_ARKARR.log" + ") generated ! Send it to Arkarr !!");
