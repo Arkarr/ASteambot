@@ -341,6 +341,13 @@ namespace ASteambot
                     }
                 }
             }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("String formated incorrectly. Input wanted : [STEAMID]/[GROUP ID]");
+                Console.WriteLine("Got : " + args);
+                Console.ForegroundColor = ConsoleColor.White;
+            }
         }
 
         /// ///////////////////////////////////////////////////////////////

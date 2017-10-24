@@ -136,10 +136,9 @@ namespace ASteambot.Networking
                 Console.WriteLine("Error while processing a message sent by the game server!");
                 Console.WriteLine(e.Message);
                 Console.WriteLine("Command : " + content);
-                Console.WriteLine(e.StackTrace);
+                Console.WriteLine(e.ToString());
 
-                handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), state);
+                handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReadCallback), state);
             }
         }
     }
