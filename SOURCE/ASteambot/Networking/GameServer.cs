@@ -30,7 +30,7 @@ namespace ASteambot
             this.socket = socket;
             ServerID = serverid;
 
-            Send(-1, tcppaswd + "SRVID|" + ServerID);
+            Send(-1, "SRVID|" + ServerID);
         }
         
         public bool SocketConnected()
@@ -45,7 +45,7 @@ namespace ASteambot
 
         public void Send(int moduleID, string data)
         {
-            string finaldata = tcppasswd + moduleID + ")" + data;
+            string finaldata = tcppasswd + moduleID + ")" + data + "<EOF>";
 
             //Console.WriteLine(finaldata);
             byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
@@ -60,6 +60,7 @@ namespace ASteambot
                 
                 int bytesSent = handler.EndSend(ar);
                 Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+
 
             }
             catch (Exception e)

@@ -341,13 +341,6 @@ namespace ASteambot
                     }
                 }
             }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("String formated incorrectly. Input wanted : [STEAMID]/[GROUP ID]");
-                Console.WriteLine("Got : " + args);
-                Console.ForegroundColor = ConsoleColor.White;
-            }
         }
 
         /// ///////////////////////////////////////////////////////////////
@@ -451,7 +444,7 @@ namespace ASteambot
             Console.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
         }
 
-        public void ScanInventory(int serverID, int moduleID, string strsteamID, bool send=true)
+        public void ScanInventory(int serverID, int moduleID, string strsteamID, bool withImg, bool send=true)
         {
             if(ArkarrSteamMarket == null)
                 ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey, config.DisableMarketScan);
@@ -466,34 +459,48 @@ namespace ASteambot
                 return;
             }
 
-            string items = strsteamID+"/";
+            Thread invScan = new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+
+                    string items = strsteamID+"/";
             
-            items += AddInventoryItems(Games.TF2, steamID) + "/";
-            items += AddInventoryItems(Games.CSGO, steamID) + "/";
-            items += AddInventoryItems(Games.Dota2, steamID);
+                items += AddInventoryItems(Games.TF2, steamID, withImg) + "/";
+                items += AddInventoryItems(Games.CSGO, steamID, withImg) + "/";
+                items += AddInventoryItems(Games.Dota2, steamID, withImg);
 
-            string final = (int)NetworkCode.ASteambotCode.ScanInventory + "|" + items;
+                string final;
+                if (withImg)
+                    final = (int)NetworkCode.ASteambotCode.ScanInventoryIMG + "|" + items;
+                else
+                    final = (int)NetworkCode.ASteambotCode.ScanInventory + "|" + items;
 
-            if (!send)
-                return;
 
-            gameServer.Send(moduleID, final);
+                if (!send)
+                    return;
+
+                gameServer.Send(moduleID, final);
+            });
+
+            invScan.Start();
+            invScan.Join();
         }
 
         public void TCPCreateTradeOffer(int serverID, int moduleID, string message)
         {
             string[] steamIDitems = message.Split('/');
             SteamID steamid = new SteamID(steamIDitems[0]);
-            string[] assetIDs = steamIDitems[2].Split(',');
+            string[] assetIDs = steamIDitems[1].Split(',');
 
             GameServer gameServer = getServerByID(serverID);
 
-            SteamTrade.SteamMarket.Games game = (SteamTrade.SteamMarket.Games)Int32.Parse(steamIDitems[1]);
+            //SteamTrade.SteamMarket.Games game = (SteamTrade.SteamMarket.Games)Int32.Parse(steamIDitems[1]);
 
             List<long> contextId = new List<long>();
             contextId.Add(2);
-            OtherGenericInventory.load((int)game, contextId, steamid);
-            
+
+            OtherGenericInventory.load((int)Games.CSGO, contextId, steamid);
+
             TradeOffer to = tradeOfferManager.NewOffer(steamid);
 
             foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
@@ -504,7 +511,27 @@ namespace ASteambot
                     to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                 }
             }
-            
+            OtherGenericInventory.load((int)Games.TF2, contextId, steamid);
+
+            foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
+            {
+                if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
+                {
+                    GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
+                    to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                }
+            }
+            OtherGenericInventory.load((int)Games.Dota2, contextId, steamid);
+
+            foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
+            {
+                if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
+                {
+                    GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
+                    to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                }
+            }
+
             string offerId;
             to.Send(out offerId, String.Format("In exchange for points on server {0} the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("hh:mm")));
 
@@ -513,51 +540,45 @@ namespace ASteambot
             AcceptMobileTradeConfirmation(offerId);
         }
 
-        private string AddInventoryItems(SteamTrade.SteamMarket.Games game, SteamID steamID)
+        private string AddInventoryItems(SteamTrade.SteamMarket.Games game, SteamID steamID, bool img)
         {
-            string items = "EMPTY";
-            Thread invScan = new Thread(() =>
+            string items = "";
+            long[] contextID = new long[1];
+            contextID[0] = 2;
+
+            OtherGenericInventory.load((int)game, contextID, steamID);
+
+            if (OtherGenericInventory.errors.Count > 0)
             {
-                Thread.CurrentThread.IsBackground = true;
-
-                long[] contextID = new long[1];
-                contextID[0] = 2;
-
-                OtherGenericInventory.load((int)game, contextID, steamID);
-
-                if (OtherGenericInventory.errors.Count > 0)
+                Console.WriteLine("Error while inventory scan :");
+                foreach (string error in OtherGenericInventory.errors)
                 {
-                    Console.WriteLine("Error while inventory scan :");
-                    foreach (string error in OtherGenericInventory.errors)
-                    {
-                        Console.WriteLine(error);
-                    }
+                    Console.WriteLine(error);
                 }
-                else
+            }
+            else
+            {
+                bool allItemsFound = false;
+                while (!allItemsFound)
                 {
-                    bool allItemsFound = false;
-                    while (!allItemsFound)
-                    {
-                        allItemsFound = true;
+                    allItemsFound = true;
                         
-                        foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
-                        {
-                            GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
+                    foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
+                    {
+                        GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
                             
-                            Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
-                            if (i != null && description.tradable && i.Value != 0)
-                                items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + i.Value + ",";
-                        }
+                        Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                        if (i != null && description.tradable && i.Value != 0)
+                            items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ")  + "=" + i.Value + (img ? "=" + i.Image : "") + ",";
                     }
-
-                    if (!items.Equals("EMPTY") && items.Length != 0)
-                        items = items.Remove(items.Length - 1);
                 }
-            });
 
-            invScan.Start();
-            invScan.Join();
-
+                if (items.Length != 0)
+                    items = items.Remove(items.Length - 1);
+                else
+                    items = "EMPTY";
+            }
+            
             return items;
         }
 
@@ -819,8 +840,8 @@ namespace ASteambot
         {
             if (stop == false)
             {
-                Console.WriteLine("Disconnected from Steam, reconnecting in 5 seconds...");
-                Thread.Sleep(TimeSpan.FromSeconds(20));
+                Console.WriteLine("Disconnected from Steam, reconnecting in 3 seconds...");
+                Thread.Sleep(TimeSpan.FromSeconds(3));
 
                 steamClient.Connect();
             }
