@@ -25,8 +25,11 @@ namespace ASteambot.Networking
                     HookChat(bot, gsr);
                 break;
                 case NetworkCode.ASteambotCode.ScanInventory:
-                    ScanInventory(bot, gsr);
+                    ScanInventory(bot, gsr, false);
                 break;
+                case NetworkCode.ASteambotCode.ScanInventoryIMG:
+                    ScanInventory(bot, gsr, true);
+                break; 
                 case NetworkCode.ASteambotCode.CreateTradeOffer:
                     CreateTradeOffer(bot, gsr);
                 break;
@@ -68,9 +71,9 @@ namespace ASteambot.Networking
             bot.steamchatHandler.ServerMessage(gsr.ServerID, gsr.Arguments);
         }
 
-        private void ScanInventory(Bot bot, GameServerRequest gsr)
+        private void ScanInventory(Bot bot, GameServerRequest gsr, bool withImg)
         {
-            bot.ScanInventory(gsr.ServerID, gsr.ModuleID, gsr.Arguments);
+            bot.ScanInventory(gsr.ServerID, gsr.ModuleID, gsr.Arguments, withImg);
         }
 
         private void CreateTradeOffer(Bot bot, GameServerRequest gsr)

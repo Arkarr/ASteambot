@@ -22,7 +22,8 @@ namespace ASteambot.Networking
             TradeToken = 9,
             FriendInvite = 10,
             ReportPlayer = 11,
-            InviteSteamGroup = 12
+            InviteSteamGroup = 12,
+            ScanInventoryIMG = 13
         }
     }
 }

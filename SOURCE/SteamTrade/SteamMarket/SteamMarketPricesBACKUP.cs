@@ -85,7 +85,7 @@ namespace SteamTrade
             Item newItem = Items.Find(x => x.Name == item.Name);
             if (newItem == null)
             {
-                newItem = new Item(item.Name, tf.LastUpdate, 1, value, 440);
+                newItem = new Item(item.Name, tf.LastUpdate, 1, value, 440, "");
                 Items.Add(newItem);
             }
             else if (newItem.Value != item.Value.Middle)
@@ -100,7 +100,7 @@ namespace SteamTrade
         
         public void AddCSGOItem(string name, string lastupdate, int quantity, double value)
         {
-            Item item = new Item(name, lastupdate, quantity, value, 730);
+            Item item = new Item(name, lastupdate, quantity, value, 730, "");
             Items.Add(item);
         }
         

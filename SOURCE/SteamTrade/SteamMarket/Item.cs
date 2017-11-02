@@ -21,14 +21,17 @@ namespace SteamTrade.SteamMarket
         public double Value { get; set; }
         [JsonProperty("appid")]
         public int AppID { get; set; }
+        [JsonProperty("img")]
+        public string Image { get; set; }
 
-        public Item(string Name, string LastUpdate, int quantity, double value, int appID)
+        public Item(string Name, string LastUpdate, int quantity, double value, int appID, string img)
         {
             this.Name = Name;
             this.LastUpdated = LastUpdate;
             this.Value = value;
             this.Quantity = quantity;
             this.AppID = appID;
+            this.Image = img;
         }
     }
 }
