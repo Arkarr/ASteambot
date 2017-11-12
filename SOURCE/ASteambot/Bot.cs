@@ -1170,7 +1170,7 @@ namespace ASteambot
                     {
                         Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name);
                         if (itemInfo != null)
-                            cent += (itemInfo.Value / 100.0);
+                            cent += itemInfo.Value;
                     }
                 }
             }
