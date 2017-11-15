@@ -235,7 +235,18 @@ namespace SteamTrade.TradeOffer
         {
             newTradeOfferId = "";
 
-            string resp = steamWeb.Fetch(url, "POST", data, false, referer);
+            string resp;
+            try
+            {
+               resp = steamWeb.Fetch(url, "POST", data, false, referer);
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Error while sending request : " + url);
+                Console.WriteLine(">>> " + e.Message);
+                return false;
+            }
+
             if (!String.IsNullOrEmpty(resp))
             {
                 try
