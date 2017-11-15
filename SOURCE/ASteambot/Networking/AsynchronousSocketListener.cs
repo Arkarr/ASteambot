@@ -69,6 +69,16 @@ namespace ASteambot.Networking
                 listener.Bind(localEndPoint);
                 listener.Listen(100);
 
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (var ip in host.AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        Console.WriteLine("Listening on " + ip + ":" + Port);
+                        break;
+                    }
+                }
+
                 Running = true;
                 while (Running)
                 {
