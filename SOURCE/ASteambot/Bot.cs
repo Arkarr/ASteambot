@@ -49,6 +49,8 @@ namespace ASteambot
         private AsynchronousSocketListener socket;
         private TradeOfferManager tradeOfferManager;
         private SteamGuardAccount steamGuardAccount;
+        private Dictionary<string, int> tradeoffersGS;
+        private List<string> finishedTO;
         //private CallbackManager steamCallbackManager;
         private Dictionary<string, double> tradeOfferValue;
 
@@ -62,6 +64,8 @@ namespace ASteambot
             messageHandler = new HandleMessage();
             steamWeb = new SteamTrade.SteamWeb();
             manager = new CallbackManager(steamClient);
+            tradeoffersGS = new Dictionary<string, int>();
+            finishedTO = new List<string>();
             steamchatHandler = new HandleSteamChat(this);
             tradeOfferValue = new Dictionary<string, double>();
             MyGenericInventory = new GenericInventory(steamWeb);
@@ -533,11 +537,15 @@ namespace ASteambot
             }
 
             string offerId;
-            to.Send(out offerId, String.Format("In exchange for points on server {0} the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("hh:mm")));
+            to.Send(out offerId, String.Format("\"{0}\" the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm")));
 
-            gameServer.Send(moduleID, offerId);
-
-            AcceptMobileTradeConfirmation(offerId);
+            if (offerId != "")
+            {
+                gameServer.Send(moduleID, (int)NetworkCode.ASteambotCode.CreateTradeOffer + "|" + offerId);
+                tradeoffersGS.Add(offerId, moduleID);
+            
+                AcceptMobileTradeConfirmation(offerId);
+            }
         }
 
         private string AddInventoryItems(SteamTrade.SteamMarket.Games game, SteamID steamID, bool img)
@@ -1061,12 +1069,12 @@ namespace ASteambot
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && tradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
                 string msg = (int)NetworkCode.ASteambotCode.TradeOfferSuccess + "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
-                SendTradeOfferConfirmationToGameServers(msg);
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, msg);
             }
             else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && tradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
                 string msg = (int)NetworkCode.ASteambotCode.TradeOfferDecline + "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
-                SendTradeOfferConfirmationToGameServers(msg);
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, msg);
             }
         }
 
@@ -1093,14 +1101,26 @@ namespace ASteambot
                 
                 msg += "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + value;
 
-                SendTradeOfferConfirmationToGameServers(msg);
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, msg);
             }
         }
 
-        private void SendTradeOfferConfirmationToGameServers(string data)
+        private void SendTradeOfferConfirmationToGameServers(string id, string data)
         {
             foreach (GameServer gs in botManager.Servers)
-                gs.Send(-2, data);
+            {
+                if (tradeoffersGS.ContainsKey(id))
+                {
+                    gs.Send(tradeoffersGS[id], data);
+                    tradeoffersGS.Remove(id);
+                    finishedTO.Add(id);
+                }
+                else
+                {
+                    if(!finishedTO.Contains(id))
+                        gs.Send(-2, data); //should never ever go here !
+                }
+            }
         }
 
         private void UpdateTradeOfferInDatabase(TradeOffer to, double value)
