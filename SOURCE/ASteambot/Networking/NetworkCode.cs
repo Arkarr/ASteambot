@@ -23,7 +23,8 @@ namespace ASteambot.Networking
             FriendInvite = 10,
             ReportPlayer = 11,
             InviteSteamGroup = 12,
-            ScanInventoryIMG = 13
+            ScanInventoryIMG = 13,
+            ExecuteCommand = 14
         }
     }
 }

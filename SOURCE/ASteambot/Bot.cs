@@ -336,12 +336,12 @@ namespace ASteambot
                         if (groupID.IsValid)
                         {
                             InviteUserToGroup(steamID, groupID);
-                            gs.Send(moduleID, ((int)Networking.NetworkCode.ASteambotCode.InviteSteamGroup).ToString() + "|" + steamID.ToString());
+                            gs.Send(moduleID, NetworkCode.ASteambotCode.InviteSteamGroup, steamID.ToString());
                         }
                     }
                     else
                     {
-                        gs.Send(moduleID, (int)NetworkCode.ASteambotCode.NotFriends + "|" + steamIDgroupID[0]);
+                        gs.Send(moduleID, NetworkCode.ASteambotCode.NotFriends, steamIDgroupID[0]);
                     }
                 }
             }
@@ -459,7 +459,7 @@ namespace ASteambot
 
             if (!friends.Contains(steamID))
             {
-                gameServer.Send(moduleID, (int)NetworkCode.ASteambotCode.NotFriends + "|"+ strsteamID);
+                gameServer.Send(moduleID, NetworkCode.ASteambotCode.NotFriends, strsteamID);
                 return;
             }
 
@@ -473,17 +473,13 @@ namespace ASteambot
                 items += AddInventoryItems(Games.CSGO, steamID, withImg) + "/";
                 items += AddInventoryItems(Games.Dota2, steamID, withImg);
 
-                string final;
-                if (withImg)
-                    final = (int)NetworkCode.ASteambotCode.ScanInventoryIMG + "|" + items;
-                else
-                    final = (int)NetworkCode.ASteambotCode.ScanInventory + "|" + items;
-
-
                 if (!send)
                     return;
-
-                gameServer.Send(moduleID, final);
+                
+                if (withImg)
+                    gameServer.Send(moduleID, NetworkCode.ASteambotCode.ScanInventoryIMG, items);
+                else
+                    gameServer.Send(moduleID, NetworkCode.ASteambotCode.ScanInventory, items);
             });
 
             invScan.Start();
@@ -541,7 +537,7 @@ namespace ASteambot
 
             if (offerId != "")
             {
-                gameServer.Send(moduleID, (int)NetworkCode.ASteambotCode.CreateTradeOffer + "|" + offerId);
+                gameServer.Send(moduleID, NetworkCode.ASteambotCode.CreateTradeOffer, offerId);
                 tradeoffersGS.Add(offerId, moduleID);
             
                 AcceptMobileTradeConfirmation(offerId);
@@ -803,7 +799,7 @@ namespace ASteambot
 
         private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
         {
-            if (callback.EntryType == EChatEntryType.ChatMsg)
+            if (callback.EntryType == EChatEntryType.ChatMsg && config.SteamAdmins.Contains(callback.Sender.ToString()))
                 steamchatHandler.HandleMessage(callback.Sender, callback.Message);
         }   
         
@@ -1068,13 +1064,13 @@ namespace ASteambot
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && tradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
-                string msg = (int)NetworkCode.ASteambotCode.TradeOfferSuccess + "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
-                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, msg);
+                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
             }
             else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && tradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
-                string msg = (int)NetworkCode.ASteambotCode.TradeOfferDecline + "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
-                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, msg);
+                string msg =  offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, NetworkCode.ASteambotCode.TradeOfferDecline, msg);
             }
         }
 
@@ -1086,39 +1082,35 @@ namespace ASteambot
             {
                 double value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
 
-                string msg = "";
+                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + value;
 
                 if (offer.Items.GetMyItems().Count == 0)
                 {
                     offer.Accept();
-                    msg += ((int)NetworkCode.ASteambotCode.TradeOfferSuccess).ToString();
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
                 }
                 else
                 {
                     offer.Decline();
-                    msg += ((int)NetworkCode.ASteambotCode.TradeOfferDecline).ToString();
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, NetworkCode.ASteambotCode.TradeOfferDecline, msg);
                 }
-                
-                msg += "|" + offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + value;
-
-                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, msg);
             }
         }
 
-        private void SendTradeOfferConfirmationToGameServers(string id, string data)
+        private void SendTradeOfferConfirmationToGameServers(string id, NetworkCode.ASteambotCode code, string data)
         {
             foreach (GameServer gs in botManager.Servers)
             {
                 if (tradeoffersGS.ContainsKey(id))
                 {
-                    gs.Send(tradeoffersGS[id], data);
+                    gs.Send(tradeoffersGS[id], code, data);
                     tradeoffersGS.Remove(id);
                     finishedTO.Add(id);
                 }
                 else
                 {
                     if(!finishedTO.Contains(id))
-                        gs.Send(-2, data); //should never ever go here !
+                        gs.Send(-2, code, data); //should never ever go here !
                 }
             }
         }
