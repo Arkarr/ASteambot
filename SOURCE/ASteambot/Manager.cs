@@ -195,7 +195,7 @@ namespace ASteambot
         private void testTCP(string[] args)
         {
             int count = 0;
-            string test = (int)NetworkCode.ASteambotCode.Simple+"|";
+            string test = "";
             foreach (string arg in args)
                 test += arg + " ";
 
@@ -203,7 +203,7 @@ namespace ASteambot
             {
                 foreach (GameServer gs in bot.botManager.Servers)
                 {
-                    gs.Send(-2, test);
+                    gs.Send(-2, NetworkCode.ASteambotCode.Simple, test);
                     count++;
                 }
             }

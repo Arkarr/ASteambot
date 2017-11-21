@@ -30,7 +30,7 @@ namespace ASteambot
             this.socket = socket;
             ServerID = serverid;
 
-            Send(-1, "SRVID|" + ServerID);
+            FirstSend(ServerID);
         }
         
         public bool SocketConnected()
@@ -42,10 +42,18 @@ namespace ASteambot
             else
                 return true;
         }
-
-        public void Send(int moduleID, string data)
+        public void FirstSend(int serverID)
         {
-            string finaldata = tcppasswd + moduleID + ")" + data + "<EOF>";
+            string finaldata = tcppasswd + "-1)SRVID| " + serverID + "<EOF>";
+
+            //Console.WriteLine(finaldata);
+            byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
+            socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
+        }
+
+        public void Send(int moduleID, NetworkCode.ASteambotCode netcode, string data)
+        {
+            string finaldata = tcppasswd + moduleID + ")" + ((int)netcode).ToString() + "|" + data + "<EOF>";
 
             //Console.WriteLine(finaldata);
             byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
