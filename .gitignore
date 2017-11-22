@@ -53,3 +53,7 @@ Version.cpp
 *.auth
 *.fakes
 *.fakesconfig
+*.xml
+*.nupkg
+*.nupkg
+*.nupkg
