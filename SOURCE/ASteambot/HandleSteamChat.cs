@@ -86,19 +86,29 @@ namespace ASteambot
 
         private void ExecuteServerCommand(SteamID partenar, string message)
         {
-            int id = Int32.Parse(message.Split(' ')[0]) - 1;
-            string cmd = message.Replace(message.Split(' ')[0], "");
-
-            if (id < 0 || id > bot.botManager.Servers.Count)
+            int id = 0;
+            if (Int32.TryParse(message.Split(' ')[0], out id))
             {
-                SendChatMessage(partenar, "Invalid server ID '"+ id +"' specified !");
-                return;
+
+                string cmd = message.Replace(message.Split(' ')[0], "");
+
+                if (id < 0 || id > bot.botManager.Servers.Count)
+                {
+                    SendChatMessage(partenar, "Invalid server ID '" + id + "' specified !");
+                    SendChatMessage(partenar, "Use SERVER command to get a valid server ID !");
+                    return;
+                }
+
+                GameServer gs = bot.botManager.Servers[id];
+                gs.Send(-2, Networking.NetworkCode.ASteambotCode.ExecuteCommand, cmd);
+
+                SendChatMessage(partenar, "Command '" + cmd + "' sent to server '" + gs.Name + "' !");
             }
-
-            GameServer gs = bot.botManager.Servers[id];
-            gs.Send(-2, Networking.NetworkCode.ASteambotCode.ExecuteCommand, cmd);
-
-            SendChatMessage(partenar, "Command '"+ cmd +"' sent to server '"+ gs.Name + "' !");
+            else
+            {
+                SendChatMessage(partenar, "Invalid server ID '" + message.Split(' ')[0] + "' specified !");
+                SendChatMessage(partenar, "Use SERVER command to get a valid server ID !");
+            }
         }
 
         public void PrintHelp(SteamID partenar)
