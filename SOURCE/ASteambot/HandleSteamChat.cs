@@ -64,7 +64,7 @@ namespace ASteambot
             GameServer gs = bot.botManager.Servers[serverID - 1];
 
             string name = bot.SteamFriends.GetFriendPersonaName(partenar);
-            string data = string.Format("{1} : {2}", name, message);
+            string data = string.Format("{0} : {1}", name, message);
             gs.Send(moduleID, Networking.NetworkCode.ASteambotCode.Simple, data);
         }
 
