@@ -321,7 +321,7 @@ namespace ASteambot
 
         public void InviteUserToGroup(int serverID, int moduleID, string args)
         {
-            GameServer gs = getServerByID(serverID);
+            GameServer gs = GetServerByID(serverID);
 
             string[] steamIDgroupID = args.Split('/');
 
@@ -404,7 +404,7 @@ namespace ASteambot
             }
         }
 
-        private GameServer getServerByID(int serverID)
+        public GameServer GetServerByID(int serverID)
         {
             foreach (GameServer gs in botManager.Servers)
             {
@@ -417,7 +417,7 @@ namespace ASteambot
         
         public void ReportPlayer(int serverID, string args)
         {
-            GameServer gs = getServerByID(serverID);
+            GameServer gs = GetServerByID(serverID);
 
             string[] ids = args.Split('/');
             SteamID steamID = new SteamID(ids[0]);
@@ -453,7 +453,7 @@ namespace ASteambot
             if(ArkarrSteamMarket == null)
                 ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey, config.DisableMarketScan);
 
-            GameServer gameServer = getServerByID(serverID);
+            GameServer gameServer = GetServerByID(serverID);
 
             SteamID steamID = new SteamID(strsteamID);
 
@@ -492,7 +492,7 @@ namespace ASteambot
             SteamID steamid = new SteamID(steamIDitems[0]);
             string[] assetIDs = steamIDitems[1].Split(',');
 
-            GameServer gameServer = getServerByID(serverID);
+            GameServer gameServer = GetServerByID(serverID);
 
             //SteamTrade.SteamMarket.Games game = (SteamTrade.SteamMarket.Games)Int32.Parse(steamIDitems[1]);
 
