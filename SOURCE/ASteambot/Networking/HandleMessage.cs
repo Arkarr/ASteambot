@@ -42,11 +42,19 @@ namespace ASteambot.Networking
                 case NetworkCode.ASteambotCode.InviteSteamGroup:
                     InviteToSteamGroup(bot, gsr);
                 break;
+                case NetworkCode.ASteambotCode.Unhookchat:
+                    UnhookChat(bot, gsr);
+                break;
             }
         }
 
         private void RegisterBot(Bot bot, GameServerRequest gsr)
         {
+            foreach (GameServer gs in bot.botManager.Servers)
+            {
+                if (gs.SocketConnected() == false)
+                    bot.steamchatHandler.ServerRemoved(gs.ServerID);
+            }
             bot.botManager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
 
             IPEndPoint ipendpoint = ((IPEndPoint)gsr.Socket.RemoteEndPoint);
@@ -69,6 +77,11 @@ namespace ASteambot.Networking
         private void HookChat(Bot bot, GameServerRequest gsr)
         {
             bot.steamchatHandler.ServerMessage(gsr.ServerID, gsr.Arguments);
+        }
+
+        private void UnhookChat(Bot bot, GameServerRequest gsr)
+        {
+            //bot.UnhookChat(gsr.ServerID, gsr.Arguments);
         }
 
         private void ScanInventory(Bot bot, GameServerRequest gsr, bool withImg)

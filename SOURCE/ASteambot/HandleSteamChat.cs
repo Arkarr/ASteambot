@@ -61,7 +61,7 @@ namespace ASteambot
         private void SendMessageToGameServer(int moduleID, SteamID partenar, string message)
         {
             int serverID = ChatListener[partenar];
-            GameServer gs = bot.botManager.Servers[serverID - 1];
+            GameServer gs = bot.GetServerByID(serverID);
 
             string name = bot.SteamFriends.GetFriendPersonaName(partenar);
             string data = string.Format("{0} : {1}", name, message);
@@ -82,6 +82,17 @@ namespace ASteambot
 
             GameServer server = bot.botManager.Servers[serverID-1];
             server.Send(moduleID, Networking.NetworkCode.ASteambotCode.Unhookchat, "");
+        }
+        
+        public void UnhookChat(int serverID, string arguments)
+        {
+            foreach (KeyValuePair<SteamID, int> value in ChatListener)
+            {
+                if (value.Value != serverID)
+                    continue;
+
+
+            }
         }
 
         private void ExecuteServerCommand(SteamID partenar, string message)
@@ -141,6 +152,20 @@ namespace ASteambot
             }
         }
 
+        public void ServerRemoved(int oldServerID)
+        {
+            foreach (KeyValuePair<SteamID, int> value in ChatListener)
+            {
+                if (value.Value == oldServerID)
+                {
+                    SendChatMessage(value.Key, "Disconnected from server ! Message won't be transfered anymore...");
+                }
+            }
+
+            foreach (var item in ChatListener.Where(kvp => kvp.Value == oldServerID).ToList())
+                ChatListener.Remove(item.Key);
+        }
+
         public void ServerMessage(int serverid, string message)
         {
             foreach(KeyValuePair<SteamID, int> value in ChatListener)
@@ -169,7 +194,7 @@ namespace ASteambot
 
             GameServer gs = bot.botManager.Servers[serverID - 1];
 
-            ChatListener.Add(partenar, serverID);
+            ChatListener.Add(partenar, gs.ServerID);
 
             SendChatMessage(partenar, "Connecting to server...");
             
