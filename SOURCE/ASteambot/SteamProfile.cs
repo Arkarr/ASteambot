@@ -97,11 +97,15 @@ namespace ASteambot
             if (response != String.Empty)
             {
                 response = response.Replace("\t", "").Replace("\n", "").Replace("\r", "").Trim();
-                response = response.Substring(response.IndexOf("<profile>"));
-                XmlSerializer serializer = new XmlSerializer(typeof(SteamProfileInfos));
-                using (TextReader reader = new StringReader(response))
+                int index = response.IndexOf("<profile>");
+                if (index != -1)
                 {
-                    return (SteamProfileInfos)serializer.Deserialize(reader);
+                    response = response.Substring(index);
+                    XmlSerializer serializer = new XmlSerializer(typeof(SteamProfileInfos));
+                    using (TextReader reader = new StringReader(response))
+                    {
+                        return (SteamProfileInfos)serializer.Deserialize(reader);
+                    }
                 }
             }
 

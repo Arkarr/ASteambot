@@ -426,20 +426,32 @@ namespace ASteambot
             SteamProfileInfos spGuy = LoadSteamProfile(steamWeb, steamID);
             SteamProfileInfos spDude = LoadSteamProfile(steamWeb, reportedDude);
 
-            string firstMsg = String.Format("{0} ({1}) reported {2} ({3}) for \"{4}\" @ {5} ({6}) !", spGuy.Name, steamID.ToString(), spDude.Name, reportedDude.ToString(), ids[2], DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm"));
-            string secondMsg = String.Format("Name of server : {0}", gs.Name);
-            string thirdMsg = String.Format("Direct URL : steam://connect/{0}:{1}", gs.IP, gs.Port);
-
-            foreach (SteamID steamid in friends)
+            if (spDude != null && spGuy != null)
             {
-                if (config.SteamAdmins.Contains(steamid.ToString()))
+                string firstMsg = String.Format("{0} ({1}) reported {2} ({3}) for \"{4}\" @ {5} ({6}) !", spGuy.Name, steamID.ToString(), spDude.Name, reportedDude.ToString(), ids[2], DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm"));
+                string secondMsg = String.Format("Name of server : {0}", gs.Name);
+                string thirdMsg = String.Format("Direct URL : steam://connect/{0}:{1}", gs.IP, gs.Port);
+
+                foreach (SteamID steamid in friends)
                 {
-                    SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, firstMsg);
-                    Thread.Sleep(100);
-                    SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, secondMsg);
-                    Thread.Sleep(100);
-                    SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, thirdMsg);
+                    if (config.SteamAdmins.Contains(steamid.ToString()))
+                    {
+                        SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, firstMsg);
+                        Thread.Sleep(100);
+                        SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, secondMsg);
+                        Thread.Sleep(100);
+                        SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, thirdMsg);
+                    }
                 }
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("One of the following steam ID is wrong !");
+                Console.WriteLine("> " + ids[0]);
+                Console.WriteLine("> " + ids[1]);
+                Console.WriteLine("Report was denied !");
+                Console.ForegroundColor = ConsoleColor.White;
             }
         }
 
