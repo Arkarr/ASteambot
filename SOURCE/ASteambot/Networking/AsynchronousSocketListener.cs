@@ -141,7 +141,7 @@ namespace ASteambot.Networking
                 }
             }
             catch (SocketException ex) { Console.WriteLine(ex.Message); }
-            catch (Exception e)
+            /*catch (Exception e)
             {
                 Console.WriteLine("Error while processing a message sent by the game server!");
                 Console.WriteLine(e.Message);
@@ -150,7 +150,7 @@ namespace ASteambot.Networking
 
                 handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                 new AsyncCallback(ReadCallback), state);
-            }
+            }*/
         }
     }
 }
