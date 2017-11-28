@@ -51,13 +51,33 @@ namespace ASteambot
             socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
         }
 
-        public void Send(int moduleID, NetworkCode.ASteambotCode netcode, string data)
+        public bool Send(int moduleID, NetworkCode.ASteambotCode netcode, string data)
         {
             string finaldata = tcppasswd + moduleID + ")" + ((int)netcode).ToString() + "|" + data + "<EOF>";
 
-            //Console.WriteLine(finaldata);
-            byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
-            socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
+            if (SocketConnected())
+            {
+                try
+                {
+                    byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
+                    socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
+                }
+                catch(Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(e);
+                    Console.ForegroundColor = ConsoleColor.White;
+                    PrintSocketError(data);
+                    return false;
+                }
+
+                return true;
+            }
+            else
+            {
+                PrintSocketError(data);
+                return false;
+            }
         }
 
         private void SendCallback(IAsyncResult ar)
@@ -75,6 +95,15 @@ namespace ASteambot
             {
                 Console.WriteLine(e.ToString());
             }
+        }
+
+        private void PrintSocketError(string msg)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Could not send data : ");
+            Console.WriteLine(msg);
+            Console.WriteLine("to " + Name + " ("+ServerID+") because the socket is not connected ("+IP + ":" + Port +") !");
+            Console.ForegroundColor = ConsoleColor.White;
         }
     }
 }
