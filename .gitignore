@@ -57,3 +57,5 @@ Version.cpp
 *.nupkg
 *.nupkg
 *.nupkg
+*.ide
+*.sqlite

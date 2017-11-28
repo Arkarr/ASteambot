@@ -63,7 +63,7 @@ namespace ASteambot
             int serverID = ChatListener[partenar];
             GameServer gs = bot.GetServerByID(serverID);
 
-            string name = bot.SteamFriends.GetFriendPersonaName(partenar);
+            string name = bot.SteamFriends.GetFriendPersonaName(partenar).Replace('|', ' ').Trim(' ');
             string data = string.Format("{0} : {1}", name, message);
             gs.Send(moduleID, Networking.NetworkCode.ASteambotCode.Simple, data);
         }
@@ -157,13 +157,16 @@ namespace ASteambot
             foreach (KeyValuePair<SteamID, int> value in ChatListener)
             {
                 if (value.Value == oldServerID)
-                {
                     SendChatMessage(value.Key, "Disconnected from server ! Message won't be transfered anymore...");
-                }
             }
+            
+            for (int i = ChatListener.Count - 1; i >= 0; i--)
+            {
+                KeyValuePair<SteamID,int> listener = ChatListener.ElementAt(i);
 
-            foreach (var item in ChatListener.Where(kvp => kvp.Value == oldServerID).ToList())
-                ChatListener.Remove(item.Key);
+                if (listener.Value == oldServerID)
+                    ChatListener.Remove(listener.Key);
+            }
         }
 
         public void ServerMessage(int serverid, string message)
