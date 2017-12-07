@@ -54,9 +54,6 @@ Version.cpp
 *.fakes
 *.fakesconfig
 *.xml
-*.nupkg
-*.nupkg
-*.nupkg
 *.ide
 *.sqlite
-/packages/
+SOURCE/packages/
