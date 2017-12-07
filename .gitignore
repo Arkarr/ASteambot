@@ -56,4 +56,4 @@ Version.cpp
 *.xml
 *.ide
 *.sqlite
-SOURCE/packages/
+/SOURCE/packages/
