@@ -24,7 +24,8 @@ namespace ASteambot.Networking
             ReportPlayer = 11,
             InviteSteamGroup = 12,
             ScanInventoryIMG = 13,
-            ExecuteCommand = 14
+            ExecuteCommand = 14,
+            Disconnect = 15
         }
     }
 }

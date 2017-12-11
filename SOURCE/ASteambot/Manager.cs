@@ -15,6 +15,7 @@ namespace ASteambot
     {
         public Bot SelectedBot { get; private set; }
         public List<Bot> OnlineBots { get; private set; }
+        
         public List<GameServer> Servers { get; private set; }
         public Config Config { get; private set; }
 
@@ -31,6 +32,24 @@ namespace ASteambot
             Servers = new List<GameServer>();
         }
 
+        public void RefreshServers()
+        {
+            foreach (Bot bot in OnlineBots)
+            {
+                foreach (GameServer gs in bot.botManager.Servers)
+                {
+                    if (gs.SocketConnected() == false)
+                        bot.steamchatHandler.ServerRemoved(gs.ServerID);
+                }
+                bot.botManager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
+            }
+        }
+
+        public void DisconnectServer(int serverID)
+        {
+            Servers.RemoveAll(gs => gs.ServerID == serverID);
+        }
+
         public void Start()
         {
             Running = true;
@@ -44,10 +63,15 @@ namespace ASteambot
                     foreach (Bot bot in bots)
                     {
                         bot.Run();
-                        if (bot.LoggedIn)
+
+                        if (bot.LoggedIn && !OnlineBots.Contains(bot))
+                        {
                             OnlineBots.Add(bot);
-                        else
+                        }
+                        else if(!bot.LoggedIn)
+                        {
                             OnlineBots.Remove(bot);
+                        }
                     }
                 }
             }
