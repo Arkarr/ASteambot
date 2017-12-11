@@ -16,64 +16,63 @@ using System.Net.Sockets;
 using SteamTrade.SteamMarket;
 
 using static ASteambot.SteamProfile;
+using System.Collections.Specialized;
 
 namespace ASteambot
 {
     public class Bot
     {
         public string Name { get; private set; }
-        public bool LoggedIn { get; private set; }
         public bool Running { get; private set; }
+        public Config config { get; private set; }
+        public bool LoggedIn { get; private set; }
         public bool WebLoggedIn { get; private set; }
-        public Manager botManager { get; private set; }
+        public Manager BotManager { get; private set; }
+        public List<SteamID> Friends { get; private set; }
+        public SteamMarket ArkarrSteamMarket { get; set; }
         public SteamFriends SteamFriends { get; private set; }
-        public SteamMarket ArkarrSteamMarket { get; private set; }
-        public HandleSteamChat steamchatHandler { get; private set; }
+        public SteamTrade.SteamWeb SteamWeb { get; private set; }
+        public HandleSteamChat SteamchatHandler { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
+        public TradeOfferManager TradeOfferManager { get; private set; }
+        public Dictionary<string, int> TradeoffersGS { get; private set; }
         public Dictionary<SteamID, int> ChatListener { get; private set; }
         public GenericInventory OtherGenericInventory { get; private set; }
 
         private bool stop;
         private Database DB;
-        private Config config;
         private bool renaming;
         private string myUniqueId;
         private string myUserNonce;
         private LoginInfo loginInfo;
         private SteamUser steamUser;
-        private List<SteamID> friends;
+        private List<string> finishedTO;
         private SteamClient steamClient;
         private CallbackManager manager;
         private Thread tradeOfferThread;
         private BackgroundWorker botThread;
         private HandleMessage messageHandler;
-        private SteamTrade.SteamWeb steamWeb;
         private AsynchronousSocketListener socket;
-        private TradeOfferManager tradeOfferManager;
         private SteamGuardAccount steamGuardAccount;
-        private Dictionary<string, int> tradeoffersGS;
-        private List<string> finishedTO;
-        //private CallbackManager steamCallbackManager;
         private Dictionary<string, double> tradeOfferValue;
 
         public Bot(Manager botManager, LoginInfo loginInfo, Config config, AsynchronousSocketListener socket)
         {
             this.socket = socket;
             this.config = config;
+            BotManager = botManager;
             this.loginInfo = loginInfo;
-            this.botManager = botManager;
             steamClient = new SteamClient();
-            messageHandler = new HandleMessage();
-            steamWeb = new SteamTrade.SteamWeb();
-            manager = new CallbackManager(steamClient);
-            tradeoffersGS = new Dictionary<string, int>();
             finishedTO = new List<string>();
-            steamchatHandler = new HandleSteamChat(this);
+            messageHandler = new HandleMessage();
+            SteamWeb = new SteamTrade.SteamWeb();
+            manager = new CallbackManager(steamClient);
             ChatListener = new Dictionary<SteamID, int>();
+            TradeoffersGS = new Dictionary<string, int>();
+            TradeoffersGS = new Dictionary<string, int>();
             tradeOfferValue = new Dictionary<string, double>();
-            MyGenericInventory = new GenericInventory(steamWeb);
-            OtherGenericInventory = new GenericInventory(steamWeb);
-            //steamCallbackManager = new CallbackManager(steamClient);
+            MyGenericInventory = new GenericInventory(SteamWeb);
+            OtherGenericInventory = new GenericInventory(SteamWeb);
 
             DB = new Database(config.DatabaseServer, config.DatabaseUser, config.DatabasePassword, config.DatabaseName, config.DatabasePort);
             DB.InitialiseDatabase();
@@ -118,10 +117,8 @@ namespace ASteambot
             {
                 try
                 {
-                    if (tradeOfferManager != null)
-                    {
-                        tradeOfferManager.HandleNextPendingTradeOfferUpdate();
-                    }
+                    if (TradeOfferManager != null)
+                        TradeOfferManager.HandleNextPendingTradeOfferUpdate();
 
                     Thread.Sleep(1);
                 }
@@ -224,35 +221,34 @@ namespace ASteambot
                 switch (friend.SteamID.AccountType)
                 {
                     case EAccountType.Clan:
-
                         if (friend.Relationship == EFriendRelationship.RequestRecipient)
                             DeclineGroupInvite(friend.SteamID);
-                        break;
+                    break;
 
                     default:
                         CreateFriendsListIfNecessary();
 
                         if (friend.Relationship == EFriendRelationship.None)
                         {
-                            friends.Remove(friend.SteamID);
+                            Friends.Remove(friend.SteamID);
                         }
                         else if (friend.Relationship == EFriendRelationship.RequestRecipient)
                         {
-                            if (!friends.Contains(friend.SteamID))
+                            if (!Friends.Contains(friend.SteamID))
                             {
-                                friends.Add(friend.SteamID);
+                                Friends.Add(friend.SteamID);
                                 newFriends.Add(friend.SteamID);
                             }
                         }
                         else if (friend.Relationship == EFriendRelationship.RequestInitiator)
                         {
-                            if (!friends.Contains(friend.SteamID))
+                            if (!Friends.Contains(friend.SteamID))
                             {
-                                friends.Add(friend.SteamID);
+                                Friends.Add(friend.SteamID);
                                 newFriends.Add(friend.SteamID);
                             }
                         }
-                        break;
+                    break;
                 }
             }
 
@@ -264,11 +260,11 @@ namespace ASteambot
 
                 Random rnd = new Random();
                 int unluckyDude = 0;
-                SteamID steamID = friends[unluckyDude];
+                SteamID steamID = Friends[unluckyDude];
                 while (newFriends.Contains(steamID))
                 {
-                    unluckyDude = rnd.Next(friends.Count);
-                    steamID = friends[unluckyDude];
+                    unluckyDude = rnd.Next(Friends.Count);
+                    steamID = Friends[unluckyDude];
                 }
 
                 SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, "Sorry, I had to remove you because my friend list is too small ! Feel free to add me back anytime !");
@@ -285,12 +281,12 @@ namespace ASteambot
 
         private void CreateFriendsListIfNecessary()
         {
-            if (friends != null)
+            if (Friends != null)
                 return;
 
-            friends = new List<SteamID>();
+            Friends = new List<SteamID>();
             for (int i = 0; i < SteamFriends.GetFriendCount(); i++)
-                friends.Add(SteamFriends.GetFriendByIndex(i));
+                Friends.Add(SteamFriends.GetFriendByIndex(i));
         }
 
         private void AcceptGroupInvite(SteamID group)
@@ -313,7 +309,7 @@ namespace ASteambot
             steamClient.Send(DeclineInvite);
         }
 
-        private void InviteUserToGroup(SteamID user, SteamID groupId)
+        public void InviteUserToGroup(SteamID user, SteamID groupId)
         {
             var InviteUser = new ClientMsg<CMsgInviteUserToGroup>((int)EMsg.ClientInviteUserToClan);
 
@@ -323,36 +319,7 @@ namespace ASteambot
 
             this.steamClient.Send(InviteUser);
         }
-
-        public void InviteUserToGroup(int serverID, int moduleID, string args)
-        {
-            GameServer gs = GetServerByID(serverID);
-
-            string[] steamIDgroupID = args.Split('/');
-
-            if (steamIDgroupID.Length == 2)
-            {
-                SteamID steamID = new SteamID(steamIDgroupID[0]);
-                SteamID groupID = new SteamID(ulong.Parse(steamIDgroupID[1]));
-                if (steamID.IsValid)
-                {
-                    if (friends.Contains(steamID))
-                    {
-                        if (groupID.IsValid)
-                        {
-                            InviteUserToGroup(steamID, groupID);
-                            gs.Send(moduleID, NetworkCode.ASteambotCode.InviteSteamGroup, steamID.ToString());
-                        }
-                    }
-                    else
-                    {
-                        gs.Send(moduleID, NetworkCode.ASteambotCode.NotFriends, steamIDgroupID[0]);
-                    }
-                }
-            }
-        }
-
-        /// ///////////////////////////////////////////////////////////////
+        
         public void CreateTradeOffer(string otherSteamID)
         {
             List<long> contextId = new List<long>();
@@ -360,7 +327,7 @@ namespace ASteambot
             MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.TF2, contextId, steamClient.SteamID);
 
             SteamID partenar = new SteamID(otherSteamID);
-            TradeOffer to = tradeOfferManager.NewOffer(partenar);
+            TradeOffer to = TradeOfferManager.NewOffer(partenar);
 
             GenericInventory.Item test = MyGenericInventory.items.FirstOrDefault().Value;
 
@@ -373,11 +340,11 @@ namespace ASteambot
 
             AcceptMobileTradeConfirmation(offerId);
         }
-        ////////////////////////////////////////////////////////////////////
+
         public void AcceptMobileTradeConfirmation(string offerId)
         {
-            steamGuardAccount.Session.SteamLogin = steamWeb.Token;
-            steamGuardAccount.Session.SteamLoginSecure = steamWeb.TokenSecure;
+            steamGuardAccount.Session.SteamLogin = SteamWeb.Token;
+            steamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
             try
             {
                 foreach (var confirmation in steamGuardAccount.FetchConfirmations())
@@ -411,22 +378,22 @@ namespace ASteambot
 
         public GameServer GetServerByID(int serverID)
         {
-            GameServer g = botManager.Servers.Find(gs => gs.ServerID == serverID);
+            GameServer g = BotManager.Servers.Find(gs => gs.ServerID == serverID);
             if (g == null)
                 return null;
 
             if (!g.SocketConnected())
             {
-                foreach (GameServer gs in botManager.Servers)
+                foreach (GameServer gs in BotManager.Servers)
                 {
                     if (gs.ServerID != serverID && gs.Name == g.Name)
                     {
-                        botManager.RefreshServers();
+                        BotManager.RefreshServers();
                         return gs;
                     }
                 }
 
-                botManager.RefreshServers();
+                BotManager.RefreshServers();
             }
             else
             {
@@ -436,220 +403,21 @@ namespace ASteambot
             return null;
         }
 
-        public void ReportPlayer(int serverID, string args)
-        {
-            GameServer gs = GetServerByID(serverID);
-
-            string[] ids = args.Split('/');
-            SteamID steamID = new SteamID(ids[0]);
-            SteamID reportedDude = new SteamID(ids[1]);
-
-            SteamProfileInfos spGuy = LoadSteamProfile(steamWeb, steamID);
-            SteamProfileInfos spDude = LoadSteamProfile(steamWeb, reportedDude);
-
-            if (spDude != null && spGuy != null)
-            {
-                string firstMsg = String.Format("{0} ({1}) reported {2} ({3}) for \"{4}\" @ {5} ({6}) !", spGuy.Name, steamID.ToString(), spDude.Name, reportedDude.ToString(), ids[2], DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm"));
-                string secondMsg = String.Format("Name of server : {0}", gs.Name);
-                string thirdMsg = String.Format("Direct URL : steam://connect/{0}:{1}", gs.IP, gs.Port);
-
-                foreach (SteamID steamid in friends)
-                {
-                    if (config.SteamAdmins.Contains(steamid.ToString()))
-                    {
-                        SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, firstMsg);
-                        Thread.Sleep(100);
-                        SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, secondMsg);
-                        Thread.Sleep(100);
-                        SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, thirdMsg);
-                    }
-                }
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("One of the following steam ID is wrong !");
-                Console.WriteLine("> " + ids[0]);
-                Console.WriteLine("> " + ids[1]);
-                Console.WriteLine("Report was denied !");
-                Console.ForegroundColor = ConsoleColor.White;
-            }
-        }
-
         public void GenerateCode()
         {
             Console.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
         }
-
-        public void UnhookChat(int serverID, string args)
-        {
-            List<SteamID> toRemove = new List<SteamID>();
-            foreach (KeyValuePair<SteamID, int> value in ChatListener)
-            {
-                if (value.Value == serverID)
-                {
-                    SteamID partenar = value.Key;
-                    toRemove.Add(partenar);
-
-                    SteamFriends.SendChatMessage(partenar, EChatEntryType.ChatMsg, "Server sent a unhook chat package, disconnecting...");
-                }
-            }
-
-            foreach (SteamID cl in toRemove)
-            {
-                ChatListener.Remove(cl);
-                SteamFriends.SendChatMessage(cl, EChatEntryType.ChatMsg, "Done !");
-            }
-        }
-
-        public void ScanInventory(int serverID, int moduleID, string strsteamID, bool withImg, bool send=true)
-        {
-            if(ArkarrSteamMarket == null)
-                ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey, config.DisableMarketScan);
-
-            GameServer gameServer = GetServerByID(serverID);
-
-            SteamID steamID = new SteamID(strsteamID);
-
-            if (!friends.Contains(steamID))
-            {
-                gameServer.Send(moduleID, NetworkCode.ASteambotCode.NotFriends, strsteamID);
-                return;
-            }
-
-            Thread invScan = new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-
-                    string items = strsteamID+"/";
-            
-                items += AddInventoryItems(Games.TF2, steamID, withImg) + "/";
-                items += AddInventoryItems(Games.CSGO, steamID, withImg) + "/";
-                items += AddInventoryItems(Games.Dota2, steamID, withImg);
-
-                if (!send)
-                    return;
-                
-                if (withImg)
-                    gameServer.Send(moduleID, NetworkCode.ASteambotCode.ScanInventoryIMG, items);
-                else
-                    gameServer.Send(moduleID, NetworkCode.ASteambotCode.ScanInventory, items);
-            });
-
-            invScan.Start();
-            invScan.Join();
-        }
-
-        public void TCPCreateTradeOffer(int serverID, int moduleID, string message)
-        {
-            string[] steamIDitems = message.Split('/');
-            SteamID steamid = new SteamID(steamIDitems[0]);
-            string[] assetIDs = steamIDitems[1].Split(',');
-
-            GameServer gameServer = GetServerByID(serverID);
-
-            //SteamTrade.SteamMarket.Games game = (SteamTrade.SteamMarket.Games)Int32.Parse(steamIDitems[1]);
-
-            List<long> contextId = new List<long>();
-            contextId.Add(2);
-
-            OtherGenericInventory.load((int)Games.CSGO, contextId, steamid);
-
-            TradeOffer to = tradeOfferManager.NewOffer(steamid);
-
-            foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
-            {
-                if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
-                {
-                    GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
-                    to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
-                }
-            }
-            OtherGenericInventory.load((int)Games.TF2, contextId, steamid);
-
-            foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
-            {
-                if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
-                {
-                    GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
-                    to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
-                }
-            }
-            OtherGenericInventory.load((int)Games.Dota2, contextId, steamid);
-
-            foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
-            {
-                if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
-                {
-                    GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
-                    to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
-                }
-            }
-
-            string offerId;
-            to.Send(out offerId, String.Format("\"{0}\" the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm")));
-
-            if (offerId != "")
-            {
-                gameServer.Send(moduleID, NetworkCode.ASteambotCode.CreateTradeOffer, offerId);
-                tradeoffersGS.Add(offerId, moduleID);
-            
-                AcceptMobileTradeConfirmation(offerId);
-            }
-        }
-
-        private string AddInventoryItems(SteamTrade.SteamMarket.Games game, SteamID steamID, bool img)
-        {
-            string items = "";
-            long[] contextID = new long[1];
-            contextID[0] = 2;
-
-            OtherGenericInventory.load((int)game, contextID, steamID);
-
-            if (OtherGenericInventory.errors.Count > 0)
-            {
-                Console.WriteLine("Error while inventory scan :");
-                foreach (string error in OtherGenericInventory.errors)
-                {
-                    Console.WriteLine(error);
-                }
-            }
-            else
-            {
-                bool allItemsFound = false;
-                while (!allItemsFound)
-                {
-                    allItemsFound = true;
-                        
-                    foreach (GenericInventory.Item item in OtherGenericInventory.items.Values)
-                    {
-                        GenericInventory.ItemDescription description = OtherGenericInventory.getDescription(item.assetid);
-                            
-                        Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
-                        if (i != null && description.tradable && i.Value != 0)
-                            items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ")  + "=" + i.Value + (img ? "=" + i.Image : "") + ",";
-                    }
-                }
-
-                if (items.Length != 0)
-                    items = items.Remove(items.Length - 1);
-                else
-                    items = "EMPTY";
-            }
-            
-            return items;
-        }
-
+        
         public void WithDrawn(string steamid)
         {
             SteamID steamID = new SteamID(steamid);
-            if (!friends.Contains(steamID))
+            if (!Friends.Contains(steamID))
             {
                 Console.WriteLine("This user is not in your friend list, unable to send trade offer.");
                 return;
             }
 
-            SteamProfileInfos sp = SteamProfile.LoadSteamProfile(steamWeb, steamID);
+            SteamProfileInfos sp = SteamProfile.LoadSteamProfile(SteamWeb, steamID);
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("You are about to send ALL the bot's items to");
@@ -666,7 +434,7 @@ namespace ASteambot
                 return;
             }
             
-            TradeOffer to = tradeOfferManager.NewOffer(steamID);
+            TradeOffer to = TradeOfferManager.NewOffer(steamID);
             long[] contextID = new long[1];
             contextID[0] = 2;
 
@@ -854,7 +622,7 @@ namespace ASteambot
         private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
         {
             if (callback.EntryType == EChatEntryType.ChatMsg && config.SteamAdmins.Contains(callback.Sender.ToString()))
-                steamchatHandler.HandleMessage(callback.Sender, callback.Message);
+                SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
         }   
         
         private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
@@ -1008,7 +776,7 @@ namespace ASteambot
         {
             do
             {
-                WebLoggedIn = steamWeb.Authenticate(myUniqueId, steamClient, myUserNonce);
+                WebLoggedIn = SteamWeb.Authenticate(myUniqueId, steamClient, myUserNonce);
 
                 if (!WebLoggedIn)
                 {
@@ -1020,6 +788,11 @@ namespace ASteambot
             Console.WriteLine("User Authenticated!");
 
             ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey, config.DisableMarketScan);
+
+            TradeOfferManager = new TradeOfferManager(loginInfo.API, SteamWeb);
+            SubscribeTradeOffer(TradeOfferManager);
+
+            SpawnTradeOfferPollingThread();
 
             //smp.ItemUpdated += Smp_ItemUpdated;
 
@@ -1038,14 +811,9 @@ namespace ASteambot
                 }
             }
             smp.ScanMarket();*/
-
-            tradeOfferManager = new TradeOfferManager(loginInfo.API, steamWeb);
-            SubscribeTradeOffer(tradeOfferManager);
-            
-            SpawnTradeOfferPollingThread();
         }
 
-        private void Smp_ItemUpdated(object sender, EventArgItemScanned e)
+        /*private void Smp_ItemUpdated(object sender, EventArgItemScanned e)
         {
             Item i = e.GetItem;
 
@@ -1070,17 +838,17 @@ namespace ASteambot
                     double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
                     UpdateTradeOfferInDatabase(to, cent);
                 }
-            }*/
+            }
 
             SaveItemInDB(i);
-        }
+        }*/
 
         private void TradeOfferUpdated(TradeOffer offer)
         {
             //UpdateTradeOfferInDatabase(offer, cent);
 
             TradeOffer to;
-            tradeOfferManager.TryGetOffer(offer.TradeOfferId, out to);
+            TradeOfferManager.TryGetOffer(offer.TradeOfferId, out to);
 
             if (to != null && ArkarrSteamMarket.IsAvailable())
             {
@@ -1092,13 +860,6 @@ namespace ASteambot
                 OwnTradeOfferUpdated(offer);
             else
                 PartenarTradeOfferUpdated(offer);
-        }
-
-        public void InviteFriend(string steamid)
-        {
-            SteamID steamID = new SteamID(steamid);
-            if(steamID.IsValid)
-                SteamFriends.AddFriend(steamID);
         }
 
         private void OwnTradeOfferUpdated(TradeOffer offer)
@@ -1153,12 +914,12 @@ namespace ASteambot
 
         private void SendTradeOfferConfirmationToGameServers(string id, NetworkCode.ASteambotCode code, string data)
         {
-            foreach (GameServer gs in botManager.Servers)
+            foreach (GameServer gs in BotManager.Servers)
             {
-                if (tradeoffersGS.ContainsKey(id))
+                if (TradeoffersGS.ContainsKey(id))
                 {
-                    gs.Send(tradeoffersGS[id], code, data);
-                    tradeoffersGS.Remove(id);
+                    gs.Send(TradeoffersGS[id], code, data);
+                    TradeoffersGS.Remove(id);
                     finishedTO.Add(id);
                 }
                 else
@@ -1209,7 +970,7 @@ namespace ASteambot
             contextID[0] = 2;
 
             List<long> appIDs = new List<long>();
-            GenericInventory gi = new GenericInventory(steamWeb);
+            GenericInventory gi = new GenericInventory(SteamWeb);
 
             foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
             {
@@ -1244,26 +1005,6 @@ namespace ASteambot
             return cent;
         }
 
-        private double GetItemValue(GenericInventory.ItemDescription ides, ulong assetID, int appid)
-        {
-            double cent = 0;
-            long[] contextID = new long[1];
-            contextID[0] = 2;
-            
-            if (ides == null)
-            {
-                Console.WriteLine("Warning, items description for item "+ assetID + " not found !");
-            }
-            else
-            {
-                Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name);
-                if (itemInfo != null)
-                    cent = itemInfo.Value;
-            }
-
-            return cent;
-        }
-
         public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
         {
             tradeOfferManager.OnTradeOfferUpdated += TradeOfferUpdated;
@@ -1289,7 +1030,7 @@ namespace ASteambot
             {
                 try
                 {
-                    tradeOfferManager.EnqueueUpdatedOffers();
+                    TradeOfferManager.EnqueueUpdatedOffers();
                 }
                 catch (Exception e)
                 {
