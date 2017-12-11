@@ -36,12 +36,12 @@ namespace ASteambot
         {
             foreach (Bot bot in OnlineBots)
             {
-                foreach (GameServer gs in bot.botManager.Servers)
+                foreach (GameServer gs in bot.BotManager.Servers)
                 {
                     if (gs.SocketConnected() == false)
-                        bot.steamchatHandler.ServerRemoved(gs.ServerID);
+                        bot.SteamchatHandler.ServerRemoved(gs.ServerID);
                 }
-                bot.botManager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
+                bot.BotManager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
             }
         }
 
@@ -225,7 +225,7 @@ namespace ASteambot
 
             foreach(Bot bot in bots)
             {
-                foreach (GameServer gs in bot.botManager.Servers)
+                foreach (GameServer gs in bot.BotManager.Servers)
                 {
                     gs.Send(-2, NetworkCode.ASteambotCode.Simple, test);
                     count++;

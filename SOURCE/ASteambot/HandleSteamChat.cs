@@ -18,7 +18,7 @@ namespace ASteambot
 
         public void HandleMessage(SteamID partenar, string message)
         {
-            if (!bot.botManager.Config.SteamAdmins.Contains(partenar.ToString()))
+            if (!bot.BotManager.Config.SteamAdmins.Contains(partenar.ToString()))
                 return;
 
             string command = message.Split(' ')[0];
@@ -102,14 +102,14 @@ namespace ASteambot
 
                 string cmd = message.Replace(message.Split(' ')[0], "");
 
-                if (id < 0 || id > bot.botManager.Servers.Count)
+                if (id < 0 || id > bot.BotManager.Servers.Count)
                 {
                     SendChatMessage(partenar, "Invalid server ID '" + id + "' specified !");
                     SendChatMessage(partenar, "Use SERVER command to get a valid server ID !");
                     return;
                 }
 
-                GameServer gs = bot.botManager.Servers[id];
+                GameServer gs = bot.BotManager.Servers[id];
                 gs.Send(-2, Networking.NetworkCode.ASteambotCode.ExecuteCommand, cmd);
 
                 SendChatMessage(partenar, "Command '" + cmd + "' sent to server '" + gs.Name + "' !");
@@ -132,15 +132,15 @@ namespace ASteambot
 
         public void PrintServer(SteamID partenar)
         {
-            if (bot.botManager.Servers.Count > 0)
+            if (bot.BotManager.Servers.Count > 0)
             {
                 SendChatMessage(partenar, "---------------------------");
-                foreach (GameServer gs in bot.botManager.Servers)
+                foreach (GameServer gs in bot.BotManager.Servers)
                 {
                     string serverLine = String.Format("[{0}] {1} - {2}:{3}", gs.ServerID, gs.Name, gs.IP, gs.Port);
                     SendChatMessage(partenar, serverLine);
                 }
-                SendChatMessage(partenar, "Number of registred servers : " + bot.botManager.Servers.Count);
+                SendChatMessage(partenar, "Number of registred servers : " + bot.BotManager.Servers.Count);
                 SendChatMessage(partenar, "---------------------------");
             }
             else
