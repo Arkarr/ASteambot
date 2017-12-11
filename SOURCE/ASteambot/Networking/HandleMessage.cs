@@ -21,6 +21,9 @@ namespace ASteambot.Networking
                 case NetworkCode.ASteambotCode.Core:
                     RegisterBot(bot, gsr);
                 break;
+                case NetworkCode.ASteambotCode.Disconnect:
+                    Disconnect(bot, gsr);
+                break;
                 case NetworkCode.ASteambotCode.HookChat:
                     HookChat(bot, gsr);
                 break;
@@ -50,13 +53,6 @@ namespace ASteambot.Networking
 
         private void RegisterBot(Bot bot, GameServerRequest gsr)
         {
-            foreach (GameServer gs in bot.botManager.Servers)
-            {
-                if (gs.SocketConnected() == false)
-                    bot.steamchatHandler.ServerRemoved(gs.ServerID);
-            }
-            bot.botManager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
-
             IPEndPoint ipendpoint = ((IPEndPoint)gsr.Socket.RemoteEndPoint);
             
             int index = bot.botManager.Servers.FindIndex(f => f.IP == ipendpoint.Address);
@@ -67,6 +63,11 @@ namespace ASteambot.Networking
             serverID++;
             GameServer gameserver = new GameServer(gsr.Socket, bot.botManager.Config.TCPPassword, serverID, gsr.Arguments);
             bot.botManager.Servers.Add(gameserver);
+        }
+
+        private void Disconnect(Bot bot, GameServerRequest gsr)
+        {
+            bot.botManager.DisconnectServer(gsr.ServerID);
         }
 
         private void ReportPlayer(Bot bot, GameServerRequest gsr)
@@ -81,7 +82,7 @@ namespace ASteambot.Networking
 
         private void UnhookChat(Bot bot, GameServerRequest gsr)
         {
-            //bot.UnhookChat(gsr.ServerID, gsr.Arguments);
+            bot.UnhookChat(gsr.ServerID, gsr.Arguments);
         }
 
         private void ScanInventory(Bot bot, GameServerRequest gsr, bool withImg)

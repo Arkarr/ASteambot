@@ -34,7 +34,7 @@ namespace ASteambot
         }
         
         public bool SocketConnected()
-        {
+        { 
             bool check1 = socket.Poll(1000, SelectMode.SelectRead);
             bool check2 = (socket.Available == 0);
             if (check1 && check2)

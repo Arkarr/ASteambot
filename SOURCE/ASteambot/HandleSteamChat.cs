@@ -11,20 +11,20 @@ namespace ASteambot
     {
         private Bot bot;
 
-        private Dictionary<SteamID, int> ChatListener;
-
         public HandleSteamChat(Bot bot)
         {
             this.bot = bot;
-            ChatListener = new Dictionary<SteamID, int>();
         }
 
         public void HandleMessage(SteamID partenar, string message)
         {
+            if (!bot.botManager.Config.SteamAdmins.Contains(partenar.ToString()))
+                return;
+
             string command = message.Split(' ')[0];
             message = message.Replace(command+" ", "");
 
-            if (!command.Equals("STOPHOOK") && ChatListener.ContainsKey(partenar))
+            if (!command.Equals("STOPHOOK") && !command.Equals("UNHOOK") && bot.ChatListener.ContainsKey(partenar))
             {
                 SendMessageToGameServer(-2, partenar, message);
                 return;
@@ -44,6 +44,7 @@ namespace ASteambot
                     HookGameServerChat(-2, partenar, message);
                 break;
 
+                case "UNHOOK":
                 case "STOPHOOK":
                     StopHook(-2, partenar);
                 break;
@@ -60,39 +61,37 @@ namespace ASteambot
 
         private void SendMessageToGameServer(int moduleID, SteamID partenar, string message)
         {
-            int serverID = ChatListener[partenar];
+            int serverID = bot.ChatListener[partenar];
             GameServer gs = bot.GetServerByID(serverID);
 
-            string name = bot.SteamFriends.GetFriendPersonaName(partenar).Replace('|', ' ').Trim(' ');
-            string data = string.Format("{0} : {1}", name, message);
-            gs.Send(moduleID, Networking.NetworkCode.ASteambotCode.Simple, data);
+            if (gs != null)
+            {
+                string name = bot.SteamFriends.GetFriendPersonaName(partenar).Replace('|', ' ').Trim(' ');
+                string data = string.Format("{0} : {1}", name, message);
+                gs.Send(moduleID, Networking.NetworkCode.ASteambotCode.Simple, data);
+            }
+            else
+            {
+                SendChatMessage(partenar, "Unable to deliver this message to the game server, he is not connected.");
+            }
         }
 
         public void StopHook(int moduleID, SteamID partenar)
         {
-            int serverID = ChatListener[partenar];
-            ChatListener.Remove(partenar);
-            SendChatMessage(partenar, "Disconnecting to server...");
+            int serverID = bot.ChatListener[partenar];
+            bot.ChatListener.Remove(partenar);
+            SendChatMessage(partenar, "Disconnecting from server...");
 
-            foreach (KeyValuePair<SteamID, int> value in ChatListener)
+            foreach (KeyValuePair<SteamID, int> value in bot.ChatListener)
             {
                 if (value.Value == serverID && value.Key != partenar)
                     return;
             }
 
-            GameServer server = bot.botManager.Servers[serverID-1];
+            GameServer server = bot.GetServerByID(serverID);
             server.Send(moduleID, Networking.NetworkCode.ASteambotCode.Unhookchat, "");
-        }
-        
-        public void UnhookChat(int serverID, string arguments)
-        {
-            foreach (KeyValuePair<SteamID, int> value in ChatListener)
-            {
-                if (value.Value != serverID)
-                    continue;
 
-
-            }
+            SendChatMessage(partenar, "Done !");
         }
 
         private void ExecuteServerCommand(SteamID partenar, string message)
@@ -133,15 +132,13 @@ namespace ASteambot
 
         public void PrintServer(SteamID partenar)
         {
-            int id = 1;
             if (bot.botManager.Servers.Count > 0)
             {
                 SendChatMessage(partenar, "---------------------------");
                 foreach (GameServer gs in bot.botManager.Servers)
                 {
-                    string serverLine = String.Format("[{0}] {1} - {2}:{3}", id, gs.Name, gs.IP, gs.Port);
+                    string serverLine = String.Format("[{0}] {1} - {2}:{3}", gs.ServerID, gs.Name, gs.IP, gs.Port);
                     SendChatMessage(partenar, serverLine);
-                    id++;
                 }
                 SendChatMessage(partenar, "Number of registred servers : " + bot.botManager.Servers.Count);
                 SendChatMessage(partenar, "---------------------------");
@@ -154,24 +151,24 @@ namespace ASteambot
 
         public void ServerRemoved(int oldServerID)
         {
-            foreach (KeyValuePair<SteamID, int> value in ChatListener)
+            foreach (KeyValuePair<SteamID, int> value in bot.ChatListener)
             {
                 if (value.Value == oldServerID)
                     SendChatMessage(value.Key, "Disconnected from server ! Message won't be transfered anymore...");
             }
             
-            for (int i = ChatListener.Count - 1; i >= 0; i--)
+            for (int i = bot.ChatListener.Count - 1; i >= 0; i--)
             {
-                KeyValuePair<SteamID,int> listener = ChatListener.ElementAt(i);
+                KeyValuePair<SteamID,int> listener = bot.ChatListener.ElementAt(i);
 
                 if (listener.Value == oldServerID)
-                    ChatListener.Remove(listener.Key);
+                    bot.ChatListener.Remove(listener.Key);
             }
         }
 
         public void ServerMessage(int serverid, string message)
         {
-            foreach(KeyValuePair<SteamID, int> value in ChatListener)
+            foreach(KeyValuePair<SteamID, int> value in bot.ChatListener)
             {
                 if (value.Value == serverid)
                     SendChatMessage(value.Key, message);
@@ -180,7 +177,7 @@ namespace ASteambot
 
         public void HookGameServerChat(int moduleID, SteamID partenar, string message)
         {
-            if(ChatListener.ContainsKey(partenar))
+            if(bot.ChatListener.ContainsKey(partenar))
             {
                 SendChatMessage(partenar, "You are already hooking a chat ! Use : STOPHOOK");
                 return;
@@ -189,19 +186,28 @@ namespace ASteambot
             int serverID = -1;
             Int32.TryParse(message, out serverID);
 
-            if(serverID > bot.botManager.Servers.Count || serverID <= 0)
+            if(serverID <= 0)
             {
                 SendChatMessage(partenar, "Invalid game server ID. Use SERVER to get game server ID.");
                 return;
             }
 
-            GameServer gs = bot.botManager.Servers[serverID - 1];
+            GameServer gs = bot.GetServerByID(serverID);
 
-            ChatListener.Add(partenar, gs.ServerID);
+            if (gs != null)
+            {
+                bot.ChatListener.Add(partenar, gs.ServerID);
 
-            SendChatMessage(partenar, "Connecting to server...");
-            
-            gs.Send(moduleID, Networking.NetworkCode.ASteambotCode.HookChat, "");
+                SendChatMessage(partenar, "Connecting to server...");
+
+                gs.Send(moduleID, Networking.NetworkCode.ASteambotCode.HookChat, "");
+
+                SendChatMessage(partenar, "Done !");
+            }
+            else
+            {
+                SendChatMessage(partenar, "Invalid server ID !");
+            }
         }
 
         private void SendChatMessage(SteamID partenar, string message)

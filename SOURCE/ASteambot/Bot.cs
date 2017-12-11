@@ -23,13 +23,15 @@ namespace ASteambot
     {
         public string Name { get; private set; }
         public bool LoggedIn { get; private set; }
+        public bool Running { get; private set; }
         public bool WebLoggedIn { get; private set; }
         public Manager botManager { get; private set; }
         public SteamFriends SteamFriends { get; private set; }
+        public SteamMarket ArkarrSteamMarket { get; private set; }
         public HandleSteamChat steamchatHandler { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
+        public Dictionary<SteamID, int> ChatListener { get; private set; }
         public GenericInventory OtherGenericInventory { get; private set; }
-        public SteamMarket ArkarrSteamMarket { get; private set; }
 
         private bool stop;
         private Database DB;
@@ -67,6 +69,7 @@ namespace ASteambot
             tradeoffersGS = new Dictionary<string, int>();
             finishedTO = new List<string>();
             steamchatHandler = new HandleSteamChat(this);
+            ChatListener = new Dictionary<SteamID, int>();
             tradeOfferValue = new Dictionary<string, double>();
             MyGenericInventory = new GenericInventory(steamWeb);
             OtherGenericInventory = new GenericInventory(steamWeb);
@@ -180,9 +183,11 @@ namespace ASteambot
                 if (code.Equals(String.Empty))
                 {
                     Console.WriteLine("Bot will stop now.");
-                    stop = true;
-
                     Disconnect();
+
+                    stop = true;
+                    Running = false;
+
                     return string.Empty;
                 }
                 else
@@ -406,15 +411,31 @@ namespace ASteambot
 
         public GameServer GetServerByID(int serverID)
         {
-            foreach (GameServer gs in botManager.Servers)
+            GameServer g = botManager.Servers.Find(gs => gs.ServerID == serverID);
+            if (g == null)
+                return null;
+
+            if (!g.SocketConnected())
             {
-                if (gs.ServerID == serverID)
-                    return gs;
+                foreach (GameServer gs in botManager.Servers)
+                {
+                    if (gs.ServerID != serverID && gs.Name == g.Name)
+                    {
+                        botManager.RefreshServers();
+                        return gs;
+                    }
+                }
+
+                botManager.RefreshServers();
+            }
+            else
+            {
+                return g;
             }
 
             return null;
         }
-        
+
         public void ReportPlayer(int serverID, string args)
         {
             GameServer gs = GetServerByID(serverID);
@@ -458,6 +479,27 @@ namespace ASteambot
         public void GenerateCode()
         {
             Console.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
+        }
+
+        public void UnhookChat(int serverID, string args)
+        {
+            List<SteamID> toRemove = new List<SteamID>();
+            foreach (KeyValuePair<SteamID, int> value in ChatListener)
+            {
+                if (value.Value == serverID)
+                {
+                    SteamID partenar = value.Key;
+                    toRemove.Add(partenar);
+
+                    SteamFriends.SendChatMessage(partenar, EChatEntryType.ChatMsg, "Server sent a unhook chat package, disconnecting...");
+                }
+            }
+
+            foreach (SteamID cl in toRemove)
+            {
+                ChatListener.Remove(cl);
+                SteamFriends.SendChatMessage(cl, EChatEntryType.ChatMsg, "Done !");
+            }
         }
 
         public void ScanInventory(int serverID, int moduleID, string strsteamID, bool withImg, bool send=true)
@@ -1267,6 +1309,8 @@ namespace ASteambot
         #region Helper function
         public void Run()
         {
+            Running = true;
+
             if (!stop)
                 manager.RunWaitAllCallbacks(TimeSpan.FromSeconds(1));
         }
