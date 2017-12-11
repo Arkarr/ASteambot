@@ -16,38 +16,50 @@ namespace ASteambot.Networking
 
         public void Execute(Bot bot, GameServerRequest gsr)
         {
-            switch((NetworkCode.ASteambotCode)gsr.NetworkCode)
+            try
             {
-                case NetworkCode.ASteambotCode.Core:
-                    RegisterBot(bot, gsr);
-                break;
-                case NetworkCode.ASteambotCode.Disconnect:
-                    Disconnect(bot, gsr);
-                break;
-                case NetworkCode.ASteambotCode.HookChat:
-                    HookChat(bot, gsr);
-                break;
-                case NetworkCode.ASteambotCode.ScanInventory:
-                    ScanInventory(bot, gsr, false);
-                break;
-                case NetworkCode.ASteambotCode.ScanInventoryIMG:
-                    ScanInventory(bot, gsr, true);
-                break; 
-                case NetworkCode.ASteambotCode.CreateTradeOffer:
-                    CreateTradeOffer(bot, gsr);
-                break;
-                case NetworkCode.ASteambotCode.FriendInvite:
-                    SendFriendInvitation(bot, gsr);
-                break;
-                case NetworkCode.ASteambotCode.ReportPlayer:
-                    ReportPlayer(bot, gsr);
-                break;
-                case NetworkCode.ASteambotCode.InviteSteamGroup:
-                    InviteToSteamGroup(bot, gsr);
-                break;
-                case NetworkCode.ASteambotCode.Unhookchat:
-                    UnhookChat(bot, gsr);
-                break;
+                switch ((NetworkCode.ASteambotCode)gsr.NetworkCode)
+                {
+                    case NetworkCode.ASteambotCode.Core:
+                        RegisterBot(bot, gsr);
+                        break;
+                    case NetworkCode.ASteambotCode.Disconnect:
+                        Disconnect(bot, gsr);
+                        break;
+                    case NetworkCode.ASteambotCode.HookChat:
+                        HookChat(bot, gsr);
+                        break;
+                    case NetworkCode.ASteambotCode.ScanInventory:
+                        ScanInventory(bot, gsr, false);
+                        break;
+                    case NetworkCode.ASteambotCode.ScanInventoryIMG:
+                        ScanInventory(bot, gsr, true);
+                        break;
+                    case NetworkCode.ASteambotCode.CreateTradeOffer:
+                        CreateTradeOffer(bot, gsr);
+                        break;
+                    case NetworkCode.ASteambotCode.FriendInvite:
+                        SendFriendInvitation(bot, gsr);
+                        break;
+                    case NetworkCode.ASteambotCode.ReportPlayer:
+                        ReportPlayer(bot, gsr);
+                        break;
+                    case NetworkCode.ASteambotCode.InviteSteamGroup:
+                        InviteToSteamGroup(bot, gsr);
+                        break;
+                    case NetworkCode.ASteambotCode.Unhookchat:
+                        UnhookChat(bot, gsr);
+                        break;
+                }
+            }
+            catch(Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Crashing while executing net code " + gsr.NetworkCode + " !");
+                Console.WriteLine("Full detail message [MAY CONTAIN SENSITIVE INFOS] :");
+                Console.WriteLine("SRV ID : " + gsr.ServerID + " MDL ID: " + gsr.ModuleID);
+                Console.WriteLine(gsr.Arguments);
+                Console.ForegroundColor = ConsoleColor.Red;
             }
         }
 
