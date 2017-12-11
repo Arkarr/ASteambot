@@ -14,8 +14,6 @@ namespace ASteambot
         public string SteamPassword { get; private set; }
         public string SteamAPIKey { get; private set; }
         public string SteamAdmins { get; private set; }
-        //public string BackpacktfAPIKey { get; private set; }
-        //public string TradeTFAPIKey { get; private set; }
         public string DatabaseServer { get; private set; }
         public string DatabaseUser { get; private set; }
         public string DatabasePassword { get; private set; }
@@ -54,10 +52,6 @@ namespace ASteambot
                     SteamAPIKey = line.Replace("steam_apikey=", "");
                 else if (line.StartsWith("steam_admins="))
                     SteamAdmins = line.Replace("steam_admins=", "");
-                /*else if (line.StartsWith("backpacktf_apikey="))
-                    BackpacktfAPIKey = line.Replace("backpacktf_apikey=", "");
-                else if (line.StartsWith("tradetf_apikey="))
-                    TradeTFAPIKey = line.Replace("tradetf_apikey=", "");*/
                 else if (line.StartsWith("database_server="))
                     DatabaseServer = line.Replace("database_server=", "");
                 else if (line.StartsWith("database_user="))
@@ -84,7 +78,34 @@ namespace ASteambot
                     DisableMarketScan = line.Replace("DisableMarketScan=", "").Equals("YES");
             }
 
+            if(!ValidateConfig())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Some fields haven't been set in config file. Press a key to close ASteambot.");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.ReadKey();
+                Environment.Exit(0);
+            }
+
             file.Close();
+
+            return true;
+        }
+
+        private bool ValidateConfig()
+        {
+            if (SteamUsername.Length == 0) return false;
+            if (SteamPassword.Length == 0) return false;
+            if (SteamAPIKey.Length == 0) return false;
+            if (SteamAdmins.Length == 0) return false;
+            if (DatabaseServer.Length == 0) return false;
+            if (DatabaseUser.Length == 0) return false;
+            if (DatabasePassword.Length == 0) return false;
+            if (DatabaseName.Length == 0) return false;
+            if (DatabasePort.Length == 0) return false;
+            if (TCPServerPort.Length == 0) return false;
+            if (TCPPassword.Length == 0) return false;
+            if (ArkarrAPIKey.Length == 0) return false;
 
             return true;
         }
