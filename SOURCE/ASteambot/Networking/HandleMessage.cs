@@ -66,6 +66,7 @@ namespace ASteambot.Networking
             catch(Exception e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e);
                 Console.WriteLine("Crashing while executing net code " + gsr.NetworkCode + " !");
                 Console.WriteLine("Full detail message [MAY CONTAIN SENSITIVE INFOS] :");
                 Console.WriteLine("SRV ID : " + gsr.ServerID + " MDL ID: " + gsr.ModuleID);
