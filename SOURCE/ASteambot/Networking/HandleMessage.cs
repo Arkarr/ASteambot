@@ -112,7 +112,7 @@ namespace ASteambot.Networking
 
                 foreach (SteamID steamid in bot.Friends)
                 {
-                    if (bot.config.SteamAdmins.Contains(steamid.ToString()))
+                    if (bot.Config.SteamAdmins.Contains(steamid.ToString()))
                     {
                         bot.SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, firstMsg);
                         Thread.Sleep(100);
@@ -162,7 +162,7 @@ namespace ASteambot.Networking
         private void ScanInventory(Bot bot, GameServerRequest gsr, bool withImg)
         {
             if (bot.ArkarrSteamMarket == null)
-                bot.ArkarrSteamMarket = new SteamMarket(bot.config.ArkarrAPIKey, bot.config.DisableMarketScan);
+                bot.ArkarrSteamMarket = new SteamMarket(bot.Config.ArkarrAPIKey, bot.Config.DisableMarketScan);
 
             GameServer gameServer = bot.GetServerByID(serverID);
 
