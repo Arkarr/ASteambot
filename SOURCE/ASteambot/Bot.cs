@@ -24,7 +24,7 @@ namespace ASteambot
     {
         public string Name { get; private set; }
         public bool Running { get; private set; }
-        public Config config { get; private set; }
+        public Config Config { get; private set; }
         public bool LoggedIn { get; private set; }
         public bool WebLoggedIn { get; private set; }
         public Manager BotManager { get; private set; }
@@ -59,7 +59,7 @@ namespace ASteambot
         public Bot(Manager botManager, LoginInfo loginInfo, Config config, AsynchronousSocketListener socket)
         {
             this.socket = socket;
-            this.config = config;
+            this.Config = Config;
             BotManager = botManager;
             this.loginInfo = loginInfo;
             steamClient = new SteamClient();
@@ -74,7 +74,7 @@ namespace ASteambot
             MyGenericInventory = new GenericInventory(SteamWeb);
             OtherGenericInventory = new GenericInventory(SteamWeb);
 
-            DB = new Database(config.DatabaseServer, config.DatabaseUser, config.DatabasePassword, config.DatabaseName, config.DatabasePort);
+            DB = new Database(Config.DatabaseServer, Config.DatabaseUser, Config.DatabasePassword, Config.DatabaseName, Config.DatabasePort);
             DB.InitialiseDatabase();
 
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
@@ -621,7 +621,52 @@ namespace ASteambot
 
         private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
         {
-            if (callback.EntryType == EChatEntryType.ChatMsg && config.SteamAdmins.Contains(callback.Sender.ToString()))
+            if (callback == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Callback is NULL ! It should not be possible !");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return;
+            }
+
+            if (SteamchatHandler == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("SteamchatHandler is NULL ! It should not be possible !");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return;
+            }
+
+            if (Config == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("COnfig is NULL ! It should not be possible !");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return;
+            }
+
+            if (Config.SteamAdmins == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("COnfig is NULL ! It should not be possible !");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return;
+            }
+
+            if (callback.Sender == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("COnfig is NULL ! It should not be possible !");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return;
+            }
+
+            if (callback.EntryType == EChatEntryType.ChatMsg && Config.SteamAdmins.Contains(callback.Sender.ToString()))
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
         }   
         
@@ -787,7 +832,7 @@ namespace ASteambot
 
             Console.WriteLine("User Authenticated!");
 
-            ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey, config.DisableMarketScan);
+            ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan);
 
             TradeOfferManager = new TradeOfferManager(loginInfo.API, SteamWeb);
             SubscribeTradeOffer(TradeOfferManager);
