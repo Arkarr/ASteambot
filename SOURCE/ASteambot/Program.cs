@@ -18,7 +18,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.9.0 - PUBLIC";
+        private static string BUILD_VERSION = "2.9.1 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -28,7 +28,7 @@ namespace ASteambot
 
             using (var file = File.Exists("./SEND_TO_ARKARR.log") ? File.Open("./SEND_TO_ARKARR.log", FileMode.Append) : File.Open("./SEND_TO_ARKARR.log", FileMode.CreateNew))
             using (var stream = new StreamWriter(file))
-                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_VERSION + ")" + "\n*************************\n" + ex.HResult + ex.Source + "\n" + ex.TargetSite + "\n" + ex.InnerException + "\n" + ex.HelpLink + "\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
+                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_VERSION + ") LINUX : " + (IsLinux() ? "YES" : "NO") + "\n*************************\n" + ex.HResult + ex.Source + "\n" + ex.TargetSite + "\n" + ex.InnerException + "\n" + ex.HelpLink + "\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
 
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Log file (" + "SEND_TO_ARKARR.log" + ") generated ! Send it to Arkarr !!");
@@ -46,7 +46,7 @@ namespace ASteambot
             PrintWelcomeMessage();
 
             config = new Config();
-            if(!config.LoadConfig())
+            if (!config.LoadConfig())
             {
                 Console.WriteLine("Config file (config.cfg) can't be found or is corrupted ! Bot can't start.");
                 Console.ReadKey();
@@ -65,7 +65,7 @@ namespace ASteambot
             steambotManager.SelectFirstBot();
 
             string command = "";
-            while(command != "quit")
+            while (command != "quit")
             {
                 Console.Write("> ");
                 command = Console.ReadLine();
@@ -85,7 +85,7 @@ namespace ASteambot
 
         private static void PrintWelcomeMessage()
         {
-            for(int i = 0; i < Console.WindowWidth; i++)
+            for (int i = 0; i < Console.WindowWidth; i++)
                 Console.Write("*");
 
             Console.ForegroundColor = ConsoleColor.Green;
@@ -97,7 +97,7 @@ namespace ASteambot
             Console.WriteLine("\tAll informations related to this software can be found here :");
             Console.WriteLine("\thttps://forums.alliedmods.net/showthread.php?t=273091");
             Console.WriteLine("");
-            Console.WriteLine("\tVersion "+ BUILD_VERSION);
+            Console.WriteLine("\tVersion " + BUILD_VERSION);
             Console.WriteLine("");
             Console.WriteLine("");
             Console.WriteLine("\tArkarr's message for you :");
@@ -121,6 +121,12 @@ namespace ASteambot
 
             for (int i = 0; i < Console.WindowWidth; i++)
                 Console.Write("*");
+        }
+
+        public static bool IsLinux()
+        {
+            int p = (int)Environment.OSVersion.Platform;
+            return (p == 4) || (p == 6) || (p == 128);
         }
     }
 }

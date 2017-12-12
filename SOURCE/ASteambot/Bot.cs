@@ -24,7 +24,7 @@ namespace ASteambot
     {
         public string Name { get; private set; }
         public bool Running { get; private set; }
-        public Config Config { get; private set; }
+        public Config config { get; private set; }
         public bool LoggedIn { get; private set; }
         public bool WebLoggedIn { get; private set; }
         public Manager BotManager { get; private set; }
@@ -59,7 +59,7 @@ namespace ASteambot
         public Bot(Manager botManager, LoginInfo loginInfo, Config config, AsynchronousSocketListener socket)
         {
             this.socket = socket;
-            this.Config = Config;
+            this.config = config;
             BotManager = botManager;
             this.loginInfo = loginInfo;
             steamClient = new SteamClient();
@@ -74,13 +74,16 @@ namespace ASteambot
             MyGenericInventory = new GenericInventory(SteamWeb);
             OtherGenericInventory = new GenericInventory(SteamWeb);
 
-            DB = new Database(Config.DatabaseServer, Config.DatabaseUser, Config.DatabasePassword, Config.DatabaseName, Config.DatabasePort);
+            if (Program.IsLinux())
+                Thread.Sleep(3000);
+
+            DB = new Database(config.DatabaseServer, config.DatabaseUser, config.DatabasePassword, config.DatabaseName, config.DatabasePort);
             DB.InitialiseDatabase();
 
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
             botThread.DoWork += BackgroundWorkerOnDoWork;
             botThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
-            
+
             socket.MessageReceived += Socket_MessageReceived;
         }
 
@@ -110,7 +113,7 @@ namespace ASteambot
             else
                 DB.INSERT("smitems", rows, values);
         }
-            
+
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
         {
             while (!botThread.CancellationPending)
@@ -141,7 +144,7 @@ namespace ASteambot
             {
                 Exception ex = runWorkerCompletedEventArgs.Error;
 
-                Console.WriteLine("Unhandled exceptions in bot "+ Name + " callback thread: "+ Environment.NewLine + ex);
+                Console.WriteLine("Unhandled exceptions in bot " + Name + " callback thread: " + Environment.NewLine + ex);
 
                 Console.WriteLine("This bot died. Stopping it..");
 
@@ -157,7 +160,7 @@ namespace ASteambot
             SteamFriends = steamClient.GetHandler<SteamFriends>();
 
             SubscribeToEvents();
-            
+
             steamClient.Connect();
         }
 
@@ -203,7 +206,7 @@ namespace ASteambot
             manager.Subscribe<SteamUser.LoggedOffCallback>(OnSteambotLoggedOff);
             manager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth);
             manager.Subscribe<SteamUser.LoginKeyCallback>(LoginKey);
-            manager.Subscribe<SteamUser.WebAPIUserNonceCallback>(WebAPIUserNonce); 
+            manager.Subscribe<SteamUser.WebAPIUserNonceCallback>(WebAPIUserNonce);
 
             //Steam events :
             manager.Subscribe<SteamUser.AccountInfoCallback>(OnAccountInfo);
@@ -223,7 +226,7 @@ namespace ASteambot
                     case EAccountType.Clan:
                         if (friend.Relationship == EFriendRelationship.RequestRecipient)
                             DeclineGroupInvite(friend.SteamID);
-                    break;
+                        break;
 
                     default:
                         CreateFriendsListIfNecessary();
@@ -248,7 +251,7 @@ namespace ASteambot
                                 newFriends.Add(friend.SteamID);
                             }
                         }
-                    break;
+                        break;
                 }
             }
 
@@ -319,7 +322,7 @@ namespace ASteambot
 
             this.steamClient.Send(InviteUser);
         }
-        
+
         public void CreateTradeOffer(string otherSteamID)
         {
             List<long> contextId = new List<long>();
@@ -336,7 +339,7 @@ namespace ASteambot
             string offerId;
             to.Send(out offerId, "Test trade offer");
 
-            Console.WriteLine("Offer ID : "+ offerId);
+            Console.WriteLine("Offer ID : " + offerId);
 
             AcceptMobileTradeConfirmation(offerId);
         }
@@ -353,7 +356,7 @@ namespace ASteambot
                     {
                         long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
                         if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
-                            Console.WriteLine("Confirmed "+ confirmation.Description + ". (Confirmation ID #"+ confirmation.ID + ")");
+                            Console.WriteLine("Confirmed " + confirmation.Description + ". (Confirmation ID #" + confirmation.ID + ")");
                     }
                 }
             }
@@ -407,7 +410,7 @@ namespace ASteambot
         {
             Console.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
         }
-        
+
         public void WithDrawn(string steamid)
         {
             SteamID steamID = new SteamID(steamid);
@@ -433,7 +436,7 @@ namespace ASteambot
                 Console.WriteLine("Operation cancelled. Nothing traded.");
                 return;
             }
-            
+
             TradeOffer to = TradeOfferManager.NewOffer(steamID);
             long[] contextID = new long[1];
             contextID[0] = 2;
@@ -571,15 +574,15 @@ namespace ASteambot
 
         //Events :
         #region Events callback
-        
-    
+
+
         private void OnAccountInfo(SteamUser.AccountInfoCallback callback)
         {
             SteamFriends.SetPersonaState(EPersonaState.Online);
 
             Name = SteamFriends.GetPersonaName();
         }
-        
+
         private void WebAPIUserNonce(SteamUser.WebAPIUserNonceCallback callback)
         {
             Console.WriteLine("Received new WebAPIUserNonce.");
@@ -621,55 +624,10 @@ namespace ASteambot
 
         private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
         {
-            if (callback == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Callback is NULL ! It should not be possible !");
-                Console.ForegroundColor = ConsoleColor.White;
-
-                return;
-            }
-
-            if (SteamchatHandler == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("SteamchatHandler is NULL ! It should not be possible !");
-                Console.ForegroundColor = ConsoleColor.White;
-
-                return;
-            }
-
-            if (Config == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("COnfig is NULL ! It should not be possible !");
-                Console.ForegroundColor = ConsoleColor.White;
-
-                return;
-            }
-
-            if (Config.SteamAdmins == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("COnfig is NULL ! It should not be possible !");
-                Console.ForegroundColor = ConsoleColor.White;
-
-                return;
-            }
-
-            if (callback.Sender == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("COnfig is NULL ! It should not be possible !");
-                Console.ForegroundColor = ConsoleColor.White;
-
-                return;
-            }
-
-            if (callback.EntryType == EChatEntryType.ChatMsg && Config.SteamAdmins.Contains(callback.Sender.ToString()))
+            if (callback.EntryType == EChatEntryType.ChatMsg && config.SteamAdmins.Contains(callback.Sender.ToString()))
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
-        }   
-        
+        }
+
         private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
         {
             Console.WriteLine("Updating sentryfile...");
@@ -685,7 +643,7 @@ namespace ASteambot
                 using (var sha = SHA1.Create())
                     sentryHash = sha.ComputeHash(fs);
             }
-            
+
             steamUser.SendMachineAuthResponse(new SteamUser.MachineAuthDetails
             {
                 JobID = callback.JobID,
@@ -731,7 +689,7 @@ namespace ASteambot
                     byte[] sentryFile = File.ReadAllBytes(loginInfo.SentryFileName);
                     test = CryptoHelper.SHAHash(sentryFile);
                 }
-                
+
                 steamUser.LogOn(new SteamUser.LogOnDetails
                 {
                     Username = loginInfo.Username,
@@ -782,7 +740,7 @@ namespace ASteambot
                             loginInfo.SetAuthCode(Console.ReadLine());
                         }
                     }
-                break;
+                    break;
 
                 case EResult.TwoFactorCodeMismatch:
                 case EResult.TwoFactorActivationCodeMismatch:
@@ -796,7 +754,7 @@ namespace ASteambot
                     stop = true;
                     Console.WriteLine("The auth code (email) is wrong ! Asking it again : ");
                     loginInfo.SetAuthCode(Console.ReadLine());
-                break;
+                    break;
 
                 default:
                     loginInfo.LoginFailCount++;
@@ -804,7 +762,7 @@ namespace ASteambot
 
                     if (loginInfo.LoginFailCount == 3)
                         stop = true;
-                break;
+                    break;
             }
         }
 
@@ -832,7 +790,7 @@ namespace ASteambot
 
             Console.WriteLine("User Authenticated!");
 
-            ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan);
+            ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey, config.DisableMarketScan);
 
             TradeOfferManager = new TradeOfferManager(loginInfo.API, SteamWeb);
             SubscribeTradeOffer(TradeOfferManager);
@@ -929,7 +887,7 @@ namespace ASteambot
             }
             else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && tradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
-                string msg =  offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
+                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
                 SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, NetworkCode.ASteambotCode.TradeOfferDecline, msg);
             }
         }
@@ -969,7 +927,7 @@ namespace ASteambot
                 }
                 else
                 {
-                    if(!finishedTO.Contains(id))
+                    if (!finishedTO.Contains(id))
                         gs.Send(-2, code, data); //should never ever go here !
                 }
             }
@@ -979,13 +937,13 @@ namespace ASteambot
         {
             string[] rows = new string[4];
             string[] values = new string[4];
-            
+
             rows[0] = "steamID";
-            rows[1] = "tradeOfferID"; 
+            rows[1] = "tradeOfferID";
             rows[2] = "tradeValue";
             rows[3] = "tradeStatus";
 
-            if (DB.SELECT(rows, "tradeoffers", "WHERE `tradeOfferID`=\""+ to.TradeOfferId + "\"").FirstOrDefault() == null)
+            if (DB.SELECT(rows, "tradeoffers", "WHERE `tradeOfferID`=\"" + to.TradeOfferId + "\"").FirstOrDefault() == null)
             {
                 values[0] = to.PartnerSteamId.ToString();
                 values[1] = to.TradeOfferId;
@@ -1009,7 +967,7 @@ namespace ASteambot
         private double GetTradeOfferValue(SteamID partenar, List<TradeOffer.TradeStatusUser.TradeAsset> list)
         {
             double cent = 0;
-            
+
             Thread.CurrentThread.IsBackground = true;
             long[] contextID = new long[1];
             contextID[0] = 2;
@@ -1022,7 +980,7 @@ namespace ASteambot
                 if (!appIDs.Contains(item.AppId))
                     appIDs.Add(item.AppId);
             }
-                
+
             cent = 0;
             foreach (int appID in appIDs)
             {
@@ -1036,7 +994,7 @@ namespace ASteambot
 
                     if (ides == null)
                     {
-                        Console.WriteLine("Warning, items description for item "+ item.AssetId + " not found !");
+                        Console.WriteLine("Warning, items description for item " + item.AssetId + " not found !");
                     }
                     else
                     {
@@ -1063,7 +1021,7 @@ namespace ASteambot
                 tradeOfferThread.Start();
             }
         }
-        
+
         protected void CancelTradeOfferPollingThread()
         {
             tradeOfferThread = null;
@@ -1081,7 +1039,7 @@ namespace ASteambot
                 {
                     //Sucks
                     Console.WriteLine("Error while polling trade offers: ");
-                    if(e.Message.Contains("403"))
+                    if (e.Message.Contains("403"))
                         Console.WriteLine("Access not allowed. Check your steam API key.");
                     else
                         Console.WriteLine(e.Message);
@@ -1090,7 +1048,7 @@ namespace ASteambot
                 Thread.Sleep(30 * 1000);//tradeOfferPollingIntervalSecs * 1000);
             }
         }
-        
+
         //Helper function :
         #region Helper function
         public void Run()
