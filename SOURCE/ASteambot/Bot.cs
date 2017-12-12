@@ -24,7 +24,7 @@ namespace ASteambot
     {
         public string Name { get; private set; }
         public bool Running { get; private set; }
-        public Config config { get; private set; }
+        public Config Config { get; private set; }
         public bool LoggedIn { get; private set; }
         public bool WebLoggedIn { get; private set; }
         public Manager BotManager { get; private set; }
@@ -56,10 +56,10 @@ namespace ASteambot
         private SteamGuardAccount steamGuardAccount;
         private Dictionary<string, double> tradeOfferValue;
 
-        public Bot(Manager botManager, LoginInfo loginInfo, Config config, AsynchronousSocketListener socket)
+        public Bot(Manager botManager, LoginInfo loginInfo, Config Config, AsynchronousSocketListener socket)
         {
             this.socket = socket;
-            this.config = config;
+            this.Config = Config;
             BotManager = botManager;
             this.loginInfo = loginInfo;
             steamClient = new SteamClient();
@@ -77,7 +77,7 @@ namespace ASteambot
             if (Program.IsLinux())
                 Thread.Sleep(3000);
 
-            DB = new Database(config.DatabaseServer, config.DatabaseUser, config.DatabasePassword, config.DatabaseName, config.DatabasePort);
+            DB = new Database(Config.DatabaseServer, Config.DatabaseUser, Config.DatabasePassword, Config.DatabaseName, Config.DatabasePort);
             DB.InitialiseDatabase();
 
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
@@ -624,7 +624,7 @@ namespace ASteambot
 
         private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
         {
-            if (callback.EntryType == EChatEntryType.ChatMsg && config.SteamAdmins.Contains(callback.Sender.ToString()))
+            if (callback.EntryType == EChatEntryType.ChatMsg && Config.SteamAdmins.Contains(callback.Sender.ToString()))
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
         }
 
@@ -790,7 +790,7 @@ namespace ASteambot
 
             Console.WriteLine("User Authenticated!");
 
-            ArkarrSteamMarket = new SteamMarket(config.ArkarrAPIKey, config.DisableMarketScan);
+            ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan);
 
             TradeOfferManager = new TradeOfferManager(loginInfo.API, SteamWeb);
             SubscribeTradeOffer(TradeOfferManager);
