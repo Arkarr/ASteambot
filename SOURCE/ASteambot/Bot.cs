@@ -624,8 +624,36 @@ namespace ASteambot
 
         private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
+            if (Config == null)
+            {
+                Console.WriteLine("Config is NULL ?!");
+                return;
+            }
+            if (Config.SteamAdmins == null)
+            {
+                Console.WriteLine("SteamAdmins is NULL ?!");
+                return;
+            }
+            if (callback == null)
+            {
+                Console.WriteLine("callback is NULL ?!");
+                return;
+            }
+            if (callback.Sender == null)
+            {
+                Console.WriteLine("callback.Sender is NULL ?!");
+                return;
+            }
+            Console.ForegroundColor = ConsoleColor.White;
+
             if (callback.EntryType == EChatEntryType.ChatMsg && Config.SteamAdmins.Contains(callback.Sender.ToString()))
+            {
+                if (SteamchatHandler == null)
+                    SteamchatHandler = new HandleSteamChat(this);
+
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
+            }
         }
 
         private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
