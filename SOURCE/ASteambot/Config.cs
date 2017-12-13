@@ -94,18 +94,18 @@ namespace ASteambot
 
         private bool ValidateConfig()
         {
-            if (SteamUsername.Length == 0) return false;
-            if (SteamPassword.Length == 0) return false;
-            if (SteamAPIKey.Length == 0) return false;
-            if (SteamAdmins.Length == 0) return false;
-            if (DatabaseServer.Length == 0) return false;
-            if (DatabaseUser.Length == 0) return false;
-            if (DatabasePassword.Length == 0) return false;
-            if (DatabaseName.Length == 0) return false;
-            if (DatabasePort.Length == 0) return false;
-            if (TCPServerPort.Length == 0) return false;
-            if (TCPPassword.Length == 0) return false;
-            if (ArkarrAPIKey.Length == 0) return false;
+            if (SteamUsername == null) return false;
+            if (SteamPassword == null) return false;
+            if (SteamAPIKey == null) return false;
+            if (SteamAdmins == null) return false;
+            if (DatabaseServer == null) return false;
+            if (DatabaseUser == null) return false;
+            if (DatabasePassword == null) return false;
+            if (DatabaseName == null) return false;
+            if (DatabasePort == null) return false;
+            if (TCPServerPort == null) return false;
+            if (TCPPassword == null) return false;
+            if (ArkarrAPIKey == null) return false;
 
             return true;
         }

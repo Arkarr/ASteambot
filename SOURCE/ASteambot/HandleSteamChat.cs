@@ -102,17 +102,23 @@ namespace ASteambot
 
                 string cmd = message.Replace(message.Split(' ')[0], "");
 
-                if (id < 0 || id > bot.BotManager.Servers.Count)
+                if (id < 0)
                 {
                     SendChatMessage(partenar, "Invalid server ID '" + id + "' specified !");
                     SendChatMessage(partenar, "Use SERVER command to get a valid server ID !");
                     return;
                 }
 
-                GameServer gs = bot.BotManager.Servers[id];
-                gs.Send(-2, Networking.NetworkCode.ASteambotCode.ExecuteCommand, cmd);
-
-                SendChatMessage(partenar, "Command '" + cmd + "' sent to server '" + gs.Name + "' !");
+                GameServer gs = bot.GetServerByID(id);
+                if (gs == null)
+                {
+                    gs.Send(-2, Networking.NetworkCode.ASteambotCode.ExecuteCommand, cmd);
+                    SendChatMessage(partenar, "Command '" + cmd + "' sent to server '" + gs.Name + "' !");
+                }
+                else
+                {
+                    SendChatMessage(partenar, "No server found with id " + id + " ! No command sent.");
+                }
             }
             else
             {
