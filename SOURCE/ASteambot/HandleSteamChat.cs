@@ -110,7 +110,7 @@ namespace ASteambot
                 }
 
                 GameServer gs = bot.GetServerByID(id);
-                if (gs == null)
+                if (gs != null)
                 {
                     gs.Send(-2, Networking.NetworkCode.ASteambotCode.ExecuteCommand, cmd);
                     SendChatMessage(partenar, "Command '" + cmd + "' sent to server '" + gs.Name + "' !");
