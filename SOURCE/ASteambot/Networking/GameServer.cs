@@ -47,7 +47,7 @@ namespace ASteambot
             string finaldata = tcppasswd + "-1)SRVID| " + serverID + "<EOF>";
 
             //Console.WriteLine(finaldata);
-            byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
+            byte[] byteData = Encoding.UTF8.GetBytes(finaldata);
             socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
         }
 
@@ -59,7 +59,7 @@ namespace ASteambot
             {
                 try
                 {
-                    byte[] byteData = Encoding.ASCII.GetBytes(finaldata);
+                    byte[] byteData = Encoding.UTF8.GetBytes(finaldata);
                     socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
                 }
                 catch(Exception e)

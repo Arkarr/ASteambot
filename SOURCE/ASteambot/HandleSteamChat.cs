@@ -16,17 +16,17 @@ namespace ASteambot
             this.bot = bot;
         }
 
-        public void HandleMessage(SteamID partenar, string message)
+        public void HandleMessage(SteamID partenar, string msg)
         {
             if (!bot.BotManager.Config.SteamAdmins.Contains(partenar.ToString()))
                 return;
 
-            string command = message.Split(' ')[0];
-            message = message.Replace(command+" ", "");
+            string command = msg.Split(' ')[0];
+            string message = msg.Replace(command+" ", "");
 
             if (!command.Equals("STOPHOOK") && !command.Equals("UNHOOK") && bot.ChatListener.ContainsKey(partenar))
             {
-                SendMessageToGameServer(-2, partenar, message);
+                SendMessageToGameServer(-2, partenar, msg);
                 return;
             }
 
