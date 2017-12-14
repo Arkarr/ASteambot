@@ -126,7 +126,7 @@ namespace ASteambot.Networking
 
                 if (bytesRead > 0)
                 {
-                    state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
+                    state.sb.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead));
 
                     content = state.sb.ToString().Replace("\0", String.Empty);
 
