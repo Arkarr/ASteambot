@@ -78,6 +78,22 @@ namespace ASteambot
 
         public void StopHook(int moduleID, SteamID partenar)
         {
+            if(partenar == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("partenar is NULL ?!");
+                Console.ForegroundColor = ConsoleColor.White;
+                return;
+            }
+            
+            if(bot.ChatListener == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("ChatListener is NULL ?!");
+                Console.ForegroundColor = ConsoleColor.White;
+                return;
+            }
+
             int serverID = bot.ChatListener[partenar];
             bot.ChatListener.Remove(partenar);
             SendChatMessage(partenar, "Disconnecting from server...");

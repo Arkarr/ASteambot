@@ -18,7 +18,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.9.5 - PUBLIC";
+        private static string BUILD_VERSION = "2.9.6 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -102,7 +102,7 @@ namespace ASteambot
             Console.WriteLine("");
             Console.WriteLine("\tArkarr's message for you :");
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write("\tI think it's the first working, stable, version of ASteambot");
+            Console.Write("\tI think it's the first stable version of ASteambot !!");
             Console.ForegroundColor = ConsoleColor.Magenta;
             Console.Write(" <3 ");
             Console.ForegroundColor = ConsoleColor.Yellow;
