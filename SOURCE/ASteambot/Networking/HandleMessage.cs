@@ -343,13 +343,15 @@ namespace ASteambot.Networking
             data.Add("action", "post");
             data.Add("headline", groupIDHeadlineBody[1]);
             data.Add("body", groupIDHeadlineBody[2]);
+            data.Add("languages[0][headline]", groupIDHeadlineBody[1]);
+            data.Add("languages[0][body]", groupIDHeadlineBody[2]);
 
             string link = "https://steamcommunity.com/gid/" + groupIDHeadlineBody[0] + "/announcements";
 
-            bot.SteamWeb.Fetch(link, "POST", data, false);
+            bot.SteamWeb.Fetch(link, "POST", data);
 
             if (gs != null)
-                gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.SGAnnoucement, "done");
+                gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.SGAnnoucement, groupIDHeadlineBody[1]);
         }
     }
 }
