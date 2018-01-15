@@ -25,6 +25,7 @@ namespace ASteambot.Networking
 
         private void HandleMessage(Socket handler, string content)
         {
+            Console.WriteLine(content);
             if (!content.StartsWith(password))
                 return;
 

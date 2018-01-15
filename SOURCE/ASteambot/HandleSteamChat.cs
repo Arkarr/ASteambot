@@ -18,7 +18,7 @@ namespace ASteambot
 
         public void HandleMessage(SteamID partenar, string msg)
         {
-            if (!bot.BotManager.Config.SteamAdmins.Contains(partenar.ToString()))
+            if (!bot.Manager.Config.SteamAdmins.Contains(partenar.ToString()))
                 return;
 
             string command = msg.Split(' ')[0];
@@ -62,7 +62,7 @@ namespace ASteambot
         private void SendMessageToGameServer(int moduleID, SteamID partenar, string message)
         {
             int serverID = bot.ChatListener[partenar];
-            GameServer gs = bot.GetServerByID(serverID);
+            GameServer gs = bot.Manager.GetServerByID(serverID);
 
             if (gs != null)
             {
@@ -104,7 +104,7 @@ namespace ASteambot
                     return;
             }
 
-            GameServer server = bot.GetServerByID(serverID);
+            GameServer server = bot.Manager.GetServerByID(serverID);
             server.Send(moduleID, Networking.NetworkCode.ASteambotCode.Unhookchat, "");
 
             SendChatMessage(partenar, "Done !");
@@ -125,7 +125,7 @@ namespace ASteambot
                     return;
                 }
 
-                GameServer gs = bot.GetServerByID(id);
+                GameServer gs = bot.Manager.GetServerByID(id);
                 if (gs != null)
                 {
                     gs.Send(-2, Networking.NetworkCode.ASteambotCode.ExecuteCommand, cmd);
@@ -154,15 +154,15 @@ namespace ASteambot
 
         public void PrintServer(SteamID partenar)
         {
-            if (bot.BotManager.Servers.Count > 0)
+            if (bot.Manager.Servers.Count > 0)
             {
                 SendChatMessage(partenar, "---------------------------");
-                foreach (GameServer gs in bot.BotManager.Servers)
+                foreach (GameServer gs in bot.Manager.Servers)
                 {
                     string serverLine = String.Format("[{0}] {1} - {2}:{3}", gs.ServerID, gs.Name, gs.IP, gs.Port);
                     SendChatMessage(partenar, serverLine);
                 }
-                SendChatMessage(partenar, "Number of registred servers : " + bot.BotManager.Servers.Count);
+                SendChatMessage(partenar, "Number of registred servers : " + bot.Manager.Servers.Count);
                 SendChatMessage(partenar, "---------------------------");
             }
             else
@@ -214,7 +214,7 @@ namespace ASteambot
                 return;
             }
 
-            GameServer gs = bot.GetServerByID(serverID);
+            GameServer gs = bot.Manager.GetServerByID(serverID);
 
             if (gs != null)
             {

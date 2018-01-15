@@ -79,24 +79,24 @@ namespace ASteambot.Networking
         {
             IPEndPoint ipendpoint = ((IPEndPoint)gsr.Socket.RemoteEndPoint);
             
-            int index = bot.BotManager.Servers.FindIndex(f => f.IP == ipendpoint.Address);
+            int index = bot.Manager.Servers.FindIndex(f => f.IP == ipendpoint.Address);
 
             if (index >= 0)
                 return;
 
             serverID++;
-            GameServer gameserver = new GameServer(gsr.Socket, bot.BotManager.Config.TCPPassword, serverID, gsr.Arguments);
-            bot.BotManager.Servers.Add(gameserver);
+            GameServer gameserver = new GameServer(gsr.Socket, bot.Manager.Config.TCPPassword, serverID, gsr.Arguments);
+            bot.Manager.Servers.Add(gameserver);
         }
 
         private void Disconnect(Bot bot, GameServerRequest gsr)
         {
-            bot.BotManager.DisconnectServer(gsr.ServerID);
+            bot.Manager.DisconnectServer(gsr.ServerID);
         }
 
         private void ReportPlayer(Bot bot, GameServerRequest gsr)
         {
-            GameServer gs = bot.GetServerByID(gsr.ServerID);
+            GameServer gs = bot.Manager.GetServerByID(gsr.ServerID);
 
             string[] ids = gsr.Arguments.Split('/');
             SteamID steamID = new SteamID(ids[0]);
@@ -165,7 +165,7 @@ namespace ASteambot.Networking
             if (bot.ArkarrSteamMarket == null)
                 bot.ArkarrSteamMarket = new SteamMarket(bot.Config.ArkarrAPIKey, bot.Config.DisableMarketScan);
 
-            GameServer gameServer = bot.GetServerByID(serverID);
+            GameServer gameServer = bot.Manager.GetServerByID(serverID);
 
             SteamID steamID = new SteamID(gsr.Arguments);
 
@@ -245,7 +245,7 @@ namespace ASteambot.Networking
             SteamID steamid = new SteamID(steamIDitems[0]);
             string[] assetIDs = steamIDitems[1].Split(',');
 
-            GameServer gameServer = bot.GetServerByID(gsr.ServerID);
+            GameServer gameServer = bot.Manager.GetServerByID(gsr.ServerID);
 
             //SteamTrade.SteamMarket.Games game = (SteamTrade.SteamMarket.Games)Int32.Parse(steamIDitems[1]);
 
@@ -295,6 +295,10 @@ namespace ASteambot.Networking
 
                 bot.AcceptMobileTradeConfirmation(offerId);
             }
+            else
+            {
+                gameServer.Send(gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, "-1");
+            }
         }
 
         private void SendFriendInvitation(Bot bot, GameServerRequest gsr)
@@ -306,7 +310,7 @@ namespace ASteambot.Networking
 
         private void InviteToSteamGroup(Bot bot, GameServerRequest gsr)
         {
-            GameServer gs = bot.GetServerByID(gsr.ServerID);
+            GameServer gs = bot.Manager.GetServerByID(gsr.ServerID);
 
             string[] steamIDgroupID = gsr.Arguments.Split('/');
 
@@ -321,12 +325,18 @@ namespace ASteambot.Networking
                         if (groupID.IsValid)
                         {
                             bot.InviteUserToGroup(steamID, groupID);
-                            gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.InviteSteamGroup, steamID.ToString());
+                            if(gs != null)
+                                gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.InviteSteamGroup, steamID.ToString());
+                            else
+                                Console.WriteLine(">>>> COUDLN'T FIND SERVER; NO REPLY SENT !");
                         }
                     }
                     else
                     {
-                        gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamIDgroupID[0]);
+                        if (gs != null)
+                            gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamIDgroupID[0]);
+                        else
+                            Console.WriteLine(">>>> COUDLN'T FIND SERVER; NO REPLY SENT !");
                     }
                 }
             }
@@ -334,7 +344,7 @@ namespace ASteambot.Networking
         
         private void PostSteamGroupAnnoucement(Bot bot, GameServerRequest gsr)
         {   
-            GameServer gs = bot.GetServerByID(serverID);
+            GameServer gs = bot.Manager.GetServerByID(serverID);
 
             string[] groupIDHeadlineBody = gsr.Arguments.Split('/');
 
