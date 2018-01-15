@@ -27,7 +27,7 @@ namespace ASteambot
         public Config Config { get; private set; }
         public bool LoggedIn { get; private set; }
         public bool WebLoggedIn { get; private set; }
-        public Manager BotManager { get; private set; }
+        public Manager Manager { get; private set; }
         public List<SteamID> Friends { get; private set; }
         public SteamMarket ArkarrSteamMarket { get; set; }
         public SteamFriends SteamFriends { get; private set; }
@@ -48,7 +48,7 @@ namespace ASteambot
         private SteamUser steamUser;
         private List<string> finishedTO;
         private SteamClient steamClient;
-        private CallbackManager manager;
+        private CallbackManager cbManager;
         private Thread tradeOfferThread;
         private BackgroundWorker botThread;
         private HandleMessage messageHandler;
@@ -56,17 +56,17 @@ namespace ASteambot
         private SteamGuardAccount steamGuardAccount;
         private Dictionary<string, double> tradeOfferValue;
 
-        public Bot(Manager botManager, LoginInfo loginInfo, Config Config, AsynchronousSocketListener socket)
+        public Bot(Manager manager, LoginInfo loginInfo, Config Config, AsynchronousSocketListener socket)
         {
             this.socket = socket;
             this.Config = Config;
-            BotManager = botManager;
+            this.Manager = manager;
             this.loginInfo = loginInfo;
             steamClient = new SteamClient();
             finishedTO = new List<string>();
             messageHandler = new HandleMessage();
             SteamWeb = new SteamTrade.SteamWeb();
-            manager = new CallbackManager(steamClient);
+            cbManager = new CallbackManager(steamClient);
             SteamchatHandler = new HandleSteamChat(this);
             ChatListener = new Dictionary<SteamID, int>();
             TradeoffersGS = new Dictionary<string, int>();
@@ -82,40 +82,44 @@ namespace ASteambot
             DB.InitialiseDatabase();
 
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
-            botThread.DoWork += BackgroundWorkerOnDoWork;
-            botThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
+            botThread.DoWork += BW_HandleSteamTradeOffer;
+            botThread.RunWorkerCompleted += BW_SteamTradeOfferScanned;
 
             socket.MessageReceived += Socket_MessageReceived;
         }
+        
+        public void SubscribeToEvents()
+        {
+            //Connection events :
+            cbManager.Subscribe<SteamClient.ConnectedCallback>(OnSteambotConnected);
+            cbManager.Subscribe<SteamClient.DisconnectedCallback>(OnSteambotDisconnected);
+            cbManager.Subscribe<SteamUser.LoggedOnCallback>(OnSteambotLoggedIn);
+            cbManager.Subscribe<SteamUser.LoggedOffCallback>(OnSteambotLoggedOff);
+            cbManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth);
+            cbManager.Subscribe<SteamUser.LoginKeyCallback>(LoginKey);
+            cbManager.Subscribe<SteamUser.WebAPIUserNonceCallback>(OnWebAPIUserNonce);
+
+            //Steam events :
+            cbManager.Subscribe<SteamUser.AccountInfoCallback>(OnAccountInfo);
+            cbManager.Subscribe<SteamFriends.FriendMsgCallback>(OnSteamFriendMessage);
+            cbManager.Subscribe<SteamFriends.PersonaChangeCallback>(OnSteamNameChange);
+            cbManager.Subscribe<SteamFriends.FriendsListCallback>(OnSteamFriendsList);
+        }
+
+        //*************//
+        //   NETWORK   //
+        //*************//
 
         private void Socket_MessageReceived(object sender, EventArgGameServer e)
         {
             messageHandler.Execute(this, e.GetGameServerRequest);
         }
 
-        private void SaveItemInDB(SteamTrade.SteamMarket.Item item)
-        {
-            string[] rows = new string[5];
-            rows[0] = "itemName";
-            rows[1] = "value";
-            rows[2] = "quantity";
-            rows[3] = "last_updated";
-            rows[4] = "gameid";
+        //*****************//
+        //   TRADE OFFER   //
+        //*****************//
 
-            string[] values = new string[5];
-            values[0] = item.Name;
-            values[1] = item.Value.ToString();
-            values[2] = item.Quantity.ToString();
-            values[3] = item.LastUpdated;
-            values[4] = item.AppID.ToString();
-
-            if (DB.SELECT(rows, "smitems", "WHERE itemName=\"" + item.Name + "\"" + ";").Count > 0)
-                DB.QUERY("UPDATE smitems SET value='" + item.Value + "',quantity='" + item.Quantity + "',last_updated = '" + item.LastUpdated + "' WHERE itemName=\"" + item.Name + "\"" + ";");
-            else
-                DB.INSERT("smitems", rows, values);
-        }
-
-        private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
+        private void BW_HandleSteamTradeOffer(object sender, DoWorkEventArgs doWorkEventArgs)
         {
             while (!botThread.CancellationPending)
             {
@@ -139,7 +143,7 @@ namespace ASteambot
             }
         }
 
-        private void BackgroundWorkerOnRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs runWorkerCompletedEventArgs)
+        private void BW_SteamTradeOfferScanned(object sender, RunWorkerCompletedEventArgs runWorkerCompletedEventArgs)
         {
             if (runWorkerCompletedEventArgs.Error != null)
             {
@@ -152,6 +156,53 @@ namespace ASteambot
                 Disconnect();
             }
         }
+
+        public void CreateTradeOffer(string otherSteamID)
+        {
+            List<long> contextId = new List<long>();
+            contextId.Add(2);
+            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.TF2, contextId, steamClient.SteamID);
+
+            SteamID partenar = new SteamID(otherSteamID);
+            TradeOffer to = TradeOfferManager.NewOffer(partenar);
+
+            GenericInventory.Item test = MyGenericInventory.items.FirstOrDefault().Value;
+
+            to.Items.AddMyItem(test.appid, test.contextid, (long)test.assetid);
+
+            string offerId;
+            to.Send(out offerId, "Test trade offer");
+
+            Console.WriteLine("Offer ID : " + offerId);
+
+            AcceptMobileTradeConfirmation(offerId);
+        }
+
+        public void AcceptMobileTradeConfirmation(string offerId)
+        {
+            steamGuardAccount.Session.SteamLogin = SteamWeb.Token;
+            steamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
+            try
+            {
+                foreach (var confirmation in steamGuardAccount.FetchConfirmations())
+                {
+                    if (confirmation.ConfType == Confirmation.ConfirmationType.Trade)
+                    {
+                        long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
+                        if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
+                            Console.WriteLine("Confirmed " + confirmation.Description + ". (Confirmation ID #" + confirmation.ID + ")");
+                    }
+                }
+            }
+            catch (SteamGuardAccount.WGTokenInvalidException)
+            {
+                Console.WriteLine("Invalid session when trying to fetch trade confirmations.");
+            }
+        }
+
+        //**************//
+        //   LOGIN IN   //
+        //**************//
 
         public void Auth()
         {
@@ -198,23 +249,152 @@ namespace ASteambot
             }
         }
 
-        public void SubscribeToEvents()
+        public void DeactivateAuthenticator()
         {
-            //Connection events :
-            manager.Subscribe<SteamClient.ConnectedCallback>(OnSteambotConnected);
-            manager.Subscribe<SteamClient.DisconnectedCallback>(OnSteambotDisconnected);
-            manager.Subscribe<SteamUser.LoggedOnCallback>(OnSteambotLoggedIn);
-            manager.Subscribe<SteamUser.LoggedOffCallback>(OnSteambotLoggedOff);
-            manager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth);
-            manager.Subscribe<SteamUser.LoginKeyCallback>(LoginKey);
-            manager.Subscribe<SteamUser.WebAPIUserNonceCallback>(WebAPIUserNonce);
-
-            //Steam events :
-            manager.Subscribe<SteamUser.AccountInfoCallback>(OnAccountInfo);
-            manager.Subscribe<SteamFriends.FriendMsgCallback>(OnSteamFriendMessage);
-            manager.Subscribe<SteamFriends.PersonaChangeCallback>(OnSteamNameChange);
-            manager.Subscribe<SteamFriends.FriendsListCallback>(OnSteamFriendsList);
+            if (steamGuardAccount == null)
+            {
+                Console.WriteLine("Unable to unlink mobile authenticator, is it really linked ?");
+            }
+            else
+            {
+                steamGuardAccount.DeactivateAuthenticator();
+                Console.WriteLine("Done !");
+            }
         }
+
+        public void GenerateCode()
+        {
+            Console.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
+        }
+
+        public void LinkMobileAuth()
+        {
+            var login = new UserLogin(loginInfo.Username, loginInfo.Password);
+            var loginResult = login.DoLogin();
+            if (loginResult == LoginResult.NeedEmail)
+            {
+                while (loginResult == LoginResult.NeedEmail)
+                {
+                    Console.WriteLine("Enter Steam Guard code from email :");
+                    var emailCode = Console.ReadLine();
+                    login.EmailCode = emailCode;
+                    loginResult = login.DoLogin();
+                }
+            }
+            if (loginResult == SteamAuth.LoginResult.LoginOkay)
+            {
+                Console.WriteLine("Linking mobile authenticator...");
+                var authLinker = new SteamAuth.AuthenticatorLinker(login.Session);
+                var addAuthResult = authLinker.AddAuthenticator();
+                if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                {
+                    while (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                    {
+                        Console.WriteLine("Enter phone number with country code, e.g. +1XXXXXXXXXXX :");
+                        var phoneNumber = Console.ReadLine();
+                        authLinker.PhoneNumber = phoneNumber;
+                        addAuthResult = authLinker.AddAuthenticator();
+                    }
+                }
+                if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.AwaitingFinalization)
+                {
+                    steamGuardAccount = authLinker.LinkedAccount;
+                    try
+                    {
+                        var authFile = String.Format("{0}.auth", loginInfo.Username);
+                        Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "authfiles"));
+                        File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(steamGuardAccount));
+                        Console.WriteLine("Enter SMS code :");
+                        var smsCode = Console.ReadLine();
+                        var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
+                        if (authResult == SteamAuth.AuthenticatorLinker.FinalizeResult.Success)
+                        {
+                            Console.WriteLine("Linked authenticator.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Error linking authenticator: " + authResult);
+                        }
+                    }
+                    catch (IOException)
+                    {
+                        Console.WriteLine("Failed to save auth file. Aborting authentication.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Error adding authenticator: " + addAuthResult);
+                }
+            }
+            else
+            {
+                if (loginResult == SteamAuth.LoginResult.Need2FA)
+                {
+                    Console.WriteLine("Mobile authenticator has already been linked!");
+                }
+                else
+                {
+                    Console.WriteLine("Error performing mobile login: " + loginResult);
+                }
+            }
+        }
+
+        private void UserWebLogOn()
+        {
+            do
+            {
+                WebLoggedIn = SteamWeb.Authenticate(myUniqueId, steamClient, myUserNonce);
+
+                if (!WebLoggedIn)
+                {
+                    Console.WriteLine("Authentication failed, retrying in 2s...");
+                    Thread.Sleep(2000);
+                }
+            } while (!WebLoggedIn);
+
+            Console.WriteLine("User Authenticated!");
+
+            ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan);
+
+            TradeOfferManager = new TradeOfferManager(loginInfo.API, SteamWeb);
+            SubscribeTradeOffer(TradeOfferManager);
+
+            SpawnTradeOfferPollingThread();
+
+            //smp.ItemUpdated += Smp_ItemUpdated;
+
+            /*string[] row = new string[5];
+            row[0] = "itemName";
+            row[1] = "last_updated";
+            row[2] = "value";
+            row[3] = "quantity";
+            row[4] = "gameid";
+            List<Dictionary<string, string>> items = DB.SELECT(row, "smitems");
+            if (items != null)
+            {
+                foreach (Dictionary<string, string> item in items)
+                {
+                    smp.AddItem(item["itemName"], item["last_updated"], Int32.Parse(item["quantity"]), Double.Parse(item["value"]), Int32.Parse(item["gameid"]));
+                }
+            }
+            smp.ScanMarket();*/
+        }
+
+        public void Disconnect()
+        {
+            stop = true;
+            steamUser.LogOff();
+            steamClient.Disconnect();
+            CancelTradeOfferPollingThread();
+
+            botThread.CancelAsync();
+
+            Console.WriteLine("stopping bot {0} ...", Name);
+        }
+
+        //*******************//
+        //   STEAM FRIENDS   //
+        //*******************//
 
         private void OnSteamFriendsList(SteamFriends.FriendsListCallback obj)
         {
@@ -293,6 +473,10 @@ namespace ASteambot
                 Friends.Add(SteamFriends.GetFriendByIndex(i));
         }
 
+        //******************//
+        //   STEAM GROUPS   //
+        //******************//
+
         private void AcceptGroupInvite(SteamID group)
         {
             var AcceptInvite = new ClientMsg<CMsgGroupInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
@@ -324,93 +508,9 @@ namespace ASteambot
             this.steamClient.Send(InviteUser);
         }
 
-        public void CreateTradeOffer(string otherSteamID)
-        {
-            List<long> contextId = new List<long>();
-            contextId.Add(2);
-            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.TF2, contextId, steamClient.SteamID);
-
-            SteamID partenar = new SteamID(otherSteamID);
-            TradeOffer to = TradeOfferManager.NewOffer(partenar);
-
-            GenericInventory.Item test = MyGenericInventory.items.FirstOrDefault().Value;
-
-            to.Items.AddMyItem(test.appid, test.contextid, (long)test.assetid);
-
-            string offerId;
-            to.Send(out offerId, "Test trade offer");
-
-            Console.WriteLine("Offer ID : " + offerId);
-
-            AcceptMobileTradeConfirmation(offerId);
-        }
-
-        public void AcceptMobileTradeConfirmation(string offerId)
-        {
-            steamGuardAccount.Session.SteamLogin = SteamWeb.Token;
-            steamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
-            try
-            {
-                foreach (var confirmation in steamGuardAccount.FetchConfirmations())
-                {
-                    if (confirmation.ConfType == Confirmation.ConfirmationType.Trade)
-                    {
-                        long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
-                        if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
-                            Console.WriteLine("Confirmed " + confirmation.Description + ". (Confirmation ID #" + confirmation.ID + ")");
-                    }
-                }
-            }
-            catch (SteamGuardAccount.WGTokenInvalidException)
-            {
-                Console.WriteLine("Invalid session when trying to fetch trade confirmations.");
-            }
-        }
-
-        public void DeactivateAuthenticator()
-        {
-            if (steamGuardAccount == null)
-            {
-                Console.WriteLine("Unable to unlink mobile authenticator, is it really linked ?");
-            }
-            else
-            {
-                steamGuardAccount.DeactivateAuthenticator();
-                Console.WriteLine("Done !");
-            }
-        }
-
-        public GameServer GetServerByID(int serverID)
-        {
-            GameServer g = BotManager.Servers.Find(gs => gs.ServerID == serverID);
-            if (g == null)
-                return null;
-
-            if (!g.SocketConnected())
-            {
-                foreach (GameServer gs in BotManager.Servers)
-                {
-                    if (gs.ServerID != serverID && gs.Name == g.Name)
-                    {
-                        BotManager.RefreshServers();
-                        return gs;
-                    }
-                }
-
-                BotManager.RefreshServers();
-            }
-            else
-            {
-                return g;
-            }
-
-            return null;
-        }
-
-        public void GenerateCode()
-        {
-            Console.WriteLine(steamGuardAccount.GenerateSteamGuardCode());
-        }
+        //*******************//
+        //  HELPER FUNCTION  //
+        //*******************//
 
         public void WithDrawn(string steamid)
         {
@@ -483,99 +583,165 @@ namespace ASteambot
             }
         }
 
-        public void LinkMobileAuth()
-        {
-            var login = new UserLogin(loginInfo.Username, loginInfo.Password);
-            var loginResult = login.DoLogin();
-            if (loginResult == LoginResult.NeedEmail)
-            {
-                while (loginResult == LoginResult.NeedEmail)
-                {
-                    Console.WriteLine("Enter Steam Guard code from email :");
-                    var emailCode = Console.ReadLine();
-                    login.EmailCode = emailCode;
-                    loginResult = login.DoLogin();
-                }
-            }
-            if (loginResult == SteamAuth.LoginResult.LoginOkay)
-            {
-                Console.WriteLine("Linking mobile authenticator...");
-                var authLinker = new SteamAuth.AuthenticatorLinker(login.Session);
-                var addAuthResult = authLinker.AddAuthenticator();
-                if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
-                {
-                    while (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
-                    {
-                        Console.WriteLine("Enter phone number with country code, e.g. +1XXXXXXXXXXX :");
-                        var phoneNumber = Console.ReadLine();
-                        authLinker.PhoneNumber = phoneNumber;
-                        addAuthResult = authLinker.AddAuthenticator();
-                    }
-                }
-                if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.AwaitingFinalization)
-                {
-                    steamGuardAccount = authLinker.LinkedAccount;
-                    try
-                    {
-                        var authFile = String.Format("{0}.auth", loginInfo.Username);
-                        Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "authfiles"));
-                        File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(steamGuardAccount));
-                        Console.WriteLine("Enter SMS code :");
-                        var smsCode = Console.ReadLine();
-                        var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
-                        if (authResult == SteamAuth.AuthenticatorLinker.FinalizeResult.Success)
-                        {
-                            Console.WriteLine("Linked authenticator.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Error linking authenticator: " + authResult);
-                        }
-                    }
-                    catch (IOException)
-                    {
-                        Console.WriteLine("Failed to save auth file. Aborting authentication.");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Error adding authenticator: " + addAuthResult);
-                }
-            }
-            else
-            {
-                if (loginResult == SteamAuth.LoginResult.Need2FA)
-                {
-                    Console.WriteLine("Mobile authenticator has already been linked!");
-                }
-                else
-                {
-                    Console.WriteLine("Error performing mobile login: " + loginResult);
-                }
-            }
-        }
-
         public void ChangeName(string newname)
         {
             renaming = true;
             SteamFriends.SetPersonaName(newname);
         }
 
-        public void Disconnect()
+        public void Run()
         {
-            stop = true;
-            steamUser.LogOff();
-            steamClient.Disconnect();
-            CancelTradeOfferPollingThread();
+            Running = true;
 
-            botThread.CancelAsync();
-
-            Console.WriteLine("stopping bot {0} ...", Name);
+            if (!stop)
+                cbManager.RunWaitAllCallbacks(TimeSpan.FromSeconds(1));
         }
 
-        //Events :
-        #region Events callback
+        public bool LoginInfoMatch(LoginInfo loginfo)
+        {
+            if (this.loginInfo.Username == loginfo.Username && this.loginInfo.Password == loginfo.Password)
+                return true;
+            else
+                return false;
+        }
 
+        private void SendTradeOfferConfirmationToGameServers(string id, NetworkCode.ASteambotCode code, string data)
+        {
+            foreach (GameServer gs in Manager.Servers)
+            {
+                if (TradeoffersGS.ContainsKey(id))
+                {
+                    gs.Send(TradeoffersGS[id], code, data);
+                    TradeoffersGS.Remove(id);
+                    finishedTO.Add(id);
+                }
+                else
+                {
+                    if (!finishedTO.Contains(id))
+                        gs.Send(-2, code, data); //should never ever go here !
+                }
+            }
+        }
+
+        private void UpdateTradeOfferInDatabase(TradeOffer to, double value)
+        {
+            string[] rows = new string[4];
+            string[] values = new string[4];
+
+            rows[0] = "steamID";
+            rows[1] = "tradeOfferID";
+            rows[2] = "tradeValue";
+            rows[3] = "tradeStatus";
+
+            if (DB.SELECT(rows, "tradeoffers", "WHERE `tradeOfferID`=\"" + to.TradeOfferId + "\"").FirstOrDefault() == null)
+            {
+                values[0] = to.PartnerSteamId.ToString();
+                values[1] = to.TradeOfferId;
+                values[2] = value.ToString();
+                values[3] = ((int)to.OfferState).ToString();
+
+                DB.INSERT("tradeoffers", rows, values);
+            }
+            else
+            {
+                if (to.OfferState != TradeOfferState.TradeOfferStateAccepted &&
+                    to.OfferState != TradeOfferState.TradeOfferStateDeclined &&
+                    to.OfferState != TradeOfferState.TradeOfferStateCanceled)
+                {
+                    string query = String.Format("UPDATE tradeoffers SET `tradeStatus`=\"{0}\", `tradeValue`=\"{1}\" WHERE `tradeOfferID`=\"{2}\";", ((int)to.OfferState), value.ToString(), to.TradeOfferId);
+                    DB.QUERY(query);
+                }
+            }
+        }
+
+        private double GetTradeOfferValue(SteamID partenar, List<TradeOffer.TradeStatusUser.TradeAsset> list)
+        {
+            double cent = 0;
+
+            Thread.CurrentThread.IsBackground = true;
+            long[] contextID = new long[1];
+            contextID[0] = 2;
+
+            List<long> appIDs = new List<long>();
+            GenericInventory gi = new GenericInventory(SteamWeb);
+
+            foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
+            {
+                if (!appIDs.Contains(item.AppId))
+                    appIDs.Add(item.AppId);
+            }
+
+            cent = 0;
+            foreach (int appID in appIDs)
+            {
+                gi.load(appID, contextID, partenar);
+                foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
+                {
+                    if (item.AppId != appID)
+                        continue;
+
+                    GenericInventory.ItemDescription ides = gi.getDescription((ulong)item.AssetId);
+
+                    if (ides == null)
+                    {
+                        Console.WriteLine("Warning, items description for item " + item.AssetId + " not found !");
+                    }
+                    else
+                    {
+                        Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name);
+                        if (itemInfo != null)
+                            cent += itemInfo.Value;
+                    }
+                }
+            }
+
+            return cent;
+        }
+
+        public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
+        {
+            tradeOfferManager.OnTradeOfferUpdated += OnTradeOfferUpdated;
+        }
+
+        protected void SpawnTradeOfferPollingThread()
+        {
+            if (tradeOfferThread == null)
+            {
+                tradeOfferThread = new Thread(TradeOfferPollingFunction);
+                tradeOfferThread.Start();
+            }
+        }
+
+        protected void CancelTradeOfferPollingThread()
+        {
+            tradeOfferThread = null;
+        }
+
+        protected void TradeOfferPollingFunction()
+        {
+            while (tradeOfferThread == Thread.CurrentThread)
+            {
+                try
+                {
+                    TradeOfferManager.EnqueueUpdatedOffers();
+                }
+                catch (Exception e)
+                {
+                    //Sucks
+                    Console.WriteLine("Error while polling trade offers: ");
+                    if (e.Message.Contains("403"))
+                        Console.WriteLine("Access not allowed. Check your steam API key.");
+                    else
+                        Console.WriteLine(e.Message);
+                }
+
+                Thread.Sleep(30 * 1000);//tradeOfferPollingIntervalSecs * 1000);
+            }
+        }
+
+        //***********//
+        //   EVENTS  //
+        //***********//
 
         private void OnAccountInfo(SteamUser.AccountInfoCallback callback)
         {
@@ -584,7 +750,7 @@ namespace ASteambot
             Name = SteamFriends.GetPersonaName();
         }
 
-        private void WebAPIUserNonce(SteamUser.WebAPIUserNonceCallback callback)
+        private void OnWebAPIUserNonce(SteamUser.WebAPIUserNonceCallback callback)
         {
             Console.WriteLine("Received new WebAPIUserNonce.");
 
@@ -773,81 +939,8 @@ namespace ASteambot
             LoggedIn = false;
             Console.WriteLine("Logged off of Steam: {0}", callback.Result);
         }
-        #endregion
 
-        /////////////////////////////////////////////////////////////////////
-        private void UserWebLogOn()
-        {
-            do
-            {
-                WebLoggedIn = SteamWeb.Authenticate(myUniqueId, steamClient, myUserNonce);
-
-                if (!WebLoggedIn)
-                {
-                    Console.WriteLine("Authentication failed, retrying in 2s...");
-                    Thread.Sleep(2000);
-                }
-            } while (!WebLoggedIn);
-
-            Console.WriteLine("User Authenticated!");
-
-            ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan);
-
-            TradeOfferManager = new TradeOfferManager(loginInfo.API, SteamWeb);
-            SubscribeTradeOffer(TradeOfferManager);
-
-            SpawnTradeOfferPollingThread();
-
-            //smp.ItemUpdated += Smp_ItemUpdated;
-
-            /*string[] row = new string[5];
-            row[0] = "itemName";
-            row[1] = "last_updated";
-            row[2] = "value";
-            row[3] = "quantity";
-            row[4] = "gameid";
-            List<Dictionary<string, string>> items = DB.SELECT(row, "smitems");
-            if (items != null)
-            {
-                foreach (Dictionary<string, string> item in items)
-                {
-                    smp.AddItem(item["itemName"], item["last_updated"], Int32.Parse(item["quantity"]), Double.Parse(item["value"]), Int32.Parse(item["gameid"]));
-                }
-            }
-            smp.ScanMarket();*/
-        }
-
-        /*private void Smp_ItemUpdated(object sender, EventArgItemScanned e)
-        {
-            Item i = e.GetItem;
-
-            if (Program.DEBUG)
-            {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("Item " + i.Name + " updated (Price : " + i.Value + ") !");
-                Console.ForegroundColor = ConsoleColor.White;
-            }
-
-            /*string[] rows = new string[1];
-            rows[0] = "tradeOfferID";
-
-            List<Dictionary<string, string>> list = DB.SELECT(rows, "tradeoffers", "WHERE `tradeStatus`=\"" + (int)TradeOfferState.TradeOfferStateActive + "\"");
-            foreach (Dictionary<string, string> tradeInfo in list)
-            {
-                TradeOffer to;
-                tradeOfferManager.TryGetOffer(tradeInfo["tradeOfferID"], out to);
-
-                if (to != null && to.OfferState == TradeOfferState.TradeOfferStateActive)
-                {
-                    double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
-                    UpdateTradeOfferInDatabase(to, cent);
-                }
-            }
-
-            SaveItemInDB(i);
-        }*/
-
-        private void TradeOfferUpdated(TradeOffer offer)
+        private void OnTradeOfferUpdated(TradeOffer offer)
         {
             //UpdateTradeOfferInDatabase(offer, cent);
 
@@ -861,12 +954,12 @@ namespace ASteambot
             }
 
             if (offer.IsOurOffer)
-                OwnTradeOfferUpdated(offer);
+                OnOwnTradeOfferUpdated(offer);
             else
-                PartenarTradeOfferUpdated(offer);
+                OnPartenarTradeOfferUpdated(offer);
         }
 
-        private void OwnTradeOfferUpdated(TradeOffer offer)
+        private void OnOwnTradeOfferUpdated(TradeOffer offer)
         {
             //Console.WriteLine("Sent offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
 
@@ -893,7 +986,7 @@ namespace ASteambot
             }
         }
 
-        private void PartenarTradeOfferUpdated(TradeOffer offer)
+        private void OnPartenarTradeOfferUpdated(TradeOffer offer)
         {
             //Console.WriteLine("Received offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
 
@@ -916,157 +1009,60 @@ namespace ASteambot
             }
         }
 
-        private void SendTradeOfferConfirmationToGameServers(string id, NetworkCode.ASteambotCode code, string data)
+        //*******************//
+        //   TO BE REMOVED   //
+        //*******************//
+
+        /*private void SaveItemInDB(SteamTrade.SteamMarket.Item item)
         {
-            foreach (GameServer gs in BotManager.Servers)
-            {
-                if (TradeoffersGS.ContainsKey(id))
-                {
-                    gs.Send(TradeoffersGS[id], code, data);
-                    TradeoffersGS.Remove(id);
-                    finishedTO.Add(id);
-                }
-                else
-                {
-                    if (!finishedTO.Contains(id))
-                        gs.Send(-2, code, data); //should never ever go here !
-                }
-            }
-        }
+            string[] rows = new string[5];
+            rows[0] = "itemName";
+            rows[1] = "value";
+            rows[2] = "quantity";
+            rows[3] = "last_updated";
+            rows[4] = "gameid";
 
-        private void UpdateTradeOfferInDatabase(TradeOffer to, double value)
-        {
-            string[] rows = new string[4];
-            string[] values = new string[4];
+            string[] values = new string[5];
+            values[0] = item.Name;
+            values[1] = item.Value.ToString();
+            values[2] = item.Quantity.ToString();
+            values[3] = item.LastUpdated;
+            values[4] = item.AppID.ToString();
 
-            rows[0] = "steamID";
-            rows[1] = "tradeOfferID";
-            rows[2] = "tradeValue";
-            rows[3] = "tradeStatus";
-
-            if (DB.SELECT(rows, "tradeoffers", "WHERE `tradeOfferID`=\"" + to.TradeOfferId + "\"").FirstOrDefault() == null)
-            {
-                values[0] = to.PartnerSteamId.ToString();
-                values[1] = to.TradeOfferId;
-                values[2] = value.ToString();
-                values[3] = ((int)to.OfferState).ToString();
-
-                DB.INSERT("tradeoffers", rows, values);
-            }
+            if (DB.SELECT(rows, "smitems", "WHERE itemName=\"" + item.Name + "\"" + ";").Count > 0)
+                DB.QUERY("UPDATE smitems SET value='" + item.Value + "',quantity='" + item.Quantity + "',last_updated = '" + item.LastUpdated + "' WHERE itemName=\"" + item.Name + "\"" + ";");
             else
-            {
-                if (to.OfferState != TradeOfferState.TradeOfferStateAccepted &&
-                    to.OfferState != TradeOfferState.TradeOfferStateDeclined &&
-                    to.OfferState != TradeOfferState.TradeOfferStateCanceled)
-                {
-                    string query = String.Format("UPDATE tradeoffers SET `tradeStatus`=\"{0}\", `tradeValue`=\"{1}\" WHERE `tradeOfferID`=\"{2}\";", ((int)to.OfferState), value.ToString(), to.TradeOfferId);
-                    DB.QUERY(query);
-                }
-            }
-        }
+                DB.INSERT("smitems", rows, values);
+        }*/
 
-        private double GetTradeOfferValue(SteamID partenar, List<TradeOffer.TradeStatusUser.TradeAsset> list)
-        {
-            double cent = 0;
+        /*private void Smp_ItemUpdated(object sender, EventArgItemScanned e)
+       {
+           Item i = e.GetItem;
 
-            Thread.CurrentThread.IsBackground = true;
-            long[] contextID = new long[1];
-            contextID[0] = 2;
+           if (Program.DEBUG)
+           {
+               Console.ForegroundColor = ConsoleColor.Cyan;
+               Console.WriteLine("Item " + i.Name + " updated (Price : " + i.Value + ") !");
+               Console.ForegroundColor = ConsoleColor.White;
+           }
 
-            List<long> appIDs = new List<long>();
-            GenericInventory gi = new GenericInventory(SteamWeb);
+           /*string[] rows = new string[1];
+           rows[0] = "tradeOfferID";
 
-            foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
-            {
-                if (!appIDs.Contains(item.AppId))
-                    appIDs.Add(item.AppId);
-            }
+           List<Dictionary<string, string>> list = DB.SELECT(rows, "tradeoffers", "WHERE `tradeStatus`=\"" + (int)TradeOfferState.TradeOfferStateActive + "\"");
+           foreach (Dictionary<string, string> tradeInfo in list)
+           {
+               TradeOffer to;
+               tradeOfferManager.TryGetOffer(tradeInfo["tradeOfferID"], out to);
 
-            cent = 0;
-            foreach (int appID in appIDs)
-            {
-                gi.load(appID, contextID, partenar);
-                foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
-                {
-                    if (item.AppId != appID)
-                        continue;
+               if (to != null && to.OfferState == TradeOfferState.TradeOfferStateActive)
+               {
+                   double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
+                   UpdateTradeOfferInDatabase(to, cent);
+               }
+           }
 
-                    GenericInventory.ItemDescription ides = gi.getDescription((ulong)item.AssetId);
-
-                    if (ides == null)
-                    {
-                        Console.WriteLine("Warning, items description for item " + item.AssetId + " not found !");
-                    }
-                    else
-                    {
-                        Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name);
-                        if (itemInfo != null)
-                            cent += itemInfo.Value;
-                    }
-                }
-            }
-
-            return cent;
-        }
-
-        public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
-        {
-            tradeOfferManager.OnTradeOfferUpdated += TradeOfferUpdated;
-        }
-
-        protected void SpawnTradeOfferPollingThread()
-        {
-            if (tradeOfferThread == null)
-            {
-                tradeOfferThread = new Thread(TradeOfferPollingFunction);
-                tradeOfferThread.Start();
-            }
-        }
-
-        protected void CancelTradeOfferPollingThread()
-        {
-            tradeOfferThread = null;
-        }
-
-        protected void TradeOfferPollingFunction()
-        {
-            while (tradeOfferThread == Thread.CurrentThread)
-            {
-                try
-                {
-                    TradeOfferManager.EnqueueUpdatedOffers();
-                }
-                catch (Exception e)
-                {
-                    //Sucks
-                    Console.WriteLine("Error while polling trade offers: ");
-                    if (e.Message.Contains("403"))
-                        Console.WriteLine("Access not allowed. Check your steam API key.");
-                    else
-                        Console.WriteLine(e.Message);
-                }
-
-                Thread.Sleep(30 * 1000);//tradeOfferPollingIntervalSecs * 1000);
-            }
-        }
-
-        //Helper function :
-        #region Helper function
-        public void Run()
-        {
-            Running = true;
-
-            if (!stop)
-                manager.RunWaitAllCallbacks(TimeSpan.FromSeconds(1));
-        }
-
-        public bool LoginInfoMatch(LoginInfo loginfo)
-        {
-            if (this.loginInfo.Username == loginfo.Username && this.loginInfo.Password == loginfo.Password)
-                return true;
-            else
-                return false;
-        }
-        #endregion
+           SaveItemInDB(i);
+       }*/
     }
 }

@@ -36,12 +36,12 @@ namespace ASteambot
         {
             foreach (Bot bot in OnlineBots)
             {
-                foreach (GameServer gs in bot.BotManager.Servers)
+                foreach (GameServer gs in bot.Manager.Servers)
                 {
                     if (gs.SocketConnected() == false)
                         bot.SteamchatHandler.ServerRemoved(gs.ServerID);
                 }
-                bot.BotManager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
+                bot.Manager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
             }
         }
 
@@ -225,7 +225,7 @@ namespace ASteambot
 
             foreach(Bot bot in bots)
             {
-                foreach (GameServer gs in bot.BotManager.Servers)
+                foreach (GameServer gs in bot.Manager.Servers)
                 {
                     gs.Send(-2, NetworkCode.ASteambotCode.Simple, test);
                     count++;
@@ -357,6 +357,33 @@ namespace ASteambot
                 //SelectedBot = result;
                 Console.Title = "Akarr's steambot - [NO STEAMBOT SELECTED USE 'select']";
             }
+        }
+
+        public GameServer GetServerByID(int serverID)
+        {
+            GameServer g = Servers.Find(gs => gs.ServerID == serverID);
+            if (g == null)
+                return null;
+
+            if (!g.SocketConnected())
+            {
+                foreach (GameServer gs in Servers)
+                {
+                    if (gs.ServerID != serverID && gs.Name == g.Name)
+                    {
+                        RefreshServers();
+                        return gs;
+                    }
+                }
+
+                RefreshServers();
+            }
+            else
+            {
+                return g;
+            }
+
+            return null;
         }
     }
 }
