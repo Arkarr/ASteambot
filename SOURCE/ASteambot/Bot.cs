@@ -222,7 +222,8 @@ namespace ASteambot
             if (File.Exists(authFile))
             {
                 steamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(authFile));
-                string code = steamGuardAccount.GenerateSteamGuardCode();
+
+                    string code = steamGuardAccount.GenerateSteamGuardCode();
                 Console.WriteLine("2FA code : " + code);
                 return code;
             }
@@ -445,7 +446,7 @@ namespace ASteambot
                 Random rnd = new Random();
                 int unluckyDude = 0;
                 SteamID steamID = Friends[unluckyDude];
-                while (newFriends.Contains(steamID))
+                while (newFriends.Contains(steamID) && !Config.SteamAdmins.Contains(steamID.ToString()))
                 {
                     unluckyDude = rnd.Next(Friends.Count);
                     steamID = Friends[unluckyDude];
