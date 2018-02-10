@@ -199,21 +199,33 @@ namespace ASteambot.Networking
 
         public void InitialiseDatabase()
         {
-            string table1 = "CREATE TABLE IF NOT EXISTS `tradeoffers` (" +
-                            "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-                            "`steamID` varchar(125) NOT NULL," +
-                            "`tradeOfferID` bigint(255) NOT NULL," +
-                            "`tradeValue` varchar(125) NOT NULL," +
-                            "`tradeStatus` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            QUERY(table1);
-            string table2 = "CREATE TABLE IF NOT EXISTS `smitems` (" +
-                             "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-                             "`itemName` varchar(125) CHARACTER SET utf8mb4 NOT NULL," +
-                             "`last_updated` varchar(125) NOT NULL," +
-                             "`value` float(15) NOT NULL," +
-                             "`quantity` int(15) NOT NULL," +
-                             "`gameid` int(15) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            QUERY(table2);
+            try
+            {
+                string table1 = "CREATE TABLE IF NOT EXISTS `tradeoffers` (" +
+                                "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
+                                "`steamID` varchar(125) NOT NULL," +
+                                "`tradeOfferID` bigint(255) NOT NULL," +
+                                "`tradeValue` varchar(125) NOT NULL," +
+                                "`tradeStatus` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+                QUERY(table1);
+                string table2 = "CREATE TABLE IF NOT EXISTS `smitems` (" +
+                                 "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
+                                 "`itemName` varchar(125) CHARACTER SET utf8 NOT NULL," +
+                                 "`last_updated` varchar(125) NOT NULL," +
+                                 "`value` float(15) NOT NULL," +
+                                 "`quantity` int(15) NOT NULL," +
+                                 "`gameid` int(15) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+                QUERY(table2);
+            }
+            catch(MySqlException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                if(e.Message.EndsWith("'utf8'"))
+                {
+                    Console.WriteLine("Couldn't find character set \"utf8mb4\" !");
+                    throw new Exception("UPDATE YOUR MySQL SERVER TO AT LEAST 5.5.3 !");
+                }                
+            }
         }
     }
 }

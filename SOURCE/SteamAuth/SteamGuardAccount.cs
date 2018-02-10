@@ -42,16 +42,45 @@ namespace SteamAuth
         [JsonProperty("status")]
         public int Status { get; set; }
 
+        private string deviceID;
         [JsonProperty("device_id")]
-        public string DeviceID { get; set; }
+        public string DeviceID
+        {
+            get
+            {
+                if (String.IsNullOrEmpty(deviceID))
+                    deviceID = AuthenticatorLinker.GenerateDeviceID();
 
+                return deviceID;
+            }
+            set
+            {
+                this.deviceID = value;
+            }
+        }
+        
         /// <summary>
         /// Set to true if the authenticator has actually been applied to the account.
         /// </summary>
         [JsonProperty("fully_enrolled")]
         public bool FullyEnrolled { get; set; }
 
-        public SessionData Session { get; set; }
+        private SessionData session;
+        public SessionData Session
+        {
+            get
+            {
+                if (session == null)
+                    session = new SessionData();
+
+                return session;
+            }
+
+            set
+            {
+                session = value;
+            }
+        }
 
         private static byte[] steamGuardCodeTranslations = new byte[] { 50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89 };
 
