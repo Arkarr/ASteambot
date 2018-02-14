@@ -18,7 +18,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.9.9 - PUBLIC";
+        private static string BUILD_VERSION = "2.9.91 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -43,8 +43,6 @@ namespace ASteambot
 
             Console.Title = "Akarr's steambot";
 
-            PrintWelcomeMessage();
-
             config = new Config();
             if (!config.LoadConfig())
             {
@@ -53,6 +51,8 @@ namespace ASteambot
                 return;
             }
 
+            PrintWelcomeMessage();
+            
             steambotManager = new Manager(config);
             threadManager = new Thread(new ThreadStart(steambotManager.Start));
             threadManager.Start();
@@ -85,12 +85,18 @@ namespace ASteambot
 
         private static void PrintWelcomeMessage()
         {
+            if (config.DisableWelcomeMessage)
+                return;
+
             for (int i = 0; i < Console.WindowWidth; i++)
                 Console.Write("*");
 
             Console.ForegroundColor = ConsoleColor.Green;
             string centerText = "ASteambot - Arkarr's steambot";
-            Console.SetCursorPosition((Console.WindowWidth - centerText.Length) / 2, Console.CursorTop);
+
+            int move = (Console.WindowWidth - centerText.Length) / 2;
+            int top = Console.CursorTop;
+            Console.SetCursorPosition(move, top);
             Console.WriteLine(centerText);
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("");

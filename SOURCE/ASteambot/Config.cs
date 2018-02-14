@@ -26,8 +26,8 @@ namespace ASteambot
         public bool SteamMarket_DOTA2 { get; private set; }
         public string ArkarrAPIKey { get; private set; }
         public bool DisableMarketScan { get; private set; }
-
-
+        public bool DisableWelcomeMessage { get; private set; }
+        
         public Config() { }
 
         public bool LoadConfig()
@@ -76,6 +76,8 @@ namespace ASteambot
                     ArkarrAPIKey = line.Replace("ArkarrAPIKey=", "");
                 else if (line.StartsWith("DisableMarketScan="))
                     DisableMarketScan = line.Replace("DisableMarketScan=", "").Equals("YES");
+                else if (line.StartsWith("DisableWelcomeMessage="))
+                    DisableWelcomeMessage = !line.Replace("DisableWelcomeMessage=", "").Equals("YES");
             }
 
             if(!ValidateConfig())
