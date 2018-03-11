@@ -18,7 +18,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.9.91 - PUBLIC";
+        private static string BUILD_VERSION = "2.9.92 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -76,7 +76,8 @@ namespace ASteambot
         private static void AttemptLoginBot(string username, string password, string api)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            string data = String.Format("Username : {0}  Password : X  API : {1}", username, api.Substring(api.Length - 10) + "**********");
+            string hidenAPI = api.Substring(api.Length - 10) + "**********";
+            string data = String.Format("Username : {0}  Password : X  API : {1}", username, hidenAPI);
             Console.WriteLine(data);
             Console.ForegroundColor = ConsoleColor.White;
             logininfo = new LoginInfo(username, password, api);

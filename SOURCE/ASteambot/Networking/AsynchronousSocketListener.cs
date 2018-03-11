@@ -63,10 +63,11 @@ namespace ASteambot.Networking
             byte[] bytes = new Byte[1024];
 
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Parse("0.0.0.0"), Port);
-            Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            
+
             try
             {
+                Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+               
                 listener.Bind(localEndPoint);
                 listener.Listen(100);
 
@@ -94,6 +95,13 @@ namespace ASteambot.Networking
                     }
                 }
 
+            }
+            catch (SocketException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Error while creating socket ! It may be because of the port being already usued! Use another TCP port number.");
+                Console.ForegroundColor = ConsoleColor.White;
             }
             catch (Exception e)
             {

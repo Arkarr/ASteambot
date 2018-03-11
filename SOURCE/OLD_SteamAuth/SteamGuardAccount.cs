@@ -42,16 +42,45 @@ namespace SteamAuth
         [JsonProperty("status")]
         public int Status { get; set; }
 
+        private string deviceID;
         [JsonProperty("device_id")]
-        public string DeviceID { get; set; }
+        public string DeviceID
+        {
+            get
+            {
+                if (String.IsNullOrEmpty(deviceID))
+                    deviceID = AuthenticatorLinker.GenerateDeviceID();
 
+                return deviceID;
+            }
+            set
+            {
+                this.deviceID = value;
+            }
+        }
+        
         /// <summary>
         /// Set to true if the authenticator has actually been applied to the account.
         /// </summary>
         [JsonProperty("fully_enrolled")]
         public bool FullyEnrolled { get; set; }
 
-        public SessionData Session { get; set; }
+        private SessionData session;
+        public SessionData Session
+        {
+            get
+            {
+                if (session == null)
+                    session = new SessionData();
+
+                return session;
+            }
+
+            set
+            {
+                session = value;
+            }
+        }
 
         private static byte[] steamGuardCodeTranslations = new byte[] { 50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89 };
 
@@ -137,9 +166,11 @@ namespace SteamAuth
               And because the data is always in the same place and same format... It's not as if we're trying to naturally understand HTML here. Just extract strings.
               I'm sorry. */
 
-            Regex confRegex = new Regex("<div class=\"mobileconf_list_entry\" id=\"conf[0-9]+\" data-confid=\"(\\d+)\" data-key=\"(\\d+)\" data-type=\"(\\d+)\" data-creator=\"(\\d+)\"");
+            Regex confIDRegex = new Regex("data-confid=\"(\\d+)\"");
+            Regex confKeyRegex = new Regex("data-key=\"(\\d+)\"");
+            Regex confDescRegex = new Regex("<div>((Confirm|Trade with|Sell -) .+)</div>");
 
-            if (response == null || !confRegex.IsMatch(response))
+            if (response == null || !(confIDRegex.IsMatch(response) && confKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
             {
                 if (response == null || !response.Contains("<div>Nothing to confirm</div>"))
                 {
@@ -149,22 +180,23 @@ namespace SteamAuth
                 return new Confirmation[0];
             }
 
-            MatchCollection confirmations = confRegex.Matches(response);
+            MatchCollection confIDs = confIDRegex.Matches(response);
+            MatchCollection confKeys = confKeyRegex.Matches(response);
+            MatchCollection confDescs = confDescRegex.Matches(response);
 
             List<Confirmation> ret = new List<Confirmation>();
-            foreach (Match confirmation in confirmations)
+            for (int i = 0; i < confIDs.Count; i++)
             {
-                if (confirmation.Groups.Count != 5) continue;
-
-                if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID) ||
-                    !ulong.TryParse(confirmation.Groups[2].Value, out ulong confKey) ||
-                    !int.TryParse(confirmation.Groups[3].Value, out int confType) ||
-                    !ulong.TryParse(confirmation.Groups[4].Value, out ulong confCreator))
+                string confID = confIDs[i].Groups[1].Value;
+                string confKey = confKeys[i].Groups[1].Value;
+                string confDesc = confDescs[i].Groups[1].Value;
+                Confirmation conf = new Confirmation()
                 {
-                    continue;
-                }
-
-                ret.Add(new Confirmation(confID, confKey, confType, confCreator));
+                    Description = confDesc,
+                    ID = confID,
+                    Key = confKey
+                };
+                ret.Add(conf);
             }
 
             return ret.ToArray();
@@ -180,13 +212,14 @@ namespace SteamAuth
             string response = await SteamWeb.RequestAsync(url, "GET", null, cookies);
 
             /*So you're going to see this abomination and you're going to be upset.
-                          It's understandable. But the thing is, regex for HTML -- while awful -- makes this way faster than parsing a DOM, plus we don't need another library.
-                          And because the data is always in the same place and same format... It's not as if we're trying to naturally understand HTML here. Just extract strings.
-                          I'm sorry. */
+              It's understandable. But the thing is, regex for HTML -- while awful -- makes this way faster than parsing a DOM, plus we don't need another library.
+              And because the data is always in the same place and same format... It's not as if we're trying to naturally understand HTML here. Just extract strings.
+              I'm sorry. */
 
-            Regex confRegex = new Regex("<div class=\"mobileconf_list_entry\" id=\"conf[0-9]+\" data-confid=\"(\\d+)\" data-key=\"(\\d+)\" data-type=\"(\\d+)\" data-creator=\"(\\d+)\"");
+            Regex confIDKeyRegex = new Regex("<div class=\"mobileconf_list_entry\" id=\"conf\\d+\" data-confid=\"(\\d+)\" data-key=\"(\\d+)\"");
+            Regex confDescRegex = new Regex("<div>((Confirm|Trade with|Sell -) .+)</div>");
 
-            if (response == null || !confRegex.IsMatch(response))
+            if (response == null || !(confIDKeyRegex.IsMatch(response) && confDescRegex.IsMatch(response)))
             {
                 if (response == null || !response.Contains("<div>Nothing to confirm</div>"))
                 {
@@ -196,38 +229,35 @@ namespace SteamAuth
                 return new Confirmation[0];
             }
 
-            MatchCollection confirmations = confRegex.Matches(response);
+            MatchCollection confIDKeys = confIDKeyRegex.Matches(response);
+            MatchCollection confDescs = confDescRegex.Matches(response);
 
             List<Confirmation> ret = new List<Confirmation>();
-            foreach (Match confirmation in confirmations)
+            for (int i = 0; i < confIDKeys.Count; i++)
             {
-                if (confirmation.Groups.Count != 5) continue;
-
-                if (!ulong.TryParse(confirmation.Groups[1].Value, out ulong confID) ||
-                    !ulong.TryParse(confirmation.Groups[2].Value, out ulong confKey) ||
-                    !int.TryParse(confirmation.Groups[3].Value, out int confType) ||
-                    !ulong.TryParse(confirmation.Groups[4].Value, out ulong confCreator))
+                string confID = confIDKeys[i].Groups[1].Value;
+                string confKey = confIDKeys[i].Groups[2].Value;
+                string confDesc = confDescs[i].Groups[1].Value;
+                Confirmation conf = new Confirmation()
                 {
-                    continue;
-                }
-
-                ret.Add(new Confirmation(confID, confKey, confType, confCreator));
+                    Description = confDesc,
+                    ID = confID,
+                    Key = confKey
+                };
+                ret.Add(conf);
             }
 
             return ret.ToArray();
         }
 
-        /// <summary>
-        /// Deprecated. Simply returns conf.Creator.
-        /// </summary>
-        /// <param name="conf"></param>
-        /// <returns>The Creator field of conf</returns>
         public long GetConfirmationTradeOfferID(Confirmation conf)
         {
-            if (conf.ConfType != Confirmation.ConfirmationType.Trade)
-                throw new ArgumentException("conf must be a trade confirmation.");
+            var confDetails = _getConfirmationDetails(conf);
+            if (confDetails == null || !confDetails.Success) return -1;
 
-            return (long)conf.Creator;
+            Regex tradeOfferIDRegex = new Regex("<div class=\"tradeoffer\" id=\"tradeofferid_(\\d+)\" >");
+            if (!tradeOfferIDRegex.IsMatch(confDetails.HTML)) return -1;
+            return long.Parse(tradeOfferIDRegex.Match(confDetails.HTML).Groups[1].Value);
         }
 
         public bool AcceptMultipleConfirmations(Confirmation[] confs)
