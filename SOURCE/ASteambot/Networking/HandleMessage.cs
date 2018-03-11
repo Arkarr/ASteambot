@@ -60,8 +60,10 @@ namespace ASteambot.Networking
                     case NetworkCode.ASteambotCode.SGAnnoucement:
                         PostSteamGroupAnnoucement(bot, gsr);
                         break;
+                    case NetworkCode.ASteambotCode.SteamID:
+                        SendSteamID(bot, gsr);
+                        break;
                 }
-                
             }
             catch(Exception e)
             {
@@ -241,9 +243,12 @@ namespace ASteambot.Networking
         {
             string message = gsr.Arguments;
 
+            string[] myAssetIDs = null;
             string[] steamIDitems = message.Split('/');
             SteamID steamid = new SteamID(steamIDitems[0]);
             string[] assetIDs = steamIDitems[1].Split(',');
+            if(assetIDs.Length > 2)
+                myAssetIDs = steamIDitems[2].Split(',');
 
             GameServer gameServer = bot.Manager.GetServerByID(gsr.ServerID);
 
@@ -306,6 +311,12 @@ namespace ASteambot.Networking
             SteamID steamID = new SteamID(gsr.Arguments);
             if (steamID.IsValid)
                 bot.SteamFriends.AddFriend(steamID);
+        }
+
+        private void SendSteamID(Bot bot, GameServerRequest gsr)
+        {
+            GameServer gs = bot.Manager.GetServerByID(gsr.ServerID);
+            gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.SteamID, bot.getSteamID().ToString());
         }
 
         private void InviteToSteamGroup(Bot bot, GameServerRequest gsr)

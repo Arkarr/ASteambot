@@ -26,7 +26,8 @@ namespace ASteambot.Networking
             ScanInventoryIMG = 13,
             ExecuteCommand = 14,
             Disconnect = 15,
-            SGAnnoucement = 16
+            SGAnnoucement = 16,
+            SteamID = 17
         }
     }
 }

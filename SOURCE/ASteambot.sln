@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ASteambot", "ASteambot\ASteambot.csproj", "{BC5F7140-5365-4EC2-BB84-075F8C35B460}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamAuth", "SteamAuth\SteamAuth.csproj", "{5AD0934E-F6C4-4AE5-83AF-C788313B2A87}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamTrade", "SteamTrade\SteamTrade.csproj", "{6CEC0333-81EB-40EE-85D1-941363626FC7}"
 EndProject
@@ -19,10 +17,6 @@ Global
 		{BC5F7140-5365-4EC2-BB84-075F8C35B460}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC5F7140-5365-4EC2-BB84-075F8C35B460}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BC5F7140-5365-4EC2-BB84-075F8C35B460}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5AD0934E-F6C4-4AE5-83AF-C788313B2A87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5AD0934E-F6C4-4AE5-83AF-C788313B2A87}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5AD0934E-F6C4-4AE5-83AF-C788313B2A87}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5AD0934E-F6C4-4AE5-83AF-C788313B2A87}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6CEC0333-81EB-40EE-85D1-941363626FC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6CEC0333-81EB-40EE-85D1-941363626FC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6CEC0333-81EB-40EE-85D1-941363626FC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -30,5 +24,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5D872784-3524-4E34-BFBB-EFCB982DE674}
 	EndGlobalSection
 EndGlobal

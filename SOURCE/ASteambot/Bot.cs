@@ -190,7 +190,7 @@ namespace ASteambot
                     {
                         long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
                         if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
-                            Console.WriteLine("Confirmed " + confirmation.Description + ". (Confirmation ID #" + confirmation.ID + ")");
+                            Console.WriteLine("Confirmed " + confirmation.ToString() + ". (Confirmation ID #" + confirmation.ID + ")");
                     }
                 }
             }
@@ -223,7 +223,7 @@ namespace ASteambot
             {
                 steamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(authFile));
 
-                    string code = steamGuardAccount.GenerateSteamGuardCode();
+                string code = steamGuardAccount.GenerateSteamGuardCode();
                 Console.WriteLine("2FA code : " + code);
                 return code;
             }
@@ -738,6 +738,11 @@ namespace ASteambot
 
                 Thread.Sleep(30 * 1000);//tradeOfferPollingIntervalSecs * 1000);
             }
+        }
+
+        public SteamID getSteamID()
+        {
+            return steamUser.SteamID;
         }
 
         //***********//
