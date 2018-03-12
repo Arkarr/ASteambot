@@ -225,7 +225,7 @@ namespace ASteambot.Networking
                         GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
 
                         Item i = bot.ArkarrSteamMarket.GetItemByName(description.market_hash_name);
-                        if (i != null && description.tradable && i.Value != 0)
+                        if (i != null && description.tradable)// && i.Value != 0)
                             items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + i.Value + (img ? "=" + i.Image : "") + ",";
                     }
                 }
