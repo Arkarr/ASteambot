@@ -57,6 +57,12 @@
     <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SteamTrade\SteamTrade.csproj">
+      <Project>{6cec0333-81eb-40ee-85d1-941363626fc7}</Project>
+      <Name>SteamTrade</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

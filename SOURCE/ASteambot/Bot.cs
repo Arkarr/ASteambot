@@ -196,7 +196,7 @@ namespace ASteambot
             }
             catch (SteamGuardAccount.WGTokenInvalidException)
             {
-                Console.WriteLine("Invalid session when trying to fetch trade confirmations.");
+                 Console.WriteLine("Invalid session when trying to fetch trade confirmations.");
             }
         }
 
