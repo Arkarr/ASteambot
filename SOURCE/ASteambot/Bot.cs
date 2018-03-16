@@ -851,8 +851,8 @@ namespace ASteambot
 
         public void OnSteambotConnected(SteamClient.ConnectedCallback callback)
         {
-            if (callback.Result == EResult.OK)
-            {
+            /*if (callback.JobID != JobID.Invalid)
+            {*/
                 Console.WriteLine("Connected to steam network !");
                 Console.WriteLine("Logging in...");
 
@@ -871,14 +871,12 @@ namespace ASteambot
                     TwoFactorCode = loginInfo.TwoFactorCode,
                     SentryFileHash = test,
                 });
-            }
+            /*}
             else
             {
                 Console.WriteLine("Unable to connect to steamnetwork !");
                 stop = true;
-            }
-
-            Console.WriteLine("Return code : {0}", callback.Result);
+            }*/
         }
 
         public void OnSteambotLoggedIn(SteamUser.LoggedOnCallback callback)

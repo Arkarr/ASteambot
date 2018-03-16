@@ -20,6 +20,7 @@
 *.user
 _ReSharper.*/
 *.sdf
+*.vs/
 bin/
 obj/
 Debug/
