@@ -367,16 +367,13 @@ namespace ASteambot
 
             if (!g.SocketConnected())
             {
+                RefreshServers();
+
                 foreach (GameServer gs in Servers)
                 {
                     if (gs.ServerID != serverID && gs.Name == g.Name)
-                    {
-                        RefreshServers();
                         return gs;
-                    }
                 }
-
-                RefreshServers();
             }
             else
             {

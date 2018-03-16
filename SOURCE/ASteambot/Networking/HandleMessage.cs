@@ -207,11 +207,13 @@ namespace ASteambot.Networking
 
             if (bot.OtherGenericInventory.errors.Count > 0)
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Error while inventory scan :");
                 foreach (string error in bot.OtherGenericInventory.errors)
                 {
                     Console.WriteLine(error);
                 }
+                Console.ForegroundColor = ConsoleColor.White;
             }
             else
             {
@@ -225,8 +227,13 @@ namespace ASteambot.Networking
                         GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
 
                         Item i = bot.ArkarrSteamMarket.GetItemByName(description.market_hash_name);
-                        if (i != null && description.tradable)// && i.Value != 0)
-                            items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + i.Value + (img ? "=" + i.Image : "") + ",";
+                        if (description.tradable)
+                        {
+                            if (i != null)// && i.Value != 0)
+                                items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + i.Value + (img ? "=" + i.Image : "") + ",";
+                            else
+                                items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + "0" + (img ? "=" + "NOT_FOUND" : "") + ",";
+                        }
                     }
                 }
 
@@ -248,7 +255,7 @@ namespace ASteambot.Networking
             SteamID steamid = new SteamID(steamIDitems[0]);
             string[] assetIDs = steamIDitems[1].Split(',');
             if(assetIDs.Length > 2)
-                myAssetIDs = steamIDitems[2].Split(',');
+                myAssetIDs = steamIDitems[1].Split(',');
 
             GameServer gameServer = bot.Manager.GetServerByID(gsr.ServerID);
 

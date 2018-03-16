@@ -101,6 +101,7 @@ namespace ASteambot.Networking
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("Error while creating socket ! It may be because of the port being already usued! Use another TCP port number.");
+                Console.WriteLine(e);
                 Console.ForegroundColor = ConsoleColor.White;
             }
             catch (Exception e)

@@ -34,13 +34,14 @@ namespace ASteambot
         }
         
         public bool SocketConnected()
-        { 
-            bool check1 = socket.Poll(1000, SelectMode.SelectRead);
+        {
+            return Send(-1, NetworkCode.ASteambotCode.Simple, "test");
+            /*bool check1 = socket.Poll(1000, SelectMode.SelectRead);
             bool check2 = (socket.Available == 0);
             if (check1 && check2)
                 return false;
             else
-                return true;
+                return true;*/
         }
         public void FirstSend(int serverID)
         {
@@ -54,30 +55,22 @@ namespace ASteambot
         public bool Send(int moduleID, NetworkCode.ASteambotCode netcode, string data)
         {
             string finaldata = tcppasswd + moduleID + ")" + ((int)netcode).ToString() + "|" + data + "<EOF>";
-
-            if (SocketConnected())
+            
+            try
             {
-                try
-                {
-                    byte[] byteData = Encoding.UTF8.GetBytes(finaldata);
-                    socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
-                }
-                catch(Exception e)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(e);
-                    Console.ForegroundColor = ConsoleColor.White;
-                    PrintSocketError(data);
-                    return false;
-                }
-
-                return true;
+                byte[] byteData = Encoding.UTF8.GetBytes(finaldata);
+                socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
             }
-            else
+            catch(Exception e)
             {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e);
+                Console.ForegroundColor = ConsoleColor.White;
                 PrintSocketError(data);
                 return false;
             }
+
+            return true;
         }
 
         private void SendCallback(IAsyncResult ar)
