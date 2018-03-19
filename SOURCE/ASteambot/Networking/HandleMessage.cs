@@ -5,6 +5,7 @@ using SteamTrade.TradeOffer;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -179,6 +180,7 @@ namespace ASteambot.Networking
 
             Thread invScan = new Thread(() =>
             {
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
                 Thread.CurrentThread.IsBackground = true;
 
                 string items = gsr.Arguments + "/";
@@ -248,62 +250,108 @@ namespace ASteambot.Networking
 
         private void CreateTradeOffer(Bot bot, GameServerRequest gsr)
         {
+            float tradeValue = -1;
             string message = gsr.Arguments;
-
+            //STEAM_0:1:42047781/2514414967/NULL/999900.00 //TOOOOOOOOO DOOOOOOOOOOOOOO
+            string[] assetIDs = null;
             string[] myAssetIDs = null;
             string[] steamIDitems = message.Split('/');
             SteamID steamid = new SteamID(steamIDitems[0]);
-            string[] assetIDs = steamIDitems[1].Split(',');
-            if(assetIDs.Length > 2)
-                myAssetIDs = steamIDitems[1].Split(',');
-
-            GameServer gameServer = bot.Manager.GetServerByID(gsr.ServerID);
-
-            //SteamTrade.SteamMarket.Games game = (SteamTrade.SteamMarket.Games)Int32.Parse(steamIDitems[1]);
-
-            List<long> contextId = new List<long>();
-            contextId.Add(2);
-
-            bot.OtherGenericInventory.load((int)Games.CSGO, contextId, steamid);
 
             TradeOffer to = bot.TradeOfferManager.NewOffer(steamid);
 
-            foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+            GameServer gameServer = bot.Manager.GetServerByID(gsr.ServerID);
+
+            if (steamIDitems[1].Length > 1 && steamIDitems[1] != "NULL")
             {
-                if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
+                assetIDs = steamIDitems[1].Split(',');
+
+                List<long> contextId = new List<long>();
+                contextId.Add(2);
+
+                bot.OtherGenericInventory.load((int)Games.CSGO, contextId, steamid);
+
+                foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
                 {
-                    GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
-                    to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                    if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
+                    {
+                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                    }
+                }
+                bot.OtherGenericInventory.load((int)Games.TF2, contextId, steamid);
+
+                foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+                {
+                    if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
+                    {
+                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                    }
+                }
+                bot.OtherGenericInventory.load((int)Games.Dota2, contextId, steamid);
+
+                foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+                {
+                    if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
+                    {
+                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                    }
                 }
             }
-            bot.OtherGenericInventory.load((int)Games.TF2, contextId, steamid);
 
-            foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+            if(steamIDitems[2].Length > 1 && steamIDitems[2] != "NULL")
             {
-                if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
+                myAssetIDs = steamIDitems[2].Split(',');
+
+                List<long> contextId = new List<long>();
+                contextId.Add(2);
+
+                bot.MyGenericInventory.load((int)Games.CSGO, contextId, steamid);
+
+                foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
                 {
-                    GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
-                    to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                    if (Array.IndexOf(myAssetIDs, item.assetid.ToString()) > -1)
+                    {
+                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                    }
+                }
+
+                bot.MyGenericInventory.load((int)Games.TF2, contextId, steamid);
+
+                foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+                {
+                    if (Array.IndexOf(myAssetIDs, item.assetid.ToString()) > -1)
+                    {
+                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                    }
+                }
+
+                bot.MyGenericInventory.load((int)Games.Dota2, contextId, steamid);
+
+                foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+                {
+                    if (Array.IndexOf(myAssetIDs, item.assetid.ToString()) > -1)
+                    {
+                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
+                    }
                 }
             }
-            bot.OtherGenericInventory.load((int)Games.Dota2, contextId, steamid);
-
-            foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
-            {
-                if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
-                {
-                    GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
-                    to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
-                }
-            }
-
+            
+            if (steamIDitems[3] != "NULL")
+                float.TryParse(steamIDitems[3], out tradeValue);
+            
             string offerId;
             to.Send(out offerId, String.Format("\"{0}\" the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm")));
 
             if (offerId != "")
             {
                 gameServer.Send(gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, offerId);
-                bot.TradeoffersGS.Add(offerId, gsr.ModuleID);
+                bot.TradeoffersGS.Add(offerId, gsr.ModuleID+"|"+tradeValue);
 
                 bot.AcceptMobileTradeConfirmation(offerId);
             }
