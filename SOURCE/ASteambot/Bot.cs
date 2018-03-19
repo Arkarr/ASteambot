@@ -17,6 +17,7 @@ using SteamTrade.SteamMarket;
 
 using static ASteambot.SteamProfile;
 using System.Collections.Specialized;
+using System.Globalization;
 
 namespace ASteambot
 {
@@ -35,7 +36,7 @@ namespace ASteambot
         public HandleSteamChat SteamchatHandler { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
         public TradeOfferManager TradeOfferManager { get; private set; }
-        public Dictionary<string, int> TradeoffersGS { get; private set; }
+        public Dictionary<string, string> TradeoffersGS { get; private set; }
         public Dictionary<SteamID, int> ChatListener { get; private set; }
         public GenericInventory OtherGenericInventory { get; private set; }
 
@@ -69,8 +70,7 @@ namespace ASteambot
             cbManager = new CallbackManager(steamClient);
             SteamchatHandler = new HandleSteamChat(this);
             ChatListener = new Dictionary<SteamID, int>();
-            TradeoffersGS = new Dictionary<string, int>();
-            TradeoffersGS = new Dictionary<string, int>();
+            TradeoffersGS = new Dictionary<string, string>();
             tradeOfferValue = new Dictionary<string, double>();
             MyGenericInventory = new GenericInventory(SteamWeb);
             OtherGenericInventory = new GenericInventory(SteamWeb);
@@ -606,15 +606,23 @@ namespace ASteambot
                 return false;
         }
 
-        private void SendTradeOfferConfirmationToGameServers(string id, NetworkCode.ASteambotCode code, string data)
+        private void SendTradeOfferConfirmationToGameServers(string id, int moduleID, NetworkCode.ASteambotCode code, string data)
         {
             foreach (GameServer gs in Manager.Servers)
             {
                 if (TradeoffersGS.ContainsKey(id))
                 {
-                    gs.Send(TradeoffersGS[id], code, data);
-                    TradeoffersGS.Remove(id);
-                    finishedTO.Add(id);
+                    if (gs.Send(moduleID, code, data))
+                    {
+                        TradeoffersGS.Remove(id);
+                        finishedTO.Add(id);
+                    }
+                    else
+                    {
+                        GameServer gameServer = Manager.GetServerByID(gs.ServerID);
+                        while (gameServer != null && !gameServer.Send(moduleID, code, data))
+                            gameServer = Manager.GetServerByID(gs.ServerID);
+                    }
                 }
                 else
                 {
@@ -709,6 +717,7 @@ namespace ASteambot
             if (tradeOfferThread == null)
             {
                 tradeOfferThread = new Thread(TradeOfferPollingFunction);
+                tradeOfferThread.CurrentUICulture = new CultureInfo("en-US");
                 tradeOfferThread.Start();
             }
         }
@@ -974,19 +983,28 @@ namespace ASteambot
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
             {
-                double value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
+                string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                double value = float.Parse(mID_value[1]);
+
+                if(value == -1)
+                    value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
+
                 tradeOfferValue.Add(offer.TradeOfferId, value);
             }
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && tradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
                 string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
-                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
             }
             else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && tradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
                 string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
-                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, NetworkCode.ASteambotCode.TradeOfferDecline, msg);
+                string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
             }
         }
 
@@ -1003,12 +1021,15 @@ namespace ASteambot
                 if (offer.Items.GetMyItems().Count == 0)
                 {
                     offer.Accept();
-                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+
+                    string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
                 }
                 else
                 {
                     offer.Decline();
-                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, NetworkCode.ASteambotCode.TradeOfferDecline, msg);
+                    string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
                 }
             }
         }

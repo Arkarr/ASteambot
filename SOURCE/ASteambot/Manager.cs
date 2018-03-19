@@ -8,6 +8,7 @@ using ASteambot.Networking;
 using System.Threading;
 
 using System.Web;
+using System.Globalization;
 
 namespace ASteambot
 {
@@ -82,6 +83,7 @@ namespace ASteambot
             Console.WriteLine("Starting TCP server on port {0}", port);
             socketServer = new AsynchronousSocketListener(port, Config.TCPPassword);
             threadSocket = new Thread(new ThreadStart(socketServer.StartListening));
+            threadSocket.CurrentUICulture = new CultureInfo("en-US");
             threadSocket.Start();
         }
 

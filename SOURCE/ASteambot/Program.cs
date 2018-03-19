@@ -3,6 +3,7 @@ using SteamTrade.SteamMarket;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "2.9.98 - PUBLIC";
+        private static string BUILD_VERSION = "3.0 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -37,6 +38,8 @@ namespace ASteambot
 
         static void Main(string[] args)
         {
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
+
             AppDomain currentDomain = default(AppDomain);
             currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
@@ -55,6 +58,7 @@ namespace ASteambot
             
             steambotManager = new Manager(config);
             threadManager = new Thread(new ThreadStart(steambotManager.Start));
+            threadManager.CurrentUICulture = new CultureInfo("en-US");
             threadManager.Start();
 
             AttemptLoginBot(config.SteamUsername, config.SteamPassword, config.SteamAPIKey);
