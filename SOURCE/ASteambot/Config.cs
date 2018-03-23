@@ -77,7 +77,7 @@ namespace ASteambot
                 else if (line.StartsWith("DisableMarketScan="))
                     DisableMarketScan = line.Replace("DisableMarketScan=", "").Equals("YES");
                 else if (line.StartsWith("DisableWelcomeMessage="))
-                    DisableWelcomeMessage = !line.Replace("DisableWelcomeMessage=", "").Equals("YES");
+                    DisableWelcomeMessage = line.Replace("DisableWelcomeMessage=", "").Equals("YES");
             }
 
             if(!ValidateConfig())
