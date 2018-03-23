@@ -612,22 +612,22 @@ namespace ASteambot
             {
                 if (TradeoffersGS.ContainsKey(id))
                 {
-                    if (gs.Send(moduleID, code, data))
+                    if (Manager.Send(gs.ServerID, moduleID, code, data))
                     {
                         TradeoffersGS.Remove(id);
                         finishedTO.Add(id);
                     }
-                    else
+                    /*else
                     {
                         GameServer gameServer = Manager.GetServerByID(gs.ServerID);
-                        while (gameServer != null && !gameServer.Send(moduleID, code, data))
+                        while (gameServer != null && !Manager.Send(gs.ServerID, moduleID, code, data))
                             gameServer = Manager.GetServerByID(gs.ServerID);
-                    }
+                    }*/
                 }
                 else
                 {
                     if (!finishedTO.Contains(id))
-                        gs.Send(-2, code, data); //should never ever go here !
+                        Manager.Send(gs.ServerID, - 2, code, data); //should never ever go here !
                 }
             }
         }

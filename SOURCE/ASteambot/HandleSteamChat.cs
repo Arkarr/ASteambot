@@ -62,18 +62,15 @@ namespace ASteambot
         private void SendMessageToGameServer(int moduleID, SteamID partenar, string message)
         {
             int serverID = bot.ChatListener[partenar];
-            GameServer gs = bot.Manager.GetServerByID(serverID);
-
-            if (gs != null)
-            {
-                string name = bot.SteamFriends.GetFriendPersonaName(partenar).Replace('|', ' ').Trim(' ');
-                string data = string.Format("{0} : {1}", name, message);
-                gs.Send(moduleID, Networking.NetworkCode.ASteambotCode.Simple, data);
-            }
+            
+            string name = bot.SteamFriends.GetFriendPersonaName(partenar).Replace('|', ' ').Trim(' ');
+            string data = string.Format("{0} : {1}", name, message);
+            bot.Manager.Send(serverID, moduleID, Networking.NetworkCode.ASteambotCode.Simple, data);
+            /*}
             else
             {
                 SendChatMessage(partenar, "Unable to deliver this message to the game server, he is not connected.");
-            }
+            }*/
         }
 
         public void StopHook(int moduleID, SteamID partenar)
@@ -103,9 +100,8 @@ namespace ASteambot
                 if (value.Value == serverID && value.Key != partenar)
                     return;
             }
-
-            GameServer server = bot.Manager.GetServerByID(serverID);
-            server.Send(moduleID, Networking.NetworkCode.ASteambotCode.Unhookchat, "");
+            
+            bot.Manager.Send(serverID, moduleID, Networking.NetworkCode.ASteambotCode.Unhookchat, "");
 
             SendChatMessage(partenar, "Done !");
         }
@@ -128,7 +124,7 @@ namespace ASteambot
                 GameServer gs = bot.Manager.GetServerByID(id);
                 if (gs != null)
                 {
-                    gs.Send(-2, Networking.NetworkCode.ASteambotCode.ExecuteCommand, cmd);
+                    bot.Manager.Send(id, -2, Networking.NetworkCode.ASteambotCode.ExecuteCommand, cmd);
                     SendChatMessage(partenar, "Command '" + cmd + "' sent to server '" + gs.Name + "' !");
                 }
                 else
@@ -222,7 +218,7 @@ namespace ASteambot
 
                 SendChatMessage(partenar, "Connecting to server...");
 
-                gs.Send(moduleID, Networking.NetworkCode.ASteambotCode.HookChat, "");
+                bot.Manager.Send(serverID, moduleID, Networking.NetworkCode.ASteambotCode.HookChat, "");
 
                 SendChatMessage(partenar, "Done !");
             }

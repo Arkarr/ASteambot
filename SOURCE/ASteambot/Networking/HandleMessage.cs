@@ -88,8 +88,14 @@ namespace ASteambot.Networking
                 return;
 
             serverID++;
+
             GameServer gameserver = new GameServer(gsr.Socket, bot.Manager.Config.TCPPassword, serverID, gsr.Arguments);
-            bot.Manager.Servers.Add(gameserver);
+            GameServer gs = bot.Manager.Servers.Find(srv => srv.IP == gameserver.IP && srv.Port == gameserver.Port);
+
+            if (gs == null)
+                bot.Manager.Servers.Add(gameserver);
+            else
+                gs.Update(gameserver);
         }
 
         private void Disconnect(Bot bot, GameServerRequest gsr)
@@ -167,14 +173,12 @@ namespace ASteambot.Networking
         {
             if (bot.ArkarrSteamMarket == null)
                 bot.ArkarrSteamMarket = new SteamMarket(bot.Config.ArkarrAPIKey, bot.Config.DisableMarketScan);
-
-            GameServer gameServer = bot.Manager.GetServerByID(serverID);
-
+            
             SteamID steamID = new SteamID(gsr.Arguments);
 
             if (!bot.Friends.Contains(steamID))
             {
-                gameServer.Send(gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, gsr.Arguments);
+                bot.Manager.Send(serverID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, gsr.Arguments);
                 return;
             }
 
@@ -190,9 +194,9 @@ namespace ASteambot.Networking
                 items += AddInventoryItems(bot, Games.Dota2, steamID, withImg);
 
                 if (withImg)
-                    gameServer.Send(gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventoryIMG, items);
+                    bot.Manager.Send(serverID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventoryIMG, items);
                 else
-                    gameServer.Send(gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventory, items);
+                    bot.Manager.Send(serverID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventory, items);
             });
 
             invScan.Start();
@@ -216,6 +220,7 @@ namespace ASteambot.Networking
                     Console.WriteLine(error);
                 }
                 Console.ForegroundColor = ConsoleColor.White;
+                items = "EMPTY";
             }
             else
             {
@@ -350,14 +355,14 @@ namespace ASteambot.Networking
 
             if (offerId != "")
             {
-                gameServer.Send(gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, offerId);
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, offerId);
                 bot.TradeoffersGS.Add(offerId, gsr.ModuleID+"|"+tradeValue);
 
                 bot.AcceptMobileTradeConfirmation(offerId);
             }
             else
             {
-                gameServer.Send(gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, "-1");
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, "-1");
             }
         }
 
@@ -369,9 +374,8 @@ namespace ASteambot.Networking
         }
 
         private void SendSteamID(Bot bot, GameServerRequest gsr)
-        {
-            GameServer gs = bot.Manager.GetServerByID(gsr.ServerID);
-            gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.SteamID, bot.getSteamID().ToString());
+        {;
+            bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.SteamID, bot.getSteamID().ToString());
         }
 
         private void InviteToSteamGroup(Bot bot, GameServerRequest gsr)
@@ -392,7 +396,7 @@ namespace ASteambot.Networking
                         {
                             bot.InviteUserToGroup(steamID, groupID);
                             if(gs != null)
-                                gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.InviteSteamGroup, steamID.ToString());
+                                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.InviteSteamGroup, steamID.ToString());
                             else
                                 Console.WriteLine(">>>> COUDLN'T FIND SERVER; NO REPLY SENT !");
                         }
@@ -400,7 +404,7 @@ namespace ASteambot.Networking
                     else
                     {
                         if (gs != null)
-                            gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamIDgroupID[0]);
+                            bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamIDgroupID[0]);
                         else
                             Console.WriteLine(">>>> COUDLN'T FIND SERVER; NO REPLY SENT !");
                     }
@@ -427,7 +431,7 @@ namespace ASteambot.Networking
             bot.SteamWeb.Fetch(link, "POST", data);
 
             if (gs != null)
-                gs.Send(gsr.ModuleID, NetworkCode.ASteambotCode.SGAnnoucement, groupIDHeadlineBody[1]);
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.SGAnnoucement, groupIDHeadlineBody[1]);
         }
     }
 }

@@ -32,20 +32,7 @@ namespace ASteambot
             OnlineBots = new List<Bot>();
             Servers = new List<GameServer>();
         }
-
-        public void RefreshServers()
-        {
-            foreach (Bot bot in OnlineBots)
-            {
-                foreach (GameServer gs in bot.Manager.Servers)
-                {
-                    if (gs.SocketConnected() == false)
-                        bot.SteamchatHandler.ServerRemoved(gs.ServerID);
-                }
-                bot.Manager.Servers.RemoveAll(gs => gs.SocketConnected() == false);
-            }
-        }
-
+        
         public void DisconnectServer(int serverID)
         {
             Servers.RemoveAll(gs => gs.ServerID == serverID);
@@ -229,7 +216,10 @@ namespace ASteambot
             {
                 foreach (GameServer gs in bot.Manager.Servers)
                 {
-                    gs.Send(-2, NetworkCode.ASteambotCode.Simple, test);
+                    if (gs.Alive == false)
+                        continue;
+
+                    bot.Manager.Send(gs.ServerID, -2, NetworkCode.ASteambotCode.Simple, test);
                     count++;
                 }
             }
@@ -361,25 +351,35 @@ namespace ASteambot
             }
         }
 
+        public bool Send(int serverID, int moduleID, NetworkCode.ASteambotCode netcode, string data)
+        {
+            GameServer gs = GetServerByID(serverID);
+            if(!gs.Send(moduleID, netcode, data))
+            {
+                foreach (Bot bot in OnlineBots)
+                {
+                    foreach (GameServer g in bot.Manager.Servers)
+                    {
+                        if (g.Alive == false || g.SocketConnected() == false)
+                            bot.SteamchatHandler.ServerRemoved(gs.ServerID);
+                    }
+                    //bot.Manager.Servers.RemoveAll(gs => gs.Alive == false);
+                }
+            }
+
+            return true;
+        }
+        
         public GameServer GetServerByID(int serverID)
         {
             GameServer g = Servers.Find(gs => gs.ServerID == serverID);
             if (g == null)
                 return null;
 
-            if (!g.SocketConnected())
+            foreach (GameServer gs in Servers)
             {
-                RefreshServers();
-
-                foreach (GameServer gs in Servers)
-                {
-                    if (gs.ServerID != serverID && gs.Name == g.Name)
-                        return gs;
-                }
-            }
-            else
-            {
-                return g;
+                if (gs.ServerID == serverID)
+                    return gs;
             }
 
             return null;
