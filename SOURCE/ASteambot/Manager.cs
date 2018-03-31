@@ -373,16 +373,20 @@ namespace ASteambot
         public GameServer GetServerByID(int serverID)
         {
             GameServer g = Servers.Find(gs => gs.ServerID == serverID);
-            if (g == null)
-                return null;
 
-            foreach (GameServer gs in Servers)
+            if(g == null || g.SocketConnected() == false)
             {
-                if (gs.ServerID == serverID)
-                    return gs;
+                g = null;
+                foreach (GameServer gs in Servers)
+                {
+                    if (gs != g && gs.Alive == true && gs.SteamID == g.SteamID && gs.SocketConnected())
+                    {
+                        return gs;
+                    }
+                }
             }
 
-            return null;
+            return g;
         }
     }
 }
