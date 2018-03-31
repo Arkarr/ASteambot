@@ -18,6 +18,7 @@ namespace ASteambot
         public IPAddress IP { get; private set; }
         public int Port { get; private set; }
         public int ServerID { get; private set; }
+        public long SteamID { get; private set; }
         public bool Alive { get; private set; }
 
         private Socket socket;
@@ -30,8 +31,9 @@ namespace ASteambot
             string[] srvinfos = ipportname.Split('|');
             Name = srvinfos[2];
             tcppasswd = tcppaswd;
-            IP = IPAddress.Parse(srvinfos[0]);
-            Port = Int32.Parse(srvinfos[1]);
+            SteamID = long.Parse(srvinfos[0]);
+            IP = IPAddress.Parse(srvinfos[1]);
+            Port = Int32.Parse(srvinfos[2]);
             this.socket = socket;
             ServerID = serverid;
             dataQueue = new DataQueue();
@@ -60,13 +62,16 @@ namespace ASteambot
 
         public bool SocketConnected()
         {
-            if (Send(-1, NetworkCode.ASteambotCode.Simple, "ARE_YOU_ALIVE"))
+            string finaldata = tcppasswd + -1 + ")" + ((int)NetworkCode.ASteambotCode.Simple).ToString() + "|" + "ARE_YOU_ALIVE" + " <EOF>";
+            byte[] bytes = Encoding.UTF8.GetBytes(finaldata);
+
+            try
             {
+                socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
                 return true;
             }
-            else
+            catch(Exception e)
             {
-                Alive = false;
                 return false;
             }
         }

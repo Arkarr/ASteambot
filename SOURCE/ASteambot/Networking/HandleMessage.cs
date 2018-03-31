@@ -90,7 +90,7 @@ namespace ASteambot.Networking
             serverID++;
 
             GameServer gameserver = new GameServer(gsr.Socket, bot.Manager.Config.TCPPassword, serverID, gsr.Arguments);
-            GameServer gs = bot.Manager.Servers.Find(srv => srv.IP == gameserver.IP && srv.Port == gameserver.Port);
+            GameServer gs = bot.Manager.Servers.Find(srv => srv.SteamID == gameserver.SteamID);
 
             if (gs == null)
                 bot.Manager.Servers.Add(gameserver);
