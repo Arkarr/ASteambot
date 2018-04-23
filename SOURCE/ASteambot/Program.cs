@@ -1,4 +1,5 @@
 ﻿using ASteambot.Networking;
+using ASteambot.Networking.Webinterface;
 using SteamTrade.SteamMarket;
 using System;
 using System.Collections.Generic;
@@ -15,11 +16,13 @@ namespace ASteambot
     class Program
     {
         private static Config config;
+        private static HTTPServer httpsrv;
         private static LoginInfo logininfo;
         private static Manager steambotManager;
         private static Thread threadManager;
+        private static Translation.Translation translation;
 
-        private static string BUILD_VERSION = "3.2 - PUBLIC";
+        private static string BUILD_VERSION = "3.3 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -54,8 +57,19 @@ namespace ASteambot
                 return;
             }
 
+            translation = new Translation.Translation();
+            if (!translation.Load(@"translation.xml"))
+            {
+                Console.WriteLine("Translation file (translation.xml) can't be found or is corrupted ! Bot can't start.");
+                Console.ReadKey();
+                return;
+            }
+
             PrintWelcomeMessage();
-            
+
+
+            //WebInterfaceHelper.AddTrade(new SteamTrade.TradeOffer.TradeOffer(null, new SteamKit2.SteamID()));
+
             steambotManager = new Manager(config);
             threadManager = new Thread(new ThreadStart(steambotManager.Start));
             threadManager.CurrentUICulture = new CultureInfo("en-US");
@@ -67,6 +81,9 @@ namespace ASteambot
                 Thread.Sleep(TimeSpan.FromSeconds(3));
 
             steambotManager.SelectFirstBot();
+            
+            httpsrv = new HTTPServer("/website/", 85);
+            Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:"+httpsrv.Port+"/index.html");
 
             string command = "";
             while (command != "quit")
@@ -75,6 +92,8 @@ namespace ASteambot
                 command = Console.ReadLine();
                 steambotManager.Command(command);
             }
+
+            httpsrv.Stop();
         }
 
         private static void AttemptLoginBot(string username, string password, string api)

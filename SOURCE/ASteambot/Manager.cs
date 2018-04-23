@@ -14,7 +14,7 @@ namespace ASteambot
 {
     public class Manager
     {
-        public Bot SelectedBot { get; private set; }
+        public static Bot SelectedBot { get; private set; }
         public List<Bot> OnlineBots { get; private set; }
         
         public List<GameServer> Servers { get; private set; }
