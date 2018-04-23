@@ -83,7 +83,6 @@ namespace ASteambot
             public MostPlayedGames MostPlayedGames { get; set; }
         }
 
-
         public static SteamProfileInfos LoadSteamProfile(SteamTrade.SteamWeb steamWeb, SteamID steamID)
         {
             string response = steamWeb.Fetch("http://steamcommunity.com/profiles/"+steamID.ConvertToUInt64()+"/?xml=1", "GET");

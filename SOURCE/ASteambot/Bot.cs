@@ -14,9 +14,6 @@ using ASteambot.Networking;
 using System.Net;
 using System.Net.Sockets;
 using SteamTrade.SteamMarket;
-
-using static ASteambot.SteamProfile;
-using System.Collections.Specialized;
 using System.Globalization;
 
 namespace ASteambot
@@ -24,6 +21,7 @@ namespace ASteambot
     public class Bot
     {
         public string Name { get; private set; }
+        public SteamProfile.SteamProfileInfos SteamProfileInfo { get; private set; }
         public bool Running { get; private set; }
         public Config Config { get; private set; }
         public bool LoggedIn { get; private set; }
@@ -39,6 +37,111 @@ namespace ASteambot
         public Dictionary<string, string> TradeoffersGS { get; private set; }
         public Dictionary<SteamID, int> ChatListener { get; private set; }
         public GenericInventory OtherGenericInventory { get; private set; }
+        public int SteamInventoryItemCount { get; private set; }
+
+        private int steamInventoryTF2Items;
+        public int SteamInventoryTF2Items
+        {
+            get
+            {
+                return steamInventoryTF2Items;
+            }
+            set
+            {
+                if(SteamInventoryItemCount != 0)
+                    steamInventoryTF2Items = (value / SteamInventoryItemCount) * 100;
+            }
+        }
+
+        private int steamInventoryCSGOItems;
+        public int SteamInventoryCSGOItems
+        {
+            get
+            {
+                return steamInventoryCSGOItems;
+            }
+            set
+            {
+                if (SteamInventoryItemCount != 0)
+                    steamInventoryCSGOItems = (value / SteamInventoryItemCount) * 100;
+            }
+        }
+
+        private int steamInventoryDOTA2Items;
+        public int SteamInventoryDOTA2Items
+        {
+            get
+            {
+                return steamInventoryDOTA2Items;
+            }
+            set
+            {
+                if (SteamInventoryItemCount != 0)
+                    steamInventoryDOTA2Items = (value / SteamInventoryItemCount) * 100;
+            }
+        }
+
+        private DateTime lastInventoryCheck;
+        private DateTime lastTradeOfferCheck;
+
+        private List<TradeOfferInfo> lastTradeInfos;
+        public List<TradeOfferInfo> LastTradeInfos
+        {
+            get
+            {
+                TimeSpan ts = DateTime.Now.Subtract(lastTradeOfferCheck);
+                if (ts.TotalMinutes >= 1)
+                {
+                    lastTradeInfos = new List<TradeOfferInfo>();
+                    lastTradeOfferCheck = DateTime.Now;
+
+                    string[] rows = { "tradeOfferID" };
+                    List<Dictionary<string, string>> values = DB.SELECT(rows, "tradeoffers", "ORDER BY ID DESC LIMIT 4");
+                    
+                    for (int i = 0; i < values.Count; i++)
+                    {
+                        TradeOffer to;
+                        if (TradeOfferManager.TryGetOffer(values[i][rows[0]], out to))
+                        {
+
+                            SteamProfile.SteamProfileInfos spi = SteamProfile.LoadSteamProfile(SteamWeb, to.PartnerSteamId);
+
+                            lastTradeInfos.Add(new TradeOfferInfo(spi.CustomURL, spi.Name, spi.AvatarFull, to.TradeOfferId, to.OfferState));
+                        }
+                        else
+                        {
+                            LastTradeInfos.Add(new TradeOfferInfo(null, null, null, null, TradeOfferState.TradeOfferStateUnknown));
+                        }
+                    }
+                }
+                
+                return lastTradeInfos;
+            }
+            private set
+            {
+                lastTradeInfos = value;
+            }
+        }
+
+        private double inventoryValue;
+        public double InventoryValue
+        {
+            get
+            {
+                TimeSpan ts = DateTime.Now.Subtract(lastInventoryCheck);
+                if (ts.TotalMinutes >= 1)
+                {
+                    lastInventoryCheck = DateTime.Now;
+                    InventoryValue = GetInventoryValue();
+                }
+
+                return inventoryValue;
+            }
+            private set
+            {
+                inventoryValue = value;
+            }
+        }
 
         private bool stop;
         private Database DB;
@@ -355,6 +458,8 @@ namespace ASteambot
 
             Console.WriteLine("User Authenticated!");
 
+            SteamProfileInfo = SteamProfile.LoadSteamProfile(SteamWeb, steamClient.SteamID);
+
             ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan);
 
             TradeOfferManager = new TradeOfferManager(loginInfo.API, SteamWeb);
@@ -513,6 +618,87 @@ namespace ASteambot
         //  HELPER FUNCTION  //
         //*******************//
 
+        private double GetInventoryValue()
+        {
+            long[] contextID = new long[1];
+            contextID[0] = 2;
+
+            SteamInventoryItemCount = 0;
+            double value = 0.0;
+            int backup = 0;
+
+            SteamInventoryTF2Items = 0;
+            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.TF2, contextID, steamUser.SteamID);
+            foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
+            {
+                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+
+                Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                if (description.tradable)
+                {
+                    if (i != null)// && i.Value != 0)
+                        value += i.Value;
+
+                    SteamInventoryItemCount++;
+                }
+            }
+            SteamInventoryTF2Items = SteamInventoryItemCount;
+            backup = SteamInventoryItemCount;
+
+            SteamInventoryCSGOItems = 0;
+            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.CSGO, contextID, steamUser.SteamID);
+            foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
+            {
+                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+
+                Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                if (description.tradable)
+                {
+                    if (i != null)// && i.Value != 0)
+                        value += i.Value;
+
+                    SteamInventoryItemCount++;
+                }
+            }
+            int ic = SteamInventoryItemCount - backup;
+            if (ic < 0)
+                ic = 0;
+
+            steamInventoryCSGOItems = ic;
+            backup += SteamInventoryItemCount;
+
+            SteamInventoryDOTA2Items = 0;
+            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.Dota2, contextID, steamUser.SteamID);
+            foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
+            {
+                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+
+                Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                if (description.tradable)
+                {
+                    if (i != null)// && i.Value != 0)
+                        value += i.Value;
+
+                    SteamInventoryItemCount++;
+                }
+            }
+            ic = SteamInventoryItemCount - backup;
+            if (ic < 0)
+                ic = 0;
+
+            steamInventoryDOTA2Items = ic;
+
+            return value;
+        }
+
+        public int GetNumberOfTrades()
+        {
+            string[] rows = { "tradeOfferID" };
+            List<Dictionary<string, string>> values = DB.SELECT(rows, "tradeoffers");
+
+            return values.Count;
+        }
+
         public void WithDrawn(string steamid)
         {
             SteamID steamID = new SteamID(steamid);
@@ -522,12 +708,10 @@ namespace ASteambot
                 return;
             }
 
-            SteamProfileInfos sp = SteamProfile.LoadSteamProfile(SteamWeb, steamID);
-
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("You are about to send ALL the bot's items to");
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.Write(" {0} ({1}) ", sp.Name, steamid);
+            Console.Write(" {0} ({1}) ", SteamProfileInfo.Name, steamid);
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("via a trade offer, do you confirm ? (YES / NO)");
             Console.WriteLine();
