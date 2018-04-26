@@ -137,20 +137,29 @@ namespace ASteambot.Networking
 
         private void Listen()
         {
-            _listener = new HttpListener();
-            _listener.Prefixes.Add("http://*:" + _port.ToString() + "/");
-            _listener.Start();
-            while (true)
+            try
             {
-                try
+                _listener = new HttpListener();
+                _listener.Prefixes.Add("http://*:" + _port.ToString() + "/");
+                _listener.Start();
+                while (true)
                 {
-                    HttpListenerContext context = _listener.GetContext();
-                    Process(context);
-                }
-                catch (Exception ex)
-                {
+                    try
+                    {
+                        HttpListenerContext context = _listener.GetContext();
+                        Process(context);
+                    }
+                    catch (Exception ex)
+                    {
 
+                    }
                 }
+            }
+            catch(Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Unable to start web interface, does the bot have enough privileges ? (WIN: Left click > run as Administrator");
+                Console.ForegroundColor = ConsoleColor.White;
             }
         }
 
