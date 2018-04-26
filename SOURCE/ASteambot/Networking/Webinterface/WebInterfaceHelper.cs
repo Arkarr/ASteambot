@@ -24,6 +24,8 @@ namespace ASteambot.Networking.Webinterface
             string html = File.ReadAllText(path);
 
             List<TradeOfferInfo> toInfos = Manager.SelectedBot.LastTradeInfos;
+            for(int i = 4; i > toInfos.Count; i--)
+                toInfos.Add(new TradeOfferInfo("", "", "", "", TradeOfferState.TradeOfferStateUnknown));
 
             html = html.Replace("STEAM_ICO_URL", Manager.SelectedBot.SteamProfileInfo.AvatarIcon)
                        .Replace("STEAM_PROFILE_URL", "https://steamcommunity.com/id/" + Manager.SelectedBot.SteamProfileInfo.CustomURL)
