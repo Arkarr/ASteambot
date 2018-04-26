@@ -23,9 +23,6 @@ namespace ASteambot.Networking.Webinterface
         {
             string html = File.ReadAllText(path);
 
-            List<TradeOfferInfo> toInfos = Manager.SelectedBot.LastTradeInfos;
-            for(int i = 4; i > toInfos.Count; i--)
-                toInfos.Add(new TradeOfferInfo("", "", "", "", TradeOfferState.TradeOfferStateUnknown));
 
             html = html.Replace("STEAM_ICO_URL", Manager.SelectedBot.SteamProfileInfo.AvatarIcon)
                        .Replace("STEAM_PROFILE_URL", "https://steamcommunity.com/id/" + Manager.SelectedBot.SteamProfileInfo.CustomURL)
@@ -33,29 +30,23 @@ namespace ASteambot.Networking.Webinterface
                        .Replace("STEAM_USERNAME", Manager.SelectedBot.SteamFriends.GetPersonaName())
                        .Replace("STEAM_TRADE_NUMBER", Manager.SelectedBot.GetNumberOfTrades()+"")
                        .Replace("STEAM_INVENTORY_COUNT", Manager.SelectedBot.SteamInventoryItemCount.ToString())
-                       .Replace("LAST_TRADE_1_PICTURE", toInfos[0].Sppicture)
-                       .Replace("LAST_TRADE_1_NAME", toInfos[0].Spname)
-                       .Replace("LAST_TRADE_1_PROFILE_LINK", "https://steamcommunity.com/id/" + toInfos[0].Splink)
-                       .Replace("LAST_TRADE_1_STATUS", toInfos[0].ToStatus.ToString())
-                       .Replace("LAST_TRADE_2_PICTURE", toInfos[1].Sppicture)
-                       .Replace("LAST_TRADE_2_NAME", toInfos[1].Spname)
-                       .Replace("LAST_TRADE_2_PROFILE_LINK", "https://steamcommunity.com/id/" + toInfos[1].Splink)
-                       .Replace("LAST_TRADE_2_STATUS", toInfos[1].ToStatus.ToString())
-                       .Replace("LAST_TRADE_3_PICTURE", toInfos[2].Sppicture)
-                       .Replace("LAST_TRADE_3_NAME", toInfos[2].Spname)
-                       .Replace("LAST_TRADE_3_PROFILE_LINK", "https://steamcommunity.com/id/" + toInfos[2].Splink)
-                       .Replace("LAST_TRADE_3_STATUS", toInfos[2].ToStatus.ToString())
-                       .Replace("LAST_TRADE_4_PICTURE", toInfos[3].Sppicture)
-                       .Replace("LAST_TRADE_4_NAME", toInfos[3].Spname)
-                       .Replace("LAST_TRADE_4_PROFILE_LINK", "https://steamcommunity.com/id/" + toInfos[3].Splink)
-                       .Replace("LAST_TRADE_4_STATUS", toInfos[3].ToStatus.ToString())
                        .Replace("TF2_ITEM_POURCENT", Manager.SelectedBot.SteamInventoryTF2Items.ToString())
                        .Replace("CSGO_ITEM_POURCENT", Manager.SelectedBot.SteamInventoryCSGOItems.ToString())
                        .Replace("DOTA2_ITEM_POURCENT", Manager.SelectedBot.SteamInventoryDOTA2Items.ToString())
-                       .Replace("STEAM_FRIENDS_COUNT", Manager.SelectedBot.SteamFriends.GetFriendCount().ToString()); 
+                       .Replace("STEAM_FRIENDS_COUNT", Manager.SelectedBot.SteamFriends.GetFriendCount().ToString());
 
-             //        
-             pages[path] = html;
+            List<TradeOfferInfo> toInfos = Manager.SelectedBot.LastTradeInfos;
+
+            for(int i = 0; i < toInfos.Count; i++)
+            {
+                html = html.Replace("LAST_TRADE_"+ i + "_PICTURE", toInfos[i].Sppicture)
+                .Replace("LAST_TRADE_" + i + "_NAME", toInfos[i].Spname)
+                .Replace("LAST_TRADE_" + i + "_PROFILE_LINK", "https://steamcommunity.com/id/" + toInfos[i].Splink)
+                .Replace("LAST_TRADE_" + i + "_STATUS", toInfos[i].ToStatus.ToString());
+            }
+
+                //        
+            pages[path] = html;
         }
 
         public Stream GetHTMLPage(string path)
