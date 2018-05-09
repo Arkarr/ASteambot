@@ -22,7 +22,7 @@ namespace ASteambot
         private static Thread threadManager;
         private static Translation.Translation translation;
 
-        private static string BUILD_VERSION = "3.5 - PUBLIC";
+        private static string BUILD_VERSION = "3.6 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -81,9 +81,16 @@ namespace ASteambot
                 Thread.Sleep(TimeSpan.FromSeconds(3));
 
             steambotManager.SelectFirstBot();
-            
-            httpsrv = new HTTPServer("/website/", 85);
-            Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:"+httpsrv.Port+"/index.html");
+
+            if (!IsLinux())
+            {
+                httpsrv = new HTTPServer("/website/", 85);
+                Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:" + httpsrv.Port + "/index.html");
+            }
+            else
+            {
+                Console.WriteLine("HTTP Server disabled for UNIX users. Wait for a fix :) !");
+            }
 
             string command = "";
             while (command != "quit")
