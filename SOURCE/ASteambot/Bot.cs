@@ -15,6 +15,7 @@ using System.Net;
 using System.Net.Sockets;
 using SteamTrade.SteamMarket;
 using System.Globalization;
+using CsQuery;
 
 namespace ASteambot
 {
@@ -147,6 +148,7 @@ namespace ASteambot
         private Database DB;
         private bool renaming;
         private string myUniqueId;
+        private int maxfriendCount;
         private string myUserNonce;
         private LoginInfo loginInfo;
         private SteamUser steamUser;
@@ -564,9 +566,13 @@ namespace ASteambot
 
         private int getMaxFriends()
         {
-            int baseFriend = 250;
-            //Get steam level ....
-            return baseFriend;
+            if(maxfriendCount == 0)
+            {
+                CQ dom = CQ.CreateFromUrl("http://steamcommunity.com/profiles/"+steamClient.SteamID.ConvertToUInt64());
+                maxfriendCount = 250 + 5 * Int32.Parse(dom["div[class='persona_name persona_level']"].Children().Children()[0].InnerText);
+            }
+
+            return maxfriendCount;
         }
 
         private void CreateFriendsListIfNecessary()
