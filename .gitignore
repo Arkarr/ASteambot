@@ -56,6 +56,5 @@ Version.cpp
 *.xml
 *.ide
 *.sqlite
-/SOURCE/packages/
 /BINARIES/as_ver.exe
 /.vs
