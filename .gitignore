@@ -13,6 +13,7 @@
 
 # Compiled Dynamic libraries
 *.so
+*.xml
 *.dylib
 /build/
 /obj/
@@ -24,8 +25,8 @@ _ReSharper.*/
 bin/
 obj/
 Debug/
-Release/
 packages/
+Release/
 *.opensdf
 *.tlog
 *.log
@@ -54,9 +55,7 @@ Version.cpp
 *.auth
 *.fakes
 *.fakesconfig
-*.xml
 *.ide
 *.sqlite
 /SOURCE/packages/
 /BINARIES/as_ver.exe
-/.vs
