@@ -25,6 +25,7 @@ bin/
 obj/
 Debug/
 Release/
+packages/
 *.opensdf
 *.tlog
 *.log
@@ -53,7 +54,9 @@ Version.cpp
 *.auth
 *.fakes
 *.fakesconfig
+*.xml
 *.ide
 *.sqlite
+/SOURCE/packages/
 /BINARIES/as_ver.exe
 /.vs
