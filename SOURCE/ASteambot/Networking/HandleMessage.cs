@@ -20,7 +20,7 @@ namespace ASteambot.Networking
     {
         public HandleMessage() { }
 
-        private int serverID;
+        private int SINGLE_SERVER_ID;
 
         public void Execute(Bot bot, GameServerRequest gsr)
         {
@@ -64,7 +64,15 @@ namespace ASteambot.Networking
                     case NetworkCode.ASteambotCode.SteamID:
                         SendSteamID(bot, gsr);
                         break;
+                    case NetworkCode.ASteambotCode.Simple:
+                        SendChatMessage(bot, gsr);
+                        break;
                 }
+                /*if (!bot.Friends.Contains(steamID))
+                {
+                    bot.Manager.Send(serverID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, gsr.Arguments);
+                    return;
+                }*/
             }
             catch(Exception e)
             {
@@ -87,9 +95,9 @@ namespace ASteambot.Networking
             if (index >= 0)
                 return;
 
-            serverID++;
+            SINGLE_SERVER_ID++;
 
-            GameServer gameserver = new GameServer(gsr.Socket, bot.Manager.Config.TCPPassword, serverID, gsr.Arguments);
+            GameServer gameserver = new GameServer(gsr.Socket, bot.Manager.Config.TCPPassword, SINGLE_SERVER_ID, gsr.Arguments);
             GameServer gs = bot.Manager.Servers.Find(srv => srv.SteamID == gameserver.SteamID);
 
             if (gs == null)
@@ -153,7 +161,7 @@ namespace ASteambot.Networking
             List<SteamID> toRemove = new List<SteamID>();
             foreach (KeyValuePair<SteamID, int> value in bot.ChatListener)
             {
-                if (value.Value == serverID)
+                if (value.Value == gsr.ServerID)
                 {
                     SteamID partenar = value.Key;
                     toRemove.Add(partenar);
@@ -178,7 +186,7 @@ namespace ASteambot.Networking
 
             if (!bot.Friends.Contains(steamID))
             {
-                bot.Manager.Send(serverID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, gsr.Arguments);
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, gsr.Arguments);
                 return;
             }
 
@@ -194,9 +202,9 @@ namespace ASteambot.Networking
                 items += AddInventoryItems(bot, Games.Dota2, steamID, withImg);
 
                 if (withImg)
-                    bot.Manager.Send(serverID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventoryIMG, items);
+                    bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventoryIMG, items);
                 else
-                    bot.Manager.Send(serverID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventory, items);
+                    bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventory, items);
             });
 
             invScan.Start();
@@ -414,9 +422,9 @@ namespace ASteambot.Networking
         
         private void PostSteamGroupAnnoucement(Bot bot, GameServerRequest gsr)
         {   
-            GameServer gs = bot.Manager.GetServerByID(serverID);
+            GameServer gs = bot.Manager.GetServerByID(gsr.ServerID);
 
-            string[] groupIDHeadlineBody = gsr.Arguments.Split('/');
+            string[] groupIDHeadlineBody = gsr.Arguments.Split(new char[] { '/' }, 3);
 
             var data = new NameValueCollection();
             data.Add("sessionID", bot.SteamWeb.SessionId);
@@ -432,6 +440,21 @@ namespace ASteambot.Networking
 
             if (gs != null)
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.SGAnnoucement, groupIDHeadlineBody[1]);
+        }
+
+        private void SendChatMessage(Bot bot, GameServerRequest gsr)
+        {
+            GameServer gs = bot.Manager.GetServerByID(gsr.ServerID);
+
+            string[] steamID_msg = gsr.Arguments.Split(new char[] { '/' }, 2);
+            SteamID steamID = new SteamID(steamID_msg[0]);
+
+            if (steamID == null)
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.Simple, "Invalid steam ID (STEAM_X:Y:ZZZZ) !");
+            else if(!bot.Friends.Contains(steamID))
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamID_msg[0]);
+            else
+                bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, steamID_msg[1]);
         }
     }
 }
