@@ -1073,7 +1073,9 @@ namespace ASteambot
             /*}
             else
             {
-                Console.WriteLine("Unable to connect to steamnetwork !");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Unable to connect to steamnetwork ! Try again in a few minutes.");
+                Console.ForegroundColor = ConsoleColor.White;
                 stop = true;
             }*/
         }
@@ -1114,14 +1116,13 @@ namespace ASteambot
 
                 case EResult.TwoFactorCodeMismatch:
                 case EResult.TwoFactorActivationCodeMismatch:
-                    stop = true;
+                    //stop = true;
                     Console.WriteLine("The 2 factor auth code is wrong ! Reloading...");
                     loginInfo.SetTwoFactorCode(GetMobileAuthCode());
-
                     break;
 
                 case EResult.InvalidLoginAuthCode:
-                    stop = true;
+                    //stop = true;
                     Console.WriteLine("The auth code (email) is wrong ! Asking it again : ");
                     loginInfo.SetAuthCode(Console.ReadLine());
                     break;
