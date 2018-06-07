@@ -67,8 +67,6 @@ namespace ASteambot
             currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
 
-            Console.Title = "Akarr's steambot";
-
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Searching for updates...");
             Console.ForegroundColor = ConsoleColor.White;
@@ -150,6 +148,8 @@ namespace ASteambot
                 Console.WriteLine("HTTP Server disabled for UNIX users. Wait for a fix :) !");
                 Console.ForegroundColor = ConsoleColor.White;
             }
+            
+            Console.Title = "Akarr's steambot";
 
             string command = "";
             while (command != "quit")

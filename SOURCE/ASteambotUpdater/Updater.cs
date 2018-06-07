@@ -164,6 +164,7 @@ namespace ASteambotUpdater
                 System.Threading.Thread.Sleep(1000);
                 Console.SetCursorPosition(Console.CursorLeft, Console.CursorTop - 1);
             }
+            Console.WriteLine();
             /*string exePath = actualPath + "/"+ updateDir + "/ASteambot.exe";
             Process process = new Process
             {
