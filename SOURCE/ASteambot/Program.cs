@@ -63,7 +63,6 @@ namespace ASteambot
                     Console.WriteLine("ASteambot PATCHED ! Restarting...");
                     Console.WriteLine(process);
                     Process.Start(process);
-                    Thread.Sleep(3000);
                     Environment.Exit(0);
                 }
                 Console.WriteLine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
