@@ -133,7 +133,7 @@ namespace ASteambotUpdater
                     {
                         Console.WriteLine("Downloading website...");
                         client.DownloadFile(file_url, actualPath + "/"+ updateDir + "/"+fileName);
-                        if (Directory.Exists(actualPath + "/"+ updateDir + "/website"))
+                        /*if (Directory.Exists(actualPath + "/"+ updateDir + "/website"))
                         {
                             Console.WriteLine("Removing old website...");
                             DeleteDirectory(actualPath + "/"+ updateDir + "/website");
@@ -145,7 +145,7 @@ namespace ASteambotUpdater
                         ZipFile.ExtractToDirectory(actualPath + "/"+ updateDir + "/" + fileName, actualPath + "/"+ updateDir + "/" + "website");
                         Console.WriteLine("Removing archive...");
                         File.Delete(actualPath + "/"+ updateDir + "/" + fileName);
-                        Console.WriteLine("Done !");
+                        Console.WriteLine("Done !");*/
                     }
                     else
                     {
