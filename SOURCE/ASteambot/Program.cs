@@ -47,6 +47,9 @@ namespace ASteambot
         {
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
+            if(!IsLinux())
+                Console.Title = "Akarr's steambot";
+
             if (args.Count() >= 1)
             {
                 if(args[0] == "-update" && Directory.Exists(Directory.GetCurrentDirectory()+"\\tmp"))
@@ -95,8 +98,6 @@ namespace ASteambot
                 Console.WriteLine("Already up to date !");
                 Console.ForegroundColor = ConsoleColor.White;
             }
-
-            Console.Title = "Akarr's steambot";
 
             config = new Config();
             if (!config.LoadConfig())
