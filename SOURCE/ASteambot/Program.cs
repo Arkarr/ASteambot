@@ -62,8 +62,8 @@ namespace ASteambot
                     string process = Directory.GetParent(Directory.GetCurrentDirectory()).ToString() + "/ASteambot.exe";
                     Console.WriteLine("ASteambot PATCHED ! Restarting...");
                     Console.WriteLine(process);
-                    Thread.Sleep(10000);
                     Process.Start(process);
+                    Thread.Sleep(3000);
                     Environment.Exit(0);
                 }
                 Console.WriteLine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
