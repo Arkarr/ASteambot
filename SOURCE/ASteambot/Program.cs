@@ -47,23 +47,27 @@ namespace ASteambot
         {
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
-            if(!IsLinux())
-                Console.Title = "Akarr's steambot";
+            Console.Title = "Akarr's steambot";
 
             if (args.Count() >= 1)
             {
-                if(args[0] == "-update" && Directory.Exists(Directory.GetCurrentDirectory()+"\\tmp"))
+                if(args[0] == "-update" && Directory.Exists(Directory.GetCurrentDirectory()+"/tmp"))
                 {
                     string destination = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
-                    foreach (string newPath in Directory.GetFiles(Directory.GetCurrentDirectory()+"\\tmp", "*.*", SearchOption.AllDirectories))
+                    foreach (string newPath in Directory.GetFiles(Directory.GetCurrentDirectory()+"/tmp", "*.*", SearchOption.AllDirectories))
                     {
                         string update = destination + "\\" + Path.GetFileName(newPath);
                         File.Copy(newPath, update, true);
                     }
-                    string process = Directory.GetParent(Directory.GetCurrentDirectory()).ToString() + "\\ASteambot.exe";
+                    string process = Directory.GetParent(Directory.GetCurrentDirectory()).ToString() + "/ASteambot.exe";
                     Process.Start(process);
                     Environment.Exit(0);
                 }
+                Console.WriteLine(">>>>>>>>> " +args[0] + " >>>> ? --> " + Directory.Exists(Directory.GetCurrentDirectory() + "/tmp"));
+            }
+            else
+            {
+                Console.WriteLine(">>>>>>>>>>>>> NO ARGS!");
             }
 
             AppDomain currentDomain = default(AppDomain);
