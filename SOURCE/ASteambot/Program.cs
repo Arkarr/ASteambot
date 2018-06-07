@@ -51,10 +51,10 @@ namespace ASteambot
 
             if (args.Count() >= 1)
             {
-                if(args[0] == "-update" && Directory.Exists(Directory.GetCurrentDirectory()+"/tmp"))
+                if(args[0] == "-update" && Directory.GetParent(Directory.GetCurrentDirectory()).ToString().EndsWith("tmp"))
                 {
                     string destination = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
-                    foreach (string newPath in Directory.GetFiles(Directory.GetCurrentDirectory()+"/tmp", "*.*", SearchOption.AllDirectories))
+                    foreach (string newPath in Directory.GetFiles(Directory.GetCurrentDirectory(), "*.*", SearchOption.AllDirectories))
                     {
                         string update = destination + "\\" + Path.GetFileName(newPath);
                         File.Copy(newPath, update, true);
@@ -63,7 +63,8 @@ namespace ASteambot
                     Process.Start(process);
                     Environment.Exit(0);
                 }
-                Console.WriteLine(">>>>>>>>> " +args[0] + " >>>> ? --> " + Directory.Exists(Directory.GetCurrentDirectory() + "/tmp"));
+                Console.WriteLine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
+                Console.WriteLine(">>>>>>>>> " +args[0] + " >>>> ? --> " + Directory.GetParent(Directory.GetCurrentDirectory()).ToString().EndsWith("tmp"));
             }
             else
             {
