@@ -25,7 +25,7 @@ namespace ASteambot
         private static Translation.Translation translation;
 
         private static string VERSION = "3.8";
-        private static string BUILD_VERSION = VERSION + " - PUBLIC";
+        private static string BUILD_VERSION = "3.8 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -62,8 +62,6 @@ namespace ASteambot
                 }
             }
 
-            updater = new Updater();
-
             AppDomain currentDomain = default(AppDomain);
             currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
@@ -73,7 +71,8 @@ namespace ASteambot
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Searching for updates...");
             Console.ForegroundColor = ConsoleColor.White;
-
+            
+            updater = new Updater();
             if (!updater.CheckVersion(VERSION))
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
