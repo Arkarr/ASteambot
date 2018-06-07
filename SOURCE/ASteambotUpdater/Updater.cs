@@ -139,7 +139,10 @@ namespace ASteambotUpdater
                             DeleteDirectory(actualPath + "/"+ updateDir + "/website");
                         }
                         Console.WriteLine("Extracting website...");
-                        ZipFile.ExtractToDirectory(actualPath + "/"+ updateDir + "/" + fileName, actualPath + "/"+ updateDir + "/");
+                        if (!Directory.Exists(actualPath + "/" + updateDir + "/" + "website"))
+                            Directory.CreateDirectory(actualPath + "/" + updateDir + "/" + "website");
+
+                        ZipFile.ExtractToDirectory(actualPath + "/"+ updateDir + "/" + fileName, actualPath + "/"+ updateDir + "/" + "website");
                         Console.WriteLine("Removing archive...");
                         File.Delete(actualPath + "/"+ updateDir + "/" + fileName);
                         Console.WriteLine("Done !");
