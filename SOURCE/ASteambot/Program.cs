@@ -7,8 +7,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,9 +25,8 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
         private static Translation.Translation translation;
-
-        private static string VERSION = "3.8";
-        private static string BUILD_VERSION = "3.8 - PUBLIC";
+        
+        private static string BUILD_VERSION = "3.8.1 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -73,7 +74,7 @@ namespace ASteambot
             Console.ForegroundColor = ConsoleColor.White;
             
             updater = new Updater();
-            if (!updater.CheckVersion(VERSION))
+            if (!updater.CheckVersion(Regex.Match(BUILD_VERSION, "([^\\s]+)").Value))
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("Update found ! Updating...");
@@ -133,12 +134,21 @@ namespace ASteambot
 
             if (!IsLinux())
             {
+                if (File.Exists("website.zip"))
+                {
+                    Console.WriteLine("Website not extracted ! Doing that now...");
+                    ZipFile.ExtractToDirectory("website.zip", "website");
+                    File.Delete("website.zip");
+                    Console.WriteLine("Done !");
+                }
                 httpsrv = new HTTPServer("/website/", 85);
                 Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:" + httpsrv.Port + "/index.html");
             }
             else
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("HTTP Server disabled for UNIX users. Wait for a fix :) !");
+                Console.ForegroundColor = ConsoleColor.White;
             }
 
             string command = "";
