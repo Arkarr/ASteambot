@@ -194,6 +194,9 @@ namespace ASteambotUpdater
 
             versions_folders = element.Select(".js-navigation-item");
             string lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].LastElementChild.InnerText;
+
+            Console.WriteLine("Current version : " + currentVersions + "\tLast version : " + lastVersion);
+
             return ("V "+currentVersions).Equals(lastVersion);
         }
 
