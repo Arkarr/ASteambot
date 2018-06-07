@@ -1,5 +1,6 @@
 ﻿using ASteambot.Networking;
 using ASteambot.Networking.Webinterface;
+using ASteambotUpdater;
 using SteamTrade.SteamMarket;
 using System;
 using System.Collections.Generic;
@@ -16,13 +17,15 @@ namespace ASteambot
     class Program
     {
         private static Config config;
+        private static Updater updater;
         private static HTTPServer httpsrv;
         private static LoginInfo logininfo;
         private static Manager steambotManager;
         private static Thread threadManager;
         private static Translation.Translation translation;
 
-        private static string BUILD_VERSION = "3.7.3 - PUBLIC";
+        private static string VERSION = "3.8";
+        private static string BUILD_VERSION = VERSION + " - PUBLIC";
 
         public static bool DEBUG;
 
@@ -43,9 +46,57 @@ namespace ASteambot
         {
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
+            if (args.Count() >= 1)
+            {
+                if(args[0] == "-update" && Directory.Exists(Directory.GetCurrentDirectory()+"\\tmp"))
+                {
+                    string destination = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
+                    foreach (string newPath in Directory.GetFiles(Directory.GetCurrentDirectory()+"\\tmp", "*.*", SearchOption.AllDirectories))
+                    {
+                        string update = destination + "\\" + Path.GetFileName(newPath);
+                        File.Copy(newPath, update, true);
+                    }
+                    string process = Directory.GetParent(Directory.GetCurrentDirectory()).ToString() + "\\ASteambot.exe";
+                    Process.Start(process);
+                    Environment.Exit(0);
+                }
+            }
+
+            updater = new Updater();
+
             AppDomain currentDomain = default(AppDomain);
             currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
+
+            Console.Title = "Akarr's steambot";
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Searching for updates...");
+            Console.ForegroundColor = ConsoleColor.White;
+
+            if (!updater.CheckVersion(VERSION))
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Update found ! Updating...");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Title = "Akarr's steambot - Updating...";
+                updater.Update();
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Update done ! Restarting...");
+
+                string path = Directory.GetCurrentDirectory() + "\\ASteambot.exe";
+                Process asteambot = new Process();
+                asteambot.StartInfo.Arguments = "-update";
+                asteambot.StartInfo.FileName = path;
+                asteambot.Start();
+                Environment.Exit(0);
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Already up to date !");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
 
             Console.Title = "Akarr's steambot";
 
@@ -57,16 +108,15 @@ namespace ASteambot
                 return;
             }
 
-            translation = new Translation.Translation();
+            /*translation = new Translation.Translation();
             if (!translation.Load(@"translation.xml"))
             {
                 Console.WriteLine("Translation file (translation.xml) can't be found or is corrupted ! Bot can't start.");
                 Console.ReadKey();
                 return;
-            }
-
+            }*/
+            
             PrintWelcomeMessage();
-
 
             //WebInterfaceHelper.AddTrade(new SteamTrade.TradeOffer.TradeOffer(null, new SteamKit2.SteamID()));
 
