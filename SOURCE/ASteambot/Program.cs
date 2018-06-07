@@ -48,7 +48,6 @@ namespace ASteambot
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
             Console.Title = "Akarr's steambot";
-            Thread.Sleep(5000);
 
             if (args.Count() >= 1)
             {
@@ -63,7 +62,7 @@ namespace ASteambot
                     string process = Directory.GetParent(Directory.GetCurrentDirectory()).ToString() + "/ASteambot.exe";
                     Console.WriteLine("ASteambot PATCHED ! Restarting...");
                     Console.WriteLine(process);
-                    Thread.Sleep(5000);
+                    Thread.Sleep(10000);
                     Process.Start(process);
                     Environment.Exit(0);
                 }
@@ -74,8 +73,6 @@ namespace ASteambot
             {
                 Console.WriteLine(">>>>>>>>>>>>> NO ARGS!");
             }
-
-            Thread.Sleep(5000);
 
             AppDomain currentDomain = default(AppDomain);
             currentDomain = AppDomain.CurrentDomain;
@@ -147,6 +144,8 @@ namespace ASteambot
                 if (File.Exists("website.zip"))
                 {
                     Console.WriteLine("Website not extracted ! Doing that now...");
+                    if (!Directory.Exists("website"))
+                        Directory.CreateDirectory("website");
                     ZipFile.ExtractToDirectory("website.zip", "website");
                     File.Delete("website.zip");
                     Console.WriteLine("Done !");
