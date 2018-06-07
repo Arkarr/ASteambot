@@ -51,7 +51,7 @@ namespace ASteambot
 
             if (args.Count() >= 1)
             {
-                if(args[0] == "-update" && Directory.GetParent(Directory.GetCurrentDirectory()).ToString().EndsWith("tmp"))
+                if(args[0] == "-update" && Directory.GetCurrentDirectory().ToString().EndsWith("tmp"))
                 {
                     string destination = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
                     foreach (string newPath in Directory.GetFiles(Directory.GetCurrentDirectory(), "*.*", SearchOption.AllDirectories))
@@ -64,7 +64,7 @@ namespace ASteambot
                     Environment.Exit(0);
                 }
                 Console.WriteLine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
-                Console.WriteLine(">>>>>>>>> " +args[0] + " >>>> ? --> " + Directory.GetParent(Directory.GetCurrentDirectory()).ToString().EndsWith("tmp"));
+                Console.WriteLine(">>>>>>>>> " +args[0] + " >>>> ? --> " + Directory.GetCurrentDirectory().ToString().EndsWith("tmp"));
             }
             else
             {
