@@ -146,7 +146,7 @@ namespace ASteambot
                     Console.WriteLine("Website not extracted ! Doing that now...");
                     if (!Directory.Exists("website"))
                         Directory.CreateDirectory("website");
-                    ZipFile.ExtractToDirectory("website.zip", "website");
+                    ZipFile.ExtractToDirectory("website.zip", "./website");
                     File.Delete("website.zip");
                     Console.WriteLine("Done !");
                 }
