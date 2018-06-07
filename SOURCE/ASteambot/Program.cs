@@ -48,6 +48,7 @@ namespace ASteambot
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
             Console.Title = "Akarr's steambot";
+            Thread.Sleep(5000);
 
             if (args.Count() >= 1)
             {
@@ -60,6 +61,9 @@ namespace ASteambot
                         File.Copy(newPath, update, true);
                     }
                     string process = Directory.GetParent(Directory.GetCurrentDirectory()).ToString() + "/ASteambot.exe";
+                    Console.WriteLine("ASteambot PATCHED ! Restarting...");
+                    Console.WriteLine(process);
+                    Thread.Sleep(5000);
                     Process.Start(process);
                     Environment.Exit(0);
                 }
@@ -70,6 +74,8 @@ namespace ASteambot
             {
                 Console.WriteLine(">>>>>>>>>>>>> NO ARGS!");
             }
+
+            Thread.Sleep(5000);
 
             AppDomain currentDomain = default(AppDomain);
             currentDomain = AppDomain.CurrentDomain;
