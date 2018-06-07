@@ -109,9 +109,9 @@ namespace ASteambotUpdater
             {
                 string updateDir = "tmp";
                 Console.WriteLine("Creating directory \"ASteambot\" ...");
-                Directory.CreateDirectory(actualPath + "\\tmp");
+                Directory.CreateDirectory(actualPath + "/tmp");
                 if(File.Exists("config.cfg"))
-                    File.Copy("config.cfg", Directory.GetCurrentDirectory()+"\\"+ updateDir + "\\config.cfg");
+                    File.Copy("config.cfg", Directory.GetCurrentDirectory()+"/"+ updateDir + "/config.cfg");
                 Directory.SetCurrentDirectory(updateDir);
                 PrintSucessMessage();
 
@@ -121,7 +121,7 @@ namespace ASteambotUpdater
                         continue;
 
                     string fileName = el.ChildNodes[1].LastElementChild.InnerText;
-                    string file_url = ASTEAMBOT_BINARIES_RAW + "\\" + lastVersion + "\\" + fileName;
+                    string file_url = ASTEAMBOT_BINARIES_RAW + "/" + lastVersion + "/" + fileName;
 
                     Console.WriteLine("Downloading " + fileName + "...");
 
@@ -132,25 +132,25 @@ namespace ASteambotUpdater
                     else if (fileName.Equals("website.zip"))
                     {
                         Console.WriteLine("Downloading website...");
-                        client.DownloadFile(file_url, actualPath + "\\"+ updateDir + "\\"+fileName);
-                        if (Directory.Exists(actualPath + "\\"+ updateDir + "\\website"))
+                        client.DownloadFile(file_url, actualPath + "/"+ updateDir + "/"+fileName);
+                        if (Directory.Exists(actualPath + "/"+ updateDir + "/website"))
                         {
                             Console.WriteLine("Removing old website...");
-                            DeleteDirectory(actualPath + "\\"+ updateDir + "\\website");
+                            DeleteDirectory(actualPath + "/"+ updateDir + "/website");
                         }
                         Console.WriteLine("Extracting website...");
-                        ZipFile.ExtractToDirectory(actualPath + "\\"+ updateDir + "\\" + fileName, actualPath + "\\"+ updateDir + "\\");
+                        ZipFile.ExtractToDirectory(actualPath + "/"+ updateDir + "/" + fileName, actualPath + "/"+ updateDir + "/");
                         Console.WriteLine("Removing archive...");
-                        File.Delete(actualPath + "\\"+ updateDir + "\\" + fileName);
+                        File.Delete(actualPath + "/"+ updateDir + "/" + fileName);
                         Console.WriteLine("Done !");
                     }
                     else
                     {
-                        client.DownloadFile(file_url, actualPath + "\\"+ updateDir + "\\" + fileName);
+                        client.DownloadFile(file_url, actualPath + "/"+ updateDir + "/" + fileName);
                     }
                 }
-                client.DownloadFile(configPath, actualPath + "\\"+ updateDir + "\\" + "config.cfg" + ".tmp");
-                rewriteConfigFile(actualPath + updateDir + "\\" + "config.cfg");
+                client.DownloadFile(configPath, actualPath + "/"+ updateDir + "/" + "config.cfg" + ".tmp");
+                rewriteConfigFile(actualPath + updateDir + "/" + "config.cfg");
 
                 PrintSucessMessage();
             }
@@ -289,7 +289,7 @@ namespace ASteambotUpdater
 
         private static string AskInput(string configLine, string commentary, string defaultValue = "")
         {
-            string[] count = commentary.Split(new string[] { "\\n" }, StringSplitOptions.None);
+            string[] count = commentary.Split(new string[] { "/n" }, StringSplitOptions.None);
 
             Console.ForegroundColor = ConsoleColor.Cyan;
             for (int i = 0; i < count.Length; i++)
