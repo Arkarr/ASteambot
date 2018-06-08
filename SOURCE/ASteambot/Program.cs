@@ -26,7 +26,7 @@ namespace ASteambot
         private static Thread threadManager;
         private static Translation.Translation translation;
         
-        private static string BUILD_VERSION = "4.0 - PUBLIC";
+        private static string BUILD_VERSION = "4.1 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -63,9 +63,10 @@ namespace ASteambot
                     string process = Directory.GetParent(Directory.GetCurrentDirectory()).ToString() + "/ASteambot.exe";
                     Console.WriteLine("ASteambot PATCHED ! Restarting...");
                     Console.WriteLine(process);
-                    Thread.Sleep(5000);
+                    Thread.Sleep(10000);
                     Process newAS = new Process();
                     newAS.StartInfo.FileName = process;
+                    newAS.Start();
                     Environment.Exit(0);
                 }
                 Console.WriteLine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
