@@ -26,7 +26,7 @@ namespace ASteambot
         private static Thread threadManager;
         private static Translation.Translation translation;
         
-        private static string BUILD_VERSION = "4.1 - PUBLIC";
+        private static string BUILD_VERSION = "4.2 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -48,7 +48,6 @@ namespace ASteambot
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
             Console.Title = "Akarr's steambot";
-            Console.WriteLine(">>>> " + Directory.GetCurrentDirectory());
 
             if (args.Count() >= 1)
             {
@@ -63,8 +62,7 @@ namespace ASteambot
                     string process = Directory.GetParent(Directory.GetCurrentDirectory()) + @"\ASteambot.exe";
                     Console.WriteLine("ASteambot PATCHED ! Restarting...");
                     Console.WriteLine(process);
-                    Console.WriteLine("WORKING DIR: " + Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
-                    Thread.Sleep(10000);
+                    Thread.Sleep(5000);
                     Process newAS = new Process();
                     newAS.StartInfo.WorkingDirectory = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
                     newAS.StartInfo.FileName = process;
@@ -72,12 +70,6 @@ namespace ASteambot
                     newAS.Start();
                     Environment.Exit(0);
                 }
-                Console.WriteLine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
-                Console.WriteLine(">>>>>>>>> " +args[0] + " >>>> ? --> " + Directory.GetCurrentDirectory().ToString().EndsWith("tmp"));
-            }
-            else
-            {
-                Console.WriteLine(">>>>>>>>>>>>> NO ARGS!");
             }
 
             updater = new Updater();
