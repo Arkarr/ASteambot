@@ -60,12 +60,13 @@ namespace ASteambot
                         string update = destination + "\\" + Path.GetFileName(newPath);
                         File.Copy(newPath, update, true);
                     }
-                    string process = Directory.GetParent(Directory.GetCurrentDirectory()).ToString() + "/ASteambot.exe";
+                    string process = Directory.GetParent(Directory.GetCurrentDirectory()) + @"\\ASteambot.exe";
                     Console.WriteLine("ASteambot PATCHED ! Restarting...");
                     Console.WriteLine(process);
                     Thread.Sleep(10000);
                     Process newAS = new Process();
                     newAS.StartInfo.FileName = process;
+                    newAS.StartInfo.Arguments = "";
                     newAS.Start();
                     Environment.Exit(0);
                 }
@@ -77,6 +78,8 @@ namespace ASteambot
                 Console.WriteLine(">>>>>>>>>>>>> NO ARGS!");
             }
 
+            updater = new Updater();
+
             AppDomain currentDomain = default(AppDomain);
             currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
@@ -85,7 +88,6 @@ namespace ASteambot
             Console.WriteLine("Searching for updates...");
             Console.ForegroundColor = ConsoleColor.White;
             
-            updater = new Updater();
             if (!updater.CheckVersion(Regex.Match(BUILD_VERSION, "([^\\s]+)").Value))
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
