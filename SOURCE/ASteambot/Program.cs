@@ -26,7 +26,7 @@ namespace ASteambot
         private static Thread threadManager;
         private static Translation.Translation translation;
         
-        private static string BUILD_VERSION = "4.1 - PUBLIC";
+        private static string BUILD_VERSION = "4.0 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -48,6 +48,7 @@ namespace ASteambot
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
             Console.Title = "Akarr's steambot";
+            Console.WriteLine(">>>> " + Directory.GetCurrentDirectory());
 
             if (args.Count() >= 1)
             {
@@ -62,7 +63,9 @@ namespace ASteambot
                     string process = Directory.GetParent(Directory.GetCurrentDirectory()).ToString() + "/ASteambot.exe";
                     Console.WriteLine("ASteambot PATCHED ! Restarting...");
                     Console.WriteLine(process);
-                    Process.Start(process);
+                    Thread.Sleep(5000);
+                    Process newAS = new Process();
+                    newAS.StartInfo.FileName = process;
                     Environment.Exit(0);
                 }
                 Console.WriteLine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
@@ -149,8 +152,18 @@ namespace ASteambot
                     File.Delete("website.zip");
                     Console.WriteLine("Done !");
                 }
-                httpsrv = new HTTPServer("/website/", 85);
-                Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:" + httpsrv.Port + "/index.html");
+
+                if (Directory.Exists("/website/"))
+                {
+                    httpsrv = new HTTPServer("/website/", 85);
+                    Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:" + httpsrv.Port + "/index.html");
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Website folder not present, can't start web interface. Re-download ASteambot from original github.");
+                    Console.ForegroundColor = ConsoleColor.White;
+                }
             }
             else
             {
@@ -169,7 +182,8 @@ namespace ASteambot
                 steambotManager.Command(command);
             }
 
-            httpsrv.Stop();
+            if(httpsrv != null)
+                httpsrv.Stop();
         }
 
         private static void AttemptLoginBot(string username, string password, string api)
