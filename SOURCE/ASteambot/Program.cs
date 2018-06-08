@@ -60,11 +60,13 @@ namespace ASteambot
                         string update = destination + "\\" + Path.GetFileName(newPath);
                         File.Copy(newPath, update, true);
                     }
-                    string process = Directory.GetParent(Directory.GetCurrentDirectory()) + @"\\ASteambot.exe";
+                    string process = Directory.GetParent(Directory.GetCurrentDirectory()) + @"\ASteambot.exe";
                     Console.WriteLine("ASteambot PATCHED ! Restarting...");
                     Console.WriteLine(process);
+                    Console.WriteLine("WORKING DIR: " + Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
                     Thread.Sleep(10000);
                     Process newAS = new Process();
+                    newAS.StartInfo.WorkingDirectory = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
                     newAS.StartInfo.FileName = process;
                     newAS.StartInfo.Arguments = "";
                     newAS.Start();
