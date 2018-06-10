@@ -26,7 +26,7 @@ namespace ASteambot
         private static Thread threadManager;
         private static Translation.Translation translation;
         
-        private static string BUILD_VERSION = "4.2 - PUBLIC";
+        private static string BUILD_VERSION = "4.3 - PUBLIC";
 
         public static bool DEBUG;
 
