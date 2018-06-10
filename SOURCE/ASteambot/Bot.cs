@@ -566,10 +566,19 @@ namespace ASteambot
 
         private int getMaxFriends()
         {
-            if(maxfriendCount == 0)
+            if (maxfriendCount == 0)
             {
-                CQ dom = CQ.CreateFromUrl("http://steamcommunity.com/profiles/"+steamClient.SteamID.ConvertToUInt64());
-                maxfriendCount = 250 + 5 * Int32.Parse(dom["div[class='persona_name persona_level']"].Children().Children()[0].InnerText);
+                try
+                {
+                    CQ dom = CQ.CreateFromUrl("http://steamcommunity.com/profiles/" + steamClient.SteamID.ConvertToUInt64());
+                    maxfriendCount = 250 + 5 * Int32.Parse(dom["div[class='persona_name persona_level']"].Children().Children()[0].InnerText);
+                }
+                catch (Exception)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Error while reading the steam level of own profile. DEBUG: " + steamClient);
+                    maxfriendCount = 250;
+                }
             }
 
             return maxfriendCount;
