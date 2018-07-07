@@ -8,6 +8,31 @@ namespace ASteambot
 {
     public class SteamProfile
     {
+        public DateTime LastTimeRefreshed { get; private set; }
+
+        private SteamProfileInfos infos;
+        public SteamProfileInfos Infos
+        {
+            get
+            {
+                infos = LoadSteamProfile(steamWeb, this.steamID);
+                return infos;
+            }
+            private set
+            {
+                infos = value;
+            }
+        }
+
+        private SteamTrade.SteamWeb steamWeb;
+        private SteamID steamID;
+
+        public SteamProfile(SteamTrade.SteamWeb steamWeb, SteamID steamID)
+        {
+            this.steamWeb = steamWeb;
+            this.steamID = steamID;
+        }
+
         [XmlRoot(ElementName = "mostPlayedGame")]
         public class MostPlayedGame
         {
@@ -83,26 +108,33 @@ namespace ASteambot
             public MostPlayedGames MostPlayedGames { get; set; }
         }
 
-        public static SteamProfileInfos LoadSteamProfile(SteamTrade.SteamWeb steamWeb, SteamID steamID)
-        {
-            string response = steamWeb.Fetch("http://steamcommunity.com/profiles/"+steamID.ConvertToUInt64()+"/?xml=1", "GET");
+        private SteamProfileInfos backup;
 
-            if (response != String.Empty)
+        private SteamProfileInfos LoadSteamProfile(SteamTrade.SteamWeb steamWeb, SteamID steamID)
+        {
+            if (LastTimeRefreshed == null || (DateTime.Now - LastTimeRefreshed).TotalMinutes > 5)
             {
-                response = response.Replace("\t", "").Replace("\n", "").Replace("\r", "").Trim();
-                int index = response.IndexOf("<profile>");
-                if (index != -1)
+                LastTimeRefreshed = DateTime.Now;
+                string response = steamWeb.Fetch("http://steamcommunity.com/profiles/" + steamID.ConvertToUInt64() + "/?xml=1", "GET");
+
+                if (response != String.Empty)
                 {
-                    response = response.Substring(index);
-                    XmlSerializer serializer = new XmlSerializer(typeof(SteamProfileInfos));
-                    using (TextReader reader = new StringReader(response))
+                    response = response.Replace("\t", "").Replace("\n", "").Replace("\r", "").Trim();
+                    int index = response.IndexOf("<profile>");
+                    if (index != -1)
                     {
-                        return (SteamProfileInfos)serializer.Deserialize(reader);
+                        response = response.Substring(index);
+                        XmlSerializer serializer = new XmlSerializer(typeof(SteamProfileInfos));
+                        using (TextReader reader = new StringReader(response))
+                        {
+                            backup = (SteamProfileInfos)serializer.Deserialize(reader);
+                            return backup;
+                        }
                     }
                 }
             }
 
-            return null;
+            return backup;
         }
     }
 }

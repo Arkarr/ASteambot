@@ -119,8 +119,8 @@ namespace ASteambot.Networking
             SteamID steamID = new SteamID(ids[0]);
             SteamID reportedDude = new SteamID(ids[1]);
 
-            SteamProfileInfos spGuy = LoadSteamProfile(bot.SteamWeb, steamID);
-            SteamProfileInfos spDude = LoadSteamProfile(bot.SteamWeb, reportedDude);
+            SteamProfileInfos spGuy = bot.GetSteamProfileInfo(steamID);
+            SteamProfileInfos spDude = bot.GetSteamProfileInfo(reportedDude);
 
             if (spDude != null && spGuy != null)
             {
