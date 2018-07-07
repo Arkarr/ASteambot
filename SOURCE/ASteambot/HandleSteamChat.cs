@@ -1,9 +1,11 @@
-﻿using SteamKit2;
+﻿using ASteambot.Translation;
+using SteamKit2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static ASteambot.SteamProfile;
 
 namespace ASteambot
 {
@@ -54,7 +56,8 @@ namespace ASteambot
                 break;
 
                 default:
-                    bot.SteamFriends.SendChatMessage(partenar, EChatEntryType.ChatMsg, "Sorry I don't understand you. Yet.");
+                    //bot.SteamFriends.SendChatMessage(partenar, EChatEntryType.ChatMsg, "Sorry I don't understand you. Yet.");
+                    PrintChatMessage(partenar, message);
                 break;
             }            
         }
@@ -104,6 +107,12 @@ namespace ASteambot
             bot.Manager.Send(serverID, moduleID, Networking.NetworkCode.ASteambotCode.Unhookchat, "");
 
             SendChatMessage(partenar, "Done !");
+        }
+
+        private void PrintChatMessage(SteamID partenar, string message)
+        {
+            SteamProfileInfos spi = bot.GetSteamProfileInfo(partenar);
+            SendChatMessage(partenar, bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi.Location)));
         }
 
         private void ExecuteServerCommand(SteamID partenar, string message)

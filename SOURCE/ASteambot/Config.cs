@@ -27,7 +27,8 @@ namespace ASteambot
         public string ArkarrAPIKey { get; private set; }
         public bool DisableMarketScan { get; private set; }
         public bool DisableWelcomeMessage { get; private set; }
-        
+        public bool DisableAutoUpdate { get; private set; }
+
         public Config() { }
 
         public bool LoadConfig()
@@ -78,9 +79,12 @@ namespace ASteambot
                     DisableMarketScan = line.Replace("DisableMarketScan=", "").Equals("YES");
                 else if (line.StartsWith("DisableWelcomeMessage="))
                     DisableWelcomeMessage = line.Replace("DisableWelcomeMessage=", "").Equals("YES");
+                else if (line.StartsWith("DisableUpdater="))
+                    DisableAutoUpdate = line.Replace("DisableUpdater=", "").Equals("YES");
             }
+            
 
-            if(!ValidateConfig())
+            if (!ValidateConfig())
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Some fields haven't been set in config file. Press a key to close ASteambot.");

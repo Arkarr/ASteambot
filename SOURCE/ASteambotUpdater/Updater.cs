@@ -1,4 +1,5 @@
 ﻿using CsQuery;
+using Mono.Posix;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,6 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -27,7 +29,8 @@ namespace ASteambotUpdater
 
         public void Update()
         {
-            string actualPath = AppDomain.CurrentDomain.BaseDirectory;
+            List<string> fileList = new List<string>();
+            string actualPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             
             Console.ForegroundColor = ConsoleColor.White;
 
@@ -109,10 +112,15 @@ namespace ASteambotUpdater
             {
                 string updateDir = "tmp";
                 Console.WriteLine("Creating directory \"ASteambot\" ...");
+                Console.WriteLine(actualPath);
+                Console.WriteLine("****************************");
+                Thread.Sleep(8000);
+                Mono.Unix.Native.Syscall.chmod(actualPath, Mono.Unix.Native.FilePermissions.ALLPERMS);
+                Mono.Unix.Native.Syscall.chmod(actualPath + "/tmp", Mono.Unix.Native.FilePermissions.ALLPERMS);
                 Directory.CreateDirectory(actualPath + "/tmp");
                 if(File.Exists("config.cfg"))
                     File.Copy("config.cfg", Directory.GetCurrentDirectory()+"/"+ updateDir + "/config.cfg");
-                Directory.SetCurrentDirectory(updateDir);
+                Directory.SetCurrentDirectory(actualPath + "/tmp");
                 PrintSucessMessage();
 
                 foreach (IDomObject el in files)
@@ -131,7 +139,6 @@ namespace ASteambotUpdater
                     }
                     else if (fileName.Equals("website.zip"))
                     {
-                        Console.WriteLine("Downloading website...");
                         client.DownloadFile(file_url, actualPath + "/"+ updateDir + "/"+fileName);
                         /*if (Directory.Exists(actualPath + "/"+ updateDir + "/website"))
                         {
@@ -151,14 +158,22 @@ namespace ASteambotUpdater
                     {
                         client.DownloadFile(file_url, actualPath + "/"+ updateDir + "/" + fileName);
                     }
+                    fileList.Add(actualPath + "/" + updateDir + "/" + fileName);
                 }
                 client.DownloadFile(configPath, actualPath + "/"+ updateDir + "/" + "config.cfg" + ".tmp");
                 rewriteConfigFile(actualPath + updateDir + "/" + "config.cfg");
 
                 PrintSucessMessage();
+
+                Console.WriteLine("Checking file disponibility...");
+
+                foreach(String file in fileList)
+                    WaitForFile(file, System.IO.FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Delete);
+                
+                PrintSucessMessage();
             }
 
-            Console.ForegroundColor = ConsoleColor.Green;
+            /*Console.ForegroundColor = ConsoleColor.Green;
             int counter = 5;
             while (counter > 0)
             {
@@ -167,7 +182,7 @@ namespace ASteambotUpdater
                 System.Threading.Thread.Sleep(1000);
                 Console.SetCursorPosition(Console.CursorLeft, Console.CursorTop - 1);
             }
-            Console.WriteLine();
+            Console.WriteLine();*/
             /*string exePath = actualPath + "/"+ updateDir + "/ASteambot.exe";
             Process process = new Process
             {
@@ -179,6 +194,31 @@ namespace ASteambotUpdater
             //Console.WriteLine(process.StartInfo.FileName);
             process.Start();
             process.WaitForExit();*/
+
+
+        }
+
+        private FileStream WaitForFile(string fullPath, System.IO.FileMode mode, FileAccess access, FileShare share)
+        {
+            for (int numTries = 0; numTries < 10; numTries++)
+            {
+                FileStream fs = null;
+                try
+                {
+                    fs = new FileStream(fullPath, mode, access, share);
+                    return fs;
+                }
+                catch (IOException)
+                {
+                    if (fs != null)
+                    {
+                        fs.Dispose();
+                    }
+                    Thread.Sleep(50);
+                }
+            }
+
+            return null;
         }
 
         public bool CheckVersion(string currentVersions)

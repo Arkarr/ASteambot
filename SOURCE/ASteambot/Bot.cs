@@ -16,6 +16,7 @@ using System.Net.Sockets;
 using SteamTrade.SteamMarket;
 using System.Globalization;
 using CsQuery;
+using static ASteambot.SteamProfile;
 
 namespace ASteambot
 {
@@ -39,6 +40,7 @@ namespace ASteambot
         public Dictionary<SteamID, int> ChatListener { get; private set; }
         public GenericInventory OtherGenericInventory { get; private set; }
         public int SteamInventoryItemCount { get; private set; }
+        public Translation.Translation Translation { get; private set; }
 
         private int steamInventoryTF2Items;
         public int SteamInventoryTF2Items
@@ -105,7 +107,7 @@ namespace ASteambot
                         if (TradeOfferManager.TryGetOffer(values[i][rows[0]], out to))
                         {
 
-                            SteamProfile.SteamProfileInfos spi = SteamProfile.LoadSteamProfile(SteamWeb, to.PartnerSteamId);
+                            SteamProfile.SteamProfileInfos spi = GetSteamProfileInfo(to.PartnerSteamId);
 
                             lastTradeInfos.Add(new TradeOfferInfo(spi.CustomURL, spi.Name, spi.AvatarFull, to.TradeOfferId, to.OfferState));
                         }
@@ -160,6 +162,7 @@ namespace ASteambot
         private HandleMessage messageHandler;
         private AsynchronousSocketListener socket;
         private SteamGuardAccount steamGuardAccount;
+        private List<SteamProfile> steamprofiles;
         private Dictionary<string, double> tradeOfferValue;
 
         public Bot(Manager manager, LoginInfo loginInfo, Config Config, AsynchronousSocketListener socket)
@@ -172,6 +175,7 @@ namespace ASteambot
             finishedTO = new List<string>();
             messageHandler = new HandleMessage();
             SteamWeb = new SteamTrade.SteamWeb();
+            steamprofiles = new List<SteamProfile>();
             cbManager = new CallbackManager(steamClient);
             SteamchatHandler = new HandleSteamChat(this);
             ChatListener = new Dictionary<SteamID, int>();
@@ -191,6 +195,9 @@ namespace ASteambot
             botThread.RunWorkerCompleted += BW_SteamTradeOfferScanned;
 
             socket.MessageReceived += Socket_MessageReceived;
+
+            Translation = new Translation.Translation();
+            Translation.Load("steamchattexts.xml");
         }
         
         public void SubscribeToEvents()
@@ -460,7 +467,7 @@ namespace ASteambot
 
             Console.WriteLine("User Authenticated!");
 
-            SteamProfileInfo = SteamProfile.LoadSteamProfile(SteamWeb, steamClient.SteamID);
+            SteamProfileInfo = GetSteamProfileInfo(steamClient.SteamID);
 
             ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan);
 
@@ -1231,6 +1238,23 @@ namespace ASteambot
                     string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
                     SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
                 }
+            }
+        }
+
+        public SteamProfileInfos GetSteamProfileInfo(SteamID steamID)
+        {
+            SteamProfile sp = steamprofiles.Find(x => x.Infos.SteamID64.Equals(steamID.ConvertToUInt64().ToString()));
+            if (sp == null)
+            {
+                SteamProfile steamProfile = new SteamProfile(SteamWeb, steamID);
+                SteamProfileInfos spi = steamProfile.Infos;
+                steamprofiles.Add(steamProfile);
+
+                return spi;
+            }
+            else
+            {
+                return sp.Infos;
             }
         }
 

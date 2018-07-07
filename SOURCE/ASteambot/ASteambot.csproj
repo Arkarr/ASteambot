@@ -96,6 +96,7 @@
     <Compile Include="SteamGroups\CMsgGroupInviteAction.cs" />
     <Compile Include="SteamGroups\CMsgInviteUserToGroup.cs" />
     <Compile Include="SteamProfile.cs" />
+    <Compile Include="Translation\CountryCode.cs" />
     <Compile Include="Translation\Translation.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -24,9 +24,8 @@ namespace ASteambot
         private static LoginInfo logininfo;
         private static Manager steambotManager;
         private static Thread threadManager;
-        private static Translation.Translation translation;
         
-        private static string BUILD_VERSION = "4.3 - PUBLIC";
+        private static string BUILD_VERSION = "4.5 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -82,7 +81,21 @@ namespace ASteambot
             Console.WriteLine("Searching for updates...");
             Console.ForegroundColor = ConsoleColor.White;
             
-            if (!updater.CheckVersion(Regex.Match(BUILD_VERSION, "([^\\s]+)").Value))
+            config = new Config();
+            if (!config.LoadConfig())
+            {
+                Console.WriteLine("Config file (config.cfg) can't be found or is corrupted ! Bot can't start.");
+                Console.ReadKey();
+                return;
+            }
+
+            if(config.DisableAutoUpdate)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Updater disabled. Not fetching for last updates.");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            else if (!updater.CheckVersion(Regex.Match(BUILD_VERSION, "([^\\s]+)").Value))
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("Update found ! Updating...");
@@ -91,11 +104,26 @@ namespace ASteambot
                 updater.Update();
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Update done ! Restarting...");
+                Console.ForegroundColor = ConsoleColor.White;
 
-                string path = Directory.GetCurrentDirectory() + "\\ASteambot.exe";
+                string path = Directory.GetCurrentDirectory() + "/ASteambot.exe";
                 Process asteambot = new Process();
-                asteambot.StartInfo.Arguments = "-update";
-                asteambot.StartInfo.FileName = path;
+
+                asteambot.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
+
+                if (IsLinux())
+                {
+                    asteambot.StartInfo.FileName = "/usr/bin/mono";
+                    asteambot.StartInfo.Arguments = "ASteambot.exe -update";
+                }
+                else
+                {
+                    asteambot.StartInfo.FileName = path;
+                    asteambot.StartInfo.Arguments = "-update";
+                }
+
+                Thread.Sleep(3000);
+
                 asteambot.Start();
                 Environment.Exit(0);
             }
@@ -105,22 +133,6 @@ namespace ASteambot
                 Console.WriteLine("Already up to date !");
                 Console.ForegroundColor = ConsoleColor.White;
             }
-
-            config = new Config();
-            if (!config.LoadConfig())
-            {
-                Console.WriteLine("Config file (config.cfg) can't be found or is corrupted ! Bot can't start.");
-                Console.ReadKey();
-                return;
-            }
-
-            /*translation = new Translation.Translation();
-            if (!translation.Load(@"translation.xml"))
-            {
-                Console.WriteLine("Translation file (translation.xml) can't be found or is corrupted ! Bot can't start.");
-                Console.ReadKey();
-                return;
-            }*/
             
             PrintWelcomeMessage();
 
