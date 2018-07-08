@@ -57,7 +57,7 @@ namespace ASteambot
 
                 default:
                     //bot.SteamFriends.SendChatMessage(partenar, EChatEntryType.ChatMsg, "Sorry I don't understand you. Yet.");
-                    PrintChatMessage(partenar, message);
+                    PrintChatMessage(partenar, command + " " + message);
                 break;
             }            
         }
