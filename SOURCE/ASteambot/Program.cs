@@ -25,7 +25,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
         
-        private static string BUILD_VERSION = "4.5 - PUBLIC";
+        private static string BUILD_VERSION = "4.6 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -87,6 +87,15 @@ namespace ASteambot
                 Console.WriteLine("Config file (config.cfg) can't be found or is corrupted ! Bot can't start.");
                 Console.ReadKey();
                 return;
+            }
+
+            if(IsLinux() && !config.DisableAutoUpdate)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Updater has been reported to not work on Linux, updated manually.");
+                Console.WriteLine("You can download the last release here :");
+                Console.WriteLine("https://github.com/Arkarr/ASteambot/releases/latest"); 
+                Console.ForegroundColor = ConsoleColor.White;
             }
 
             if(config.DisableAutoUpdate)

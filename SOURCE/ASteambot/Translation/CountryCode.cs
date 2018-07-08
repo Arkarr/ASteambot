@@ -12,10 +12,7 @@ namespace ASteambot.Translation
     {
         public static string GetCountryCode(string country)
         {
-            if (country.Contains("ussian Federation"))
-                country = "Russia";
-
-            country = RemoveBetween(country, '(', ')').Trim();
+            country = RemoveBetween(country.Split(' ')[0], '(', ')').Trim();
 
             var regions = CultureInfo.GetCultures(CultureTypes.SpecificCultures).Select(x => new RegionInfo(x.LCID));
             RegionInfo englishRegion = regions.FirstOrDefault(region => region.EnglishName.Contains(country));
