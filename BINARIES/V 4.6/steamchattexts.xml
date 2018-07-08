@@ -5,6 +5,6 @@
 	</handler>
 	<handler msg="PING">
 		<translation lang="en">PONG</translation>
-		<translation lang="fr">PONG</translation>
+		<translation lang="fr">PONG but in FRENCH</translation>
 	</handler>
 </steamchattexts>
