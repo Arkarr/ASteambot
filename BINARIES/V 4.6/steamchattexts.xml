@@ -1,0 +1,10 @@
+<steamchattexts>
+	<handler msg="Hello">
+		<translation lang="en">World !</translation>
+		<translation lang="fr">Monde !</translation>
+	</handler>
+	<handler msg="PING">
+		<translation lang="en">PONG</translation>
+		<translation lang="fr">PONG</translation>
+	</handler>
+</steamchattexts>
