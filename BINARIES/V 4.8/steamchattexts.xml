@@ -4,7 +4,7 @@
 		<translation lang="fr">Monde !</translation>
 	</handler>
 	<handler msg="PING">
-		<translation lang="en">PONG</translation>
-		<translation lang="fr">PONG</translation>
+		<translation lang="en">PONG\nLINE_RETURN</translation>
+		<translation lang="fr">PONG\nREOUTR_A_LA_LIGNE</translation>
 	</handler>
 </steamchattexts>
