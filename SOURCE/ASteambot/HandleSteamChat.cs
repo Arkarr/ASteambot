@@ -112,7 +112,9 @@ namespace ASteambot
         private void PrintChatMessage(SteamID partenar, string message)
         {
             SteamProfileInfos spi = bot.GetSteamProfileInfo(partenar);
-            SendChatMessage(partenar, bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi.Location)));
+            string sentences = bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi.Location));
+            foreach (string s in sentences.Split(new string[] { "\\n" }, StringSplitOptions.None))
+                SendChatMessage(partenar, s);
         }
 
         private void ExecuteServerCommand(SteamID partenar, string message)
