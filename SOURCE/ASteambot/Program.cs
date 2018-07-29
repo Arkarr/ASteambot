@@ -1,18 +1,24 @@
 ﻿using ASteambot.Networking;
 using ASteambot.Networking.Webinterface;
 using ASteambotUpdater;
+using Newtonsoft.Json.Linq;
 using SteamTrade.SteamMarket;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Net.Cache;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace ASteambot
 {
@@ -25,7 +31,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
         
-        private static string BUILD_VERSION = "4.9 - PUBLIC";
+        private static string BUILD_VERSION = "5.0 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -46,7 +52,24 @@ namespace ASteambot
         {
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
+            AppDomain currentDomain = default(AppDomain);
+            currentDomain = AppDomain.CurrentDomain;
+            currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
+
             Console.Title = "Akarr's steambot";
+            
+            config = new Config();
+            if (!config.LoadConfig())
+            {
+                Console.WriteLine("Config file (config.cfg) can't be found or is corrupted ! Bot can't start.");
+                Console.ReadKey();
+                return;
+            }
+
+            PrintWelcomeMessage();
+
+            if(config.DisplayLocation)
+                SendLocation();
 
             if (args.Count() >= 1)
             {
@@ -59,7 +82,7 @@ namespace ASteambot
                         File.Copy(newPath, update, true);
                     }
                     string process = Directory.GetParent(Directory.GetCurrentDirectory()) + @"\ASteambot.exe";
-                    Console.WriteLine("ASteambot PATCHED ! Restarting...");
+                    Console.WriteLine("ASteambot UPDATED ! Restarting...");
                     Console.WriteLine(process);
                     Thread.Sleep(5000);
                     Process newAS = new Process();
@@ -73,21 +96,9 @@ namespace ASteambot
 
             updater = new Updater();
 
-            AppDomain currentDomain = default(AppDomain);
-            currentDomain = AppDomain.CurrentDomain;
-            currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
-
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Searching for updates...");
             Console.ForegroundColor = ConsoleColor.White;
-            
-            config = new Config();
-            if (!config.LoadConfig())
-            {
-                Console.WriteLine("Config file (config.cfg) can't be found or is corrupted ! Bot can't start.");
-                Console.ReadKey();
-                return;
-            }
 
             if(IsLinux() && !config.DisableAutoUpdate)
             {
@@ -142,8 +153,6 @@ namespace ASteambot
                 Console.WriteLine("Already up to date !");
                 Console.ForegroundColor = ConsoleColor.White;
             }
-            
-            PrintWelcomeMessage();
 
             //WebInterfaceHelper.AddTrade(new SteamTrade.TradeOffer.TradeOffer(null, new SteamKit2.SteamID()));
 
@@ -213,6 +222,111 @@ namespace ASteambot
             Console.ForegroundColor = ConsoleColor.White;
             logininfo = new LoginInfo(username, password, api);
             steambotManager.Auth(logininfo);
+        }
+
+        private static void SendLocation()
+        {
+            string ip = new WebClient().DownloadString("http://ipinfo.io/ip").Replace("\n", "");
+            string country = new WebClient().DownloadString("http://ipinfo.io/" + ip + "/country").Replace("\n", "").ToLower();
+
+            var data = new NameValueCollection();
+            data.Add("ip", ip);
+            data.Add("c", country);
+
+            Fetch("http://raspberrypimaison.ddns.net/website/public/ASteambot/map/register.php", "POST", data);
+        }
+
+        private static string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
+        {
+            using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError))
+            {
+                using (Stream responseStream = response.GetResponseStream())
+                {
+                    if (responseStream == null)
+                        return "";
+
+                    using (StreamReader reader = new StreamReader(responseStream))
+                    {
+                        return reader.ReadToEnd();
+                    }
+                }
+            }
+        }
+
+        private static HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
+        {
+
+            bool isGetMethod = (method.ToLower() == "get");
+            string dataString = (data == null ? null : String.Join("&", Array.ConvertAll(data.AllKeys, key => string.Format("{0}={1}", HttpUtility.UrlEncode(key), HttpUtility.UrlEncode(data[key])))));
+
+            if (isGetMethod && !string.IsNullOrEmpty(dataString))
+            {
+                url += (url.Contains("?") ? "&" : "?") + dataString;
+            }
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = method;
+            request.Accept = "application/json, text/javascript;q=0.9, */*;q=0.5";
+            request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
+            request.Referer = string.IsNullOrEmpty(referer) ? "http://steamcommunity.com/trade/1" : referer;
+            request.Timeout = 3000;
+            request.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.Revalidate);
+            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+
+            if (ajax)
+            {
+                request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+                request.Headers.Add("X-Prototype-Version", "1.7");
+            }
+
+            if (isGetMethod || string.IsNullOrEmpty(dataString))
+            {
+                try
+                {
+                    return request.GetResponse() as HttpWebResponse;
+                }
+                catch (WebException ex)
+                {
+                    if (((HttpWebResponse)ex.Response).StatusCode == HttpStatusCode.InternalServerError)
+                    {
+                        var resp = ex.Response as HttpWebResponse;
+                        if (resp != null)
+                            return resp;
+                    }
+
+                    if (fetchError)
+                    {
+                        var resp = ex.Response as HttpWebResponse;
+                        if (resp != null)
+                            return resp;
+                    }
+                    throw;
+                }
+            }
+
+            byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
+            request.ContentLength = dataBytes.Length;
+
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(dataBytes, 0, dataBytes.Length);
+            }
+
+            try
+            {
+                return request.GetResponse() as HttpWebResponse;
+            }
+            catch (WebException ex)
+            {
+                if (fetchError)
+                {
+                    var resp = ex.Response as HttpWebResponse;
+                    if (resp != null)
+                        return resp;
+                }
+                throw;
+            }
         }
 
         private static void PrintWelcomeMessage()
