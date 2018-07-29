@@ -28,6 +28,7 @@ namespace ASteambot
         public bool DisableMarketScan { get; private set; }
         public bool DisableWelcomeMessage { get; private set; }
         public bool DisableAutoUpdate { get; private set; }
+        public bool DisplayLocation { get; private set; }
 
         public Config() { }
 
@@ -81,8 +82,9 @@ namespace ASteambot
                     DisableWelcomeMessage = line.Replace("DisableWelcomeMessage=", "").Equals("YES");
                 else if (line.StartsWith("DisableUpdater="))
                     DisableAutoUpdate = line.Replace("DisableUpdater=", "").Equals("YES");
+                else if (line.StartsWith("DisplayLocation="))
+                    DisplayLocation = line.Replace("DisplayLocation=", "").Equals("YES");
             }
-            
 
             if (!ValidateConfig())
             {
