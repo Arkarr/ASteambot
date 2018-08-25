@@ -124,12 +124,12 @@ namespace SteamTrade.SteamMarket
             RefreshMarket();
         }
 
-        private bool ScanMarket(Games game)
+        private bool ScanMarket(Games game, int startIndex = 0)
         {
             try
             {
                 int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
-                string json = Fetch("http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game, "GET", null, true, "", false, timeout);
+                string json = Fetch("http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&start="+startIndex+"&appid=" + (int)game, "GET", null, true, "", false, timeout);
                 RootObject ro = JsonConvert.DeserializeObject<RootObject>(json);
                 List<Item> items = ro.items;
                 if (ro.success)
@@ -168,7 +168,10 @@ namespace SteamTrade.SteamMarket
                         itemToAdd.Clear();
                     }
 
-                    Console.WriteLine(game.ToString() + " prices updated !");
+                    if (ro.nbritems <= startIndex + 500)
+                        Console.WriteLine(game.ToString() + " prices updated !");
+                    else
+                        return ScanMarket(game, startIndex + 500);
 
                     return true;
                 }
@@ -197,6 +200,8 @@ namespace SteamTrade.SteamMarket
             public string message { get; set; }
             [JsonProperty("Success")]
             public Boolean success { get; set; }
+            [JsonProperty("nbritems")]
+            public int nbritems { get; set; }
         }
         
         public Item GetItemByName(string itemName)
