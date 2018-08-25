@@ -71,7 +71,7 @@ namespace SteamAuth
                 if (removeResponse == null || removeResponse.Response == null || !removeResponse.Response.Success) return false;
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
                 return false;
             }
