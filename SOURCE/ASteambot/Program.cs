@@ -31,7 +31,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
         
-        private static string BUILD_VERSION = "5.0 - PUBLIC";
+        private static string BUILD_VERSION = "5.1 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -226,14 +226,25 @@ namespace ASteambot
 
         private static void SendLocation()
         {
-            string ip = new WebClient().DownloadString("http://ipinfo.io/ip").Replace("\n", "");
-            string country = new WebClient().DownloadString("http://ipinfo.io/" + ip + "/country").Replace("\n", "").ToLower();
+            try
+            {
+                string ip = new WebClient().DownloadString("http://ipinfo.io/ip").Replace("\n", "");
+                string country = new WebClient().DownloadString("http://ipinfo.io/" + ip + "/country").Replace("\n", "").ToLower();
 
-            var data = new NameValueCollection();
-            data.Add("ip", ip);
-            data.Add("c", country);
+                var data = new NameValueCollection();
+                data.Add("ip", ip);
+                data.Add("c", country);
 
-            Fetch("http://raspberrypimaison.ddns.net/website/public/ASteambot/map/register.php", "POST", data);
+                Fetch("http://raspberrypimaison.ddns.net/website/public/ASteambot/map/register.php", "POST", data);
+            }
+            catch(Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Unable to locate ASteambot. Not publishing location on world map.");
+                Console.WriteLine(e);
+                Console.WriteLine(">>>>>>>>> You can ignore this.");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
         }
 
         private static string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)

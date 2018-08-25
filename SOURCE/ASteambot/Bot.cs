@@ -504,6 +504,8 @@ namespace ASteambot
 
             botThread.CancelAsync();
 
+            ArkarrSteamMarket.Cancel();
+
             Console.WriteLine("stopping bot {0} ...", Name);
         }
 
