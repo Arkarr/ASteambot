@@ -32,15 +32,18 @@ namespace SteamTrade.SteamMarket
     public class SteamMarket
     {
         private string APIkey;
+        private bool stop;
         private bool TF2OK;
         private bool CSGOOK;
         private bool DOTA2OK;
         private List<Item> steamMarketItemsTF2;
         private List<Item> steamMarketItemsCSGO;
         private List<Item> steamMarketItemsDOTA2;
+        private Thread marketScanner;
 
         public SteamMarket(string apikey, bool disabled)
         {
+            stop = false;
             APIkey = apikey;
             TF2OK = false;
             CSGOOK = false;
@@ -62,33 +65,52 @@ namespace SteamTrade.SteamMarket
 
         private void TMR_ResfreshMarkets(object source, ElapsedEventArgs e)
         {
-            RefreshMarket();
+            if(!stop)
+                RefreshMarket();
+        }
+
+        public void Cancel()
+        {
+            stop = true;
+            marketScanner.Abort();
         }
 
         private void RefreshMarket(Games game = Games.None)
         {
-            new Thread(() =>
+            marketScanner = new Thread(() =>
             {
                 if (game == Games.None)
                 {
                     Console.WriteLine("Fetching market's prices...");
-                    TF2OK = ScanMarket(Games.TF2);
-                    CSGOOK = ScanMarket(Games.CSGO);
-                    DOTA2OK = ScanMarket(Games.Dota2);
+
+                    if (!stop)
+                        TF2OK = ScanMarket(Games.TF2);
+
+                    if (!stop)
+                        CSGOOK = ScanMarket(Games.CSGO);
+
+                    if (!stop)
+                        DOTA2OK = ScanMarket(Games.Dota2);
+
                     Console.WriteLine("Done !");
                 }
                 else
-                { 
-                    Console.WriteLine("Fetching "+game+" prices...");
-                    switch (game)
+                {
+                    if (!stop)
                     {
-                        case Games.CSGO: CSGOOK = ScanMarket(game); break;
-                        case Games.TF2: TF2OK = ScanMarket(game); break;
-                        case Games.Dota2: DOTA2OK = ScanMarket(game); break;
+                        Console.WriteLine("Fetching " + game + " prices...");
+                        switch (game)
+                        {
+                            case Games.CSGO: CSGOOK = ScanMarket(game); break;
+                            case Games.TF2: TF2OK = ScanMarket(game); break;
+                            case Games.Dota2: DOTA2OK = ScanMarket(game); break;
+                        }
+                        Console.WriteLine("Done !");
                     }
-                    Console.WriteLine("Done !");
                 }
-            }).Start();
+            });
+
+            marketScanner.Start();
         }
 
         public bool IsAvailable()
