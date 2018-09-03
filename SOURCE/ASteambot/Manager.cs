@@ -291,24 +291,33 @@ namespace ASteambot
                 return;
             }
 
-            int index = Int32.Parse(args[1])-1;
+            int index = 0;
 
-            if(index < 0 || index > bots.Count)
+            if (Int32.TryParse(args[1], out index))
             {
-                Console.WriteLine("No steambot found with index '"+ index + "'");
-                return;
-            }
+                index--;
+                
+                if (index < 0 || index > bots.Count)
+                {
+                    Console.WriteLine("No steambot found with index '" + index + "'");
+                    return;
+                }
 
-            if (bots.Count-1 < index || index > bots.Count - 1)
-            {
-                Console.WriteLine("Index "+ index + " is invalid !");
+                if (bots.Count - 1 < index || index > bots.Count - 1)
+                {
+                    Console.WriteLine("Index " + index + " is invalid !");
+                }
+                else
+                {
+                    SelectedBot = bots[index];
+                    Console.Title = "Akarr's steambot - [" + SelectedBot.Name + "]";
+
+                    Console.WriteLine("[" + SelectedBot.Name + "] selected as current bot. Command will be executed from this steambot.");
+                }
             }
             else
             {
-                SelectedBot = bots[index];
-                Console.Title = "Akarr's steambot - [" + SelectedBot.Name + "]";
-
-                Console.WriteLine("["+ SelectedBot.Name + "] selected as current bot. Command will be executed from this steambot.");
+                Console.WriteLine(args[1] + " is not a valid number !");
             }
         }
 

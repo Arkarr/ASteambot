@@ -161,7 +161,7 @@ namespace ASteambotUpdater
                     fileList.Add(actualPath + "/" + updateDir + "/" + fileName);
                 }
                 client.DownloadFile(configPath, actualPath + "/"+ updateDir + "/" + "config.cfg" + ".tmp");
-                rewriteConfigFile(actualPath + updateDir + "/" + "config.cfg");
+                rewriteConfigFile(actualPath + "/" + updateDir + "/" + "config.cfg");
 
                 PrintSucessMessage();
 

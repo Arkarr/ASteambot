@@ -14,6 +14,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Cache;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -31,9 +32,12 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
         
-        private static string BUILD_VERSION = "5.2 - PUBLIC";
+        private static string BUILD_VERSION = "5.3 - PUBLIC";
 
         public static bool DEBUG;
+
+        [DllImport("libc", EntryPoint = "chmod", SetLastError = true)]
+        private static extern int sys_chmod(string path, uint mode);
 
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
@@ -100,14 +104,17 @@ namespace ASteambot
             Console.WriteLine("Searching for updates...");
             Console.ForegroundColor = ConsoleColor.White;
 
-            if(IsLinux() && !config.DisableAutoUpdate)
+            /*if(IsLinux() && !config.DisableAutoUpdate)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Updater has been reported to not work on Linux, updated manually.");
                 Console.WriteLine("You can download the last release here :");
                 Console.WriteLine("https://github.com/Arkarr/ASteambot/releases/latest"); 
                 Console.ForegroundColor = ConsoleColor.White;
-            }
+            }*/
+
+            if (File.Exists("./update.sh"))
+                File.Delete("./update.sh");
 
             if(config.DisableAutoUpdate)
             {
@@ -121,10 +128,8 @@ namespace ASteambot
                 Console.WriteLine("Update found ! Updating...");
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.Title = "Akarr's steambot - Updating...";
+                
                 updater.Update();
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Update done ! Restarting...");
-                Console.ForegroundColor = ConsoleColor.White;
 
                 string path = Directory.GetCurrentDirectory() + "/ASteambot.exe";
                 Process asteambot = new Process();
@@ -133,8 +138,7 @@ namespace ASteambot
 
                 if (IsLinux())
                 {
-                    asteambot.StartInfo.FileName = "/usr/bin/mono";
-                    asteambot.StartInfo.Arguments = "ASteambot.exe -update";
+                    asteambot.StartInfo.FileName = "setsid " + path + " '-update'";
                 }
                 else
                 {
@@ -145,6 +149,11 @@ namespace ASteambot
                 Thread.Sleep(3000);
 
                 asteambot.Start();
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Update done ! Restarting...");
+                Console.ForegroundColor = ConsoleColor.White;
+
                 Environment.Exit(0);
             }
             else
