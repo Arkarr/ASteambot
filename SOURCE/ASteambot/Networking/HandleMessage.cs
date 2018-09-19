@@ -356,7 +356,7 @@ namespace ASteambot.Networking
             }
             
             if (steamIDitems[3] != "NULL")
-                float.TryParse(steamIDitems[3], out tradeValue);
+                tradeValue = float.Parse(steamIDitems[3], CultureInfo.InvariantCulture);
             
             string offerId;
             to.Send(out offerId, String.Format("\"{0}\" the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm")));
@@ -365,6 +365,7 @@ namespace ASteambot.Networking
             {
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, offerId);
                 bot.TradeoffersGS.Add(offerId, gsr.ModuleID+"|"+tradeValue);
+                bot.TradeOfferValue.Add(offerId, tradeValue);
 
                 bot.AcceptMobileTradeConfirmation(offerId);
             }
