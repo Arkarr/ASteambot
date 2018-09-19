@@ -28,8 +28,8 @@ namespace ASteambot
         public GameServer(Socket socket, string tcppaswd, int serverid, string ipportname)
         {
             Alive = true;
-            string[] srvinfos = ipportname.Split('|');
-            Name = srvinfos[2];
+            string[] srvinfos = ipportname.Split(new[] { '|' }, 4);
+            Name = srvinfos[3];
             tcppasswd = tcppaswd;
             SteamID = long.Parse(srvinfos[0]);
             IP = IPAddress.Parse(srvinfos[1]);

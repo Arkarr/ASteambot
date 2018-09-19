@@ -37,6 +37,7 @@ namespace ASteambot
         public GenericInventory MyGenericInventory { get; private set; }
         public TradeOfferManager TradeOfferManager { get; private set; }
         public Dictionary<string, string> TradeoffersGS { get; private set; }
+        public Dictionary<string, double> TradeOfferValue { get; private set; }
         public Dictionary<SteamID, int> ChatListener { get; private set; }
         public GenericInventory OtherGenericInventory { get; private set; }
         public int SteamInventoryItemCount { get; private set; }
@@ -163,7 +164,6 @@ namespace ASteambot
         private AsynchronousSocketListener socket;
         private SteamGuardAccount steamGuardAccount;
         private List<SteamProfile> steamprofiles;
-        private Dictionary<string, double> tradeOfferValue;
 
         public Bot(Manager manager, LoginInfo loginInfo, Config Config, AsynchronousSocketListener socket)
         {
@@ -180,7 +180,7 @@ namespace ASteambot
             SteamchatHandler = new HandleSteamChat(this);
             ChatListener = new Dictionary<SteamID, int>();
             TradeoffersGS = new Dictionary<string, string>();
-            tradeOfferValue = new Dictionary<string, double>();
+            TradeOfferValue = new Dictionary<string, double>();
             MyGenericInventory = new GenericInventory(SteamWeb);
             OtherGenericInventory = new GenericInventory(SteamWeb);
 
@@ -1192,26 +1192,34 @@ namespace ASteambot
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
             {
-                string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
-                double value = float.Parse(mID_value[1]);
+                if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
+                {
+                    string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                    double value = float.Parse(mID_value[1]);
 
-                if(value == -1)
-                    value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
-
-                tradeOfferValue.Add(offer.TradeOfferId, value);
+                    if (value == -1)
+                        value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
+                }
+                else
+                {
+                    offer.Cancel();
+                    SteamFriends.SendChatMessage(offer.PartnerSteamId, EChatEntryType.ChatMsg, "Sorry, I had to cancel the trade because an error happened !");
+                }
             }
 
-            if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && tradeOfferValue.ContainsKey(offer.TradeOfferId))
+            if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
-                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
+                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
                 string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                TradeOfferValue.Remove(offer.TradeOfferId);
 
                 SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
             }
-            else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && tradeOfferValue.ContainsKey(offer.TradeOfferId))
+            else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
-                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + tradeOfferValue[offer.TradeOfferId];
+                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
                 string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                TradeOfferValue.Remove(offer.TradeOfferId);
 
                 SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
             }
@@ -1231,14 +1239,29 @@ namespace ASteambot
                 {
                     offer.Accept();
 
-                    string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
-                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                    if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
+                    {
+                        string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                        SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                    }
+                    else
+                    {
+                        SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                    }
                 }
                 else
                 {
                     offer.Decline();
-                    string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
-                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
+
+                    if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
+                    {
+                        string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                        SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
+                    }
+                    else
+                    {
+                        SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                    }
                 }
             }
         }
