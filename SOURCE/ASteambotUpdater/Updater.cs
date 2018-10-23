@@ -223,25 +223,38 @@ namespace ASteambotUpdater
 
         public bool CheckVersion(string currentVersions)
         {
-            CQ element = null;
-            CQ versions_folders = null;
-            ServicePointManager.Expect100Continue = true;
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            WebRequest req = HttpWebRequest.Create(ASTEAMBOT_BINARIES);
-            req.Method = "GET";
+            try
+            {
+                CQ element = null;
+                CQ versions_folders = null;
+                ServicePointManager.Expect100Continue = true;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                WebRequest req = HttpWebRequest.Create(ASTEAMBOT_BINARIES);
+                req.Method = "GET";
 
-            string source;
-            using (StreamReader reader = new StreamReader(req.GetResponse().GetResponseStream()))
-                source = reader.ReadToEnd();
+                string source;
+                using (StreamReader reader = new StreamReader(req.GetResponse().GetResponseStream()))
+                    source = reader.ReadToEnd();
 
-            element = CQ.Create(source);
+                element = CQ.Create(source);
 
-            versions_folders = element.Select(".js-navigation-item");
-            string lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].LastElementChild.InnerText;
+                versions_folders = element.Select(".js-navigation-item");
+                string lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].LastElementChild.InnerText;
 
-            Console.WriteLine("Current version : " + currentVersions + "\tLast version : " + lastVersion);
+                Console.WriteLine("Current version : " + currentVersions + "\tLast version : " + lastVersion);
 
-            return ("V "+currentVersions).Equals(lastVersion);
+                return ("V " + currentVersions).Equals(lastVersion);
+            }
+            catch (Exception e)
+            {
+                //TODO : Handle that correctly.
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error while fetching updates : ");
+                Console.WriteLine(e);
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return true;
+            }
         }
 
         private static void DeleteDirectory(string target_dir)

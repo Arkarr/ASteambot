@@ -388,9 +388,15 @@ namespace ASteambot
                 g = null;
                 foreach (GameServer gs in Servers)
                 {
-                    if (gs != g && gs.Alive == true && gs.SteamID == g.SteamID && gs.SocketConnected())
+                    if(g == null)
                     {
-                        return gs;
+                        if (gs != g && gs.Alive == true && gs.SocketConnected())
+                            return gs;
+                    }
+                    else
+                    {
+                        if (gs != g && gs.Alive == true && gs.SteamID == g.SteamID && gs.SocketConnected())
+                            return gs;
                     }
                 }
             }
