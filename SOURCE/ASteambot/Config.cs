@@ -95,6 +95,15 @@ namespace ASteambot
                 Environment.Exit(0);
             }
 
+            if (!IsValidTCPPassword(TCPPassword))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("TCP_Password can not contains '/', '&' or '|' characters.");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.ReadKey();
+                Environment.Exit(0);
+            }
+
             file.Close();
 
             return true;
@@ -114,6 +123,17 @@ namespace ASteambot
             if (TCPServerPort.Length == 0) return false;
             if (TCPPassword.Length == 0) return false;
             if (ArkarrAPIKey.Length == 0) return false;
+
+            return true;
+        }
+        
+        private bool IsValidTCPPassword(string pswd)
+        {
+            foreach (char c in pswd)
+            {
+                if (c == '|' || c == '&' || c == '/')
+                    return false;
+            }
 
             return true;
         }
