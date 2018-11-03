@@ -114,9 +114,20 @@ namespace ASteambotUpdater
                 Console.WriteLine("Creating directory \"ASteambot\" ...");
                 Console.WriteLine(actualPath);
                 Console.WriteLine("****************************");
-                Thread.Sleep(8000);
-                Mono.Unix.Native.Syscall.chmod(actualPath, Mono.Unix.Native.FilePermissions.ALLPERMS);
-                Mono.Unix.Native.Syscall.chmod(actualPath + "/tmp", Mono.Unix.Native.FilePermissions.ALLPERMS);
+                
+                if (IsLinux())
+                {
+                    Console.WriteLine("OS detected: Unix");
+                    Thread.Sleep(3000);
+                    Mono.Unix.Native.Syscall.chmod(actualPath, Mono.Unix.Native.FilePermissions.ALLPERMS);
+                    Mono.Unix.Native.Syscall.chmod(actualPath + "/tmp", Mono.Unix.Native.FilePermissions.ALLPERMS);
+                }
+                else
+                {
+                    Console.WriteLine("OS detected: Windows");
+                    Thread.Sleep(3000);
+                }
+
                 Directory.CreateDirectory(actualPath + "/tmp");
                 if(File.Exists("config.cfg"))
                     File.Copy("config.cfg", Directory.GetCurrentDirectory()+"/"+ updateDir + "/config.cfg");
@@ -239,7 +250,8 @@ namespace ASteambotUpdater
                 element = CQ.Create(source);
 
                 versions_folders = element.Select(".js-navigation-item");
-                string lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].LastElementChild.InnerText;
+                //string lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].LastElementChild.InnerText;
+                string lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].FirstChild.InnerText;
 
                 Console.WriteLine("Current version : " + currentVersions + "\tLast version : " + lastVersion);
 
@@ -424,6 +436,12 @@ namespace ASteambotUpdater
                 }
             }
             return isOk;
+        }
+
+        public static bool IsLinux()
+        {
+            int p = (int)Environment.OSVersion.Platform;
+            return (p == 4) || (p == 6) || (p == 128);
         }
     }
 }
