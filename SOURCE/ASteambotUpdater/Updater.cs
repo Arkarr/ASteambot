@@ -84,8 +84,7 @@ namespace ASteambotUpdater
             try
             {
                 versions_folders = element.Select(".js-navigation-item");
-                lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].LastElementChild.InnerText;
-
+                lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].FirstChild.InnerText;
                 Console.WriteLine("Last version found : ");
                 Console.WriteLine(lastVersion);
 
@@ -249,9 +248,8 @@ namespace ASteambotUpdater
 
                 element = CQ.Create(source);
 
-                versions_folders = element.Select(".js-navigation-item");
-                //string lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].LastElementChild.InnerText;
-                string lastVersion = versions_folders.Last().Children().ToList().ElementAt(1).ChildNodes[1].FirstChild.InnerText;
+                versions_folders = element.Select(".content");
+                string lastVersion = versions_folders.ToList()[1].ChildNodes[1].FirstChild.InnerText;
 
                 Console.WriteLine("Current version : " + currentVersions + "\tLast version : " + lastVersion);
 
