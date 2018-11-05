@@ -1,6 +1,5 @@
 ﻿using ASteambot.Networking;
 using ASteambot.Networking.Webinterface;
-using ASteambotUpdater;
 using Newtonsoft.Json.Linq;
 using SteamTrade.SteamMarket;
 using System;
@@ -26,13 +25,12 @@ namespace ASteambot
     class Program
     {
         private static Config config;
-        private static Updater updater;
         private static HTTPServer httpsrv;
         private static LoginInfo logininfo;
         private static Manager steambotManager;
         private static Thread threadManager;
         
-        private static string BUILD_VERSION = "5.8 - PUBLIC";
+        private static string BUILD_VERSION = "5.9 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -75,46 +73,9 @@ namespace ASteambot
             if(config.DisplayLocation)
                 SendLocation();
 
-            if (args.Count() >= 1)
-            {
-                if(args[0] == "-update" && Directory.GetCurrentDirectory().ToString().EndsWith("tmp"))
-                {
-                    string destination = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
-                    foreach (string newPath in Directory.GetFiles(Directory.GetCurrentDirectory(), "*.*", SearchOption.AllDirectories))
-                    {
-                        string update = destination + "\\" + Path.GetFileName(newPath);
-                        File.Copy(newPath, update, true);
-                    }
-                    string process = Directory.GetParent(Directory.GetCurrentDirectory()) + @"\ASteambot.exe";
-                    Console.WriteLine("ASteambot UPDATED ! Restarting...");
-                    Console.WriteLine(process);
-                    Thread.Sleep(5000);
-                    Process newAS = new Process();
-                    newAS.StartInfo.WorkingDirectory = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
-                    newAS.StartInfo.FileName = process;
-                    newAS.StartInfo.Arguments = "";
-                    newAS.Start();
-                    Environment.Exit(0);
-                }
-            }
-
-            updater = new Updater();
-
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Searching for updates...");
             Console.ForegroundColor = ConsoleColor.White;
-
-            /*if(IsLinux() && !config.DisableAutoUpdate)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Updater has been reported to not work on Linux, updated manually.");
-                Console.WriteLine("You can download the last release here :");
-                Console.WriteLine("https://github.com/Arkarr/ASteambot/releases/latest"); 
-                Console.ForegroundColor = ConsoleColor.White;
-            }*/
-
-            if (File.Exists("./update.sh"))
-                File.Delete("./update.sh");
 
             if(config.DisableAutoUpdate)
             {
@@ -122,48 +83,50 @@ namespace ASteambot
                 Console.WriteLine("Updater disabled. Not fetching for last updates.");
                 Console.ForegroundColor = ConsoleColor.White;
             }
-            else if (!updater.CheckVersion(Regex.Match(BUILD_VERSION, "([^\\s]+)").Value))
-            {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("Update found ! Updating...");
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.Title = "Akarr's steambot - Updating...";
-                
-                updater.Update();
-
-                string path = Directory.GetCurrentDirectory() + "/ASteambot.exe";
-                Process asteambot = new Process();
-
-                asteambot.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
-
-                if (IsLinux())
-                {
-                    asteambot.StartInfo.FileName = "setsid " + path + " '-update'";
-                }
-                else
-                {
-                    asteambot.StartInfo.FileName = path;
-                    asteambot.StartInfo.Arguments = "-update";
-                }
-
-                Thread.Sleep(3000);
-
-                asteambot.Start();
-
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Update done ! Restarting...");
-                Console.ForegroundColor = ConsoleColor.White;
-
-                Environment.Exit(0);
-            }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("Already up to date !");
-                Console.ForegroundColor = ConsoleColor.White;
-            }
+                if (!Directory.Exists("./updater"))
+                    Directory.CreateDirectory("./updater");
 
-            //WebInterfaceHelper.AddTrade(new SteamTrade.TradeOffer.TradeOffer(null, new SteamKit2.SteamID()));
+                if (File.Exists("./updater/ASteambotUpdater.exe"))
+                    File.Delete("./updater/ASteambotUpdater.exe");
+
+                try
+                {
+                    using (var client = new WebClient())
+                    {
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine("Downloading updater...");
+                        Console.ForegroundColor = ConsoleColor.White;
+
+                        client.DownloadFile("https://github.com/Arkarr/ASteambot/tree/master/BINARIES/ASteambotUpdater.exe", "./updater/ASteambotUpdater.exe");
+                    }
+                }
+                catch(Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Error while downloading the updater, aborting update process.");
+                    Console.ForegroundColor = ConsoleColor.White;
+                }
+
+                if (File.Exists("ASteambotUpdater.exe"))
+                {
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine("Starting updater...");
+                    Console.ForegroundColor = ConsoleColor.White;
+
+                    Thread.Sleep(3000);
+
+                    Process p = new Process();
+                    p.StartInfo.FileName = "updater.exe";
+                    p.StartInfo.Arguments = "V"+ BUILD_VERSION.Split(' ')[0];
+                    p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.CreateNoWindow = true;
+                    p.Start();
+
+                    Environment.Exit(0);
+                }
+            }
 
             steambotManager = new Manager(config);
             threadManager = new Thread(new ThreadStart(steambotManager.Start));

@@ -105,10 +105,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ASteambotUpdater\ASteambotUpdater.csproj">
-      <Project>{2a81d690-a1d5-4d6d-99aa-3c1b56d17970}</Project>
-      <Name>ASteambotUpdater</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SteamAuth\SteamAuth.csproj">
       <Project>{5ad0934e-f6c4-4ae5-83af-c788313b2a87}</Project>
       <Name>SteamAuth</Name>
