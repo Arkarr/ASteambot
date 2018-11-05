@@ -92,6 +92,15 @@ namespace ASteambot
                 if (File.Exists("./updater/ASteambotUpdater.exe"))
                     File.Delete("./updater/ASteambotUpdater.exe");
 
+                if (File.Exists("./updater/CsQuery.dll"))
+                    File.Delete("./updater/CsQuery.dll");
+
+                if (File.Exists("./updater/Mono.Posix.dll"))
+                    File.Delete("./updater/Mono.Posix.dll");
+
+                if (File.Exists("./updater/System.IO.Compression.dll"))
+                    File.Delete("./updater/System.IO.Compression.dll");
+
                 try
                 {
                     using (var client = new WebClient())
@@ -100,7 +109,10 @@ namespace ASteambot
                         Console.WriteLine("Downloading updater...");
                         Console.ForegroundColor = ConsoleColor.White;
 
-                        client.DownloadFile("https://github.com/Arkarr/ASteambot/tree/master/BINARIES/ASteambotUpdater.exe", "./updater/ASteambotUpdater.exe");
+                        client.DownloadFile("https://github.com/Arkarr/ASteambot/tree/master/BINARIES/updater/updater.zip", "./updater/updater.zip");
+
+                        ZipFile.ExtractToDirectory("./updater/updater.zip", "");
+                        File.Delete("./updater/updater.zip");
                     }
                 }
                 catch(Exception e)
