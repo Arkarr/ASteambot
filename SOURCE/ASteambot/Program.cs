@@ -109,10 +109,11 @@ namespace ASteambot
                         Console.WriteLine("Downloading updater...");
                         Console.ForegroundColor = ConsoleColor.White;
                         
-                        client.DownloadFile("https://github.com/Arkarr/ASteambot/tree/master/BINARIES/updater/updater.zip", "updater.zip");
-
-                        File.Delete("updater.zip");
+                        client.DownloadFile("https://github.com/Arkarr/ASteambot/tree/master/BINARIES/updater/updater.zip", @"updater.zip");
                     }
+
+                    ZipFile.ExtractToDirectory("updater.zip", "./updater");
+                    File.Delete("updater.zip");
                 }
                 catch(Exception e)
                 {
