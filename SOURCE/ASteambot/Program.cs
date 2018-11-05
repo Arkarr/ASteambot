@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Cache;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -109,7 +110,7 @@ namespace ASteambot
                     Console.ForegroundColor = ConsoleColor.White;
                 }
 
-                if (File.Exists("ASteambotUpdater.exe"))
+                if (File.Exists("./updater/ASteambotUpdater.exe"))
                 {
                     Console.ForegroundColor = ConsoleColor.Cyan;
                     Console.WriteLine("Starting updater...");
@@ -118,7 +119,7 @@ namespace ASteambot
                     Thread.Sleep(3000);
 
                     Process p = new Process();
-                    p.StartInfo.FileName = "updater.exe";
+                    p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)+ "/updater/ASteambotUpdater.exe";
                     p.StartInfo.Arguments = "V"+ BUILD_VERSION.Split(' ')[0];
                     p.StartInfo.UseShellExecute = false;
                     p.StartInfo.CreateNoWindow = true;
