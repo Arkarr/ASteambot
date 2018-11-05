@@ -30,7 +30,7 @@ namespace ASteambot
         private static LoginInfo logininfo;
         private static Manager steambotManager;
         private static Thread threadManager;
-        
+
         private static string BUILD_VERSION = "5.9 - PUBLIC";
 
         public static bool DEBUG;
@@ -108,17 +108,17 @@ namespace ASteambot
                         Console.ForegroundColor = ConsoleColor.Cyan;
                         Console.WriteLine("Downloading updater...");
                         Console.ForegroundColor = ConsoleColor.White;
+                        
+                        client.DownloadFile("https://github.com/Arkarr/ASteambot/tree/master/BINARIES/updater/updater.zip", "updater.zip");
 
-                        client.DownloadFile("https://github.com/Arkarr/ASteambot/tree/master/BINARIES/updater/updater.zip", "./updater/updater.zip");
-
-                        ZipFile.ExtractToDirectory("./updater/updater.zip", "");
-                        File.Delete("./updater/updater.zip");
+                        File.Delete("updater.zip");
                     }
                 }
                 catch(Exception e)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Error while downloading the updater, aborting update process.");
+                    Console.WriteLine(e.Message);
                     Console.ForegroundColor = ConsoleColor.White;
                 }
 
