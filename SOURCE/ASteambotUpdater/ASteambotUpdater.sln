@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2005
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ASteambotUpdater", "ASteambotUpdater.csproj", "{D44C61FB-75E9-496B-9550-30FA8BCF6B86}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D44C61FB-75E9-496B-9550-30FA8BCF6B86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D44C61FB-75E9-496B-9550-30FA8BCF6B86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D44C61FB-75E9-496B-9550-30FA8BCF6B86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D44C61FB-75E9-496B-9550-30FA8BCF6B86}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BADFFFD2-EEA7-4A6F-AD2B-349DD27BCF5E}
+	EndGlobalSection
+EndGlobal
