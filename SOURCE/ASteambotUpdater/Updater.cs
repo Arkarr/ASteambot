@@ -19,7 +19,8 @@ namespace ASteambotUpdater
 {
     public class Updater
     {
-        private int topitop = 0;
+        private DateTime lastUpdate;
+        private long lastBytes = 0;
         private bool downloadFinished = false;
         public static readonly string ASTEAMBOT_LATEST_BINARIES = "https://github.com/Arkarr/ASteambot/releases/latest";
 
@@ -31,7 +32,7 @@ namespace ASteambotUpdater
                 DeleteDirectory(Directory.GetCurrentDirectory() + "/tmp");
         }
 
-        public void Update(string currentVersion)
+        public bool Update(string currentVersion)
         {
             string lastVersion;
             string actualPath = Directory.GetCurrentDirectory();//Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
@@ -39,7 +40,7 @@ namespace ASteambotUpdater
             if (IsLastVersion(currentVersion, out lastVersion))
             {
                 PrintInfoMessage("ASteambot already up to date !");
-                return;
+                return true;
             }
             else
             {
@@ -77,14 +78,13 @@ namespace ASteambotUpdater
                     if (IsLinux())
                     {
                         Console.WriteLine("OS detected: Unix");
-                        Thread.Sleep(3000);
+                        Thread.Sleep(1000);
                         Mono.Unix.Native.Syscall.chmod(actualPath, Mono.Unix.Native.FilePermissions.ALLPERMS);
                         Mono.Unix.Native.Syscall.chmod(actualPath + "/tmp", Mono.Unix.Native.FilePermissions.ALLPERMS);
                     }
                     else
                     {
                         Console.WriteLine("OS detected: Windows");
-                        Thread.Sleep(3000);
                     }
 
                     Directory.SetCurrentDirectory(actualPath);
@@ -95,7 +95,6 @@ namespace ASteambotUpdater
                     }
 
                     downloadFinished = false;
-                    topitop = Console.CursorTop;
 
                     client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
                     client.DownloadFileCompleted += new AsyncCompletedEventHandler(client_DownloadFileCompleted);
@@ -103,7 +102,6 @@ namespace ASteambotUpdater
                     
                     while(!downloadFinished)
                     {
-                        Thread.Sleep(500);
                     }
 
                     ZipFile.ExtractToDirectory("ASteambot_" + lastVersion + ".zip", "tmp");
@@ -127,26 +125,50 @@ namespace ASteambotUpdater
             catch (Exception e)
             {
                 PrintErrorMessage(e.Message);
+
+                return false;
             }
             finally
             {
                 PrintSucessMessage();
             }
+
+            return true;
         }
 
         private void client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
+            /*if (lastBytes == 0)
+            {
+                lastUpdate = DateTime.Now;
+                lastBytes = e.BytesReceived;
+                return;
+            }
+
+            DateTime now = DateTime.Now;
+            TimeSpan timeSpan = now - lastUpdate;
+            double bytesChange = e.BytesReceived - lastBytes;
+            double bytesPerSecond = bytesChange / timeSpan.Seconds;
+
+            lastBytes = e.BytesReceived;
+            lastUpdate = now;*/
+
+            if (Console.CursorLeft != 0)
+                return;
+
+            int mb = (int)Math.Pow(10, 6);
             double bytesIn = double.Parse(e.BytesReceived.ToString());
             double totalBytes = double.Parse(e.TotalBytesToReceive.ToString());
             double percentage = bytesIn / totalBytes * 100;
-            Console.WriteLine("Downloaded " + e.BytesReceived + " of " + e.TotalBytesToReceive);
+
+            Console.Write("Downloaded " + (e.BytesReceived / mb) + "mb of " + (e.TotalBytesToReceive / mb) + " mb");// @" + bytesPerSecond + "byte/s");
             Console.CursorLeft = 0;
-            Console.CursorTop = topitop;
         }
         
         private void client_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
             downloadFinished = true;
+            Console.WriteLine();
         }
 
         private FileStream WaitForFile(string fullPath, System.IO.FileMode mode, FileAccess access, FileShare share)
