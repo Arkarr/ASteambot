@@ -100,7 +100,18 @@ namespace ASteambot
                         client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", "updater.zip");
                     }
 
-                    ZipFile.ExtractToDirectory("updater.zip", "./updater");
+                    //ZipFile.ExtractToDirectory("updater.zip", "./updater");
+                    using (FileStream zipToOpen = new FileStream("updater.zip", FileMode.Open))
+                    {
+                        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+                        {
+                            foreach (ZipArchiveEntry file in archive.Entries)
+                            {
+                                string completeFileName = Path.Combine("./updater", file.FullName);
+                                file.ExtractToFile(completeFileName, true);
+                            }
+                        }
+                    }
                     File.Delete("updater.zip");
                 }
                 catch(Exception e)
