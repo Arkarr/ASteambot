@@ -65,7 +65,7 @@
 if $(ConfigurationName) == Release xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\CsQuery.dll" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
 if $(ConfigurationName) == Release xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\Mono.Posix.dll" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
 if $(ConfigurationName) == Release xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\System.IO.Compression.dll" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
-if $(ConfigurationName) == Release cd "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"¨
-if $(ConfigurationName) == Release (powershell Compress-Archive -Path 'C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\*.*' -DestinationPath "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\updater.zip" -Force)</PostBuildEvent>
+if $(ConfigurationName) == Release cd "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
+if $(ConfigurationName) == Release powershell Compress-Archive -Path 'C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\*.*' -DestinationPath "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\updater.zip" -Force</PostBuildEvent>
   </PropertyGroup>
 </Project>
