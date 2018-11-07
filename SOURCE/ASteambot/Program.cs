@@ -89,18 +89,6 @@ namespace ASteambot
                 if (!Directory.Exists("./updater"))
                     Directory.CreateDirectory("./updater");
 
-                if (File.Exists("./updater/ASteambotUpdater.exe"))
-                    File.Delete("./updater/ASteambotUpdater.exe");
-
-                if (File.Exists("./updater/CsQuery.dll"))
-                    File.Delete("./updater/CsQuery.dll");
-
-                if (File.Exists("./updater/Mono.Posix.dll"))
-                    File.Delete("./updater/Mono.Posix.dll");
-
-                if (File.Exists("./updater/System.IO.Compression.dll"))
-                    File.Delete("./updater/System.IO.Compression.dll");
-
                 try
                 {
                     using (var client = new WebClient())
@@ -109,7 +97,7 @@ namespace ASteambot
                         Console.WriteLine("Downloading updater...");
                         Console.ForegroundColor = ConsoleColor.White;
                         
-                        client.DownloadFile("https://github.com/Arkarr/ASteambot/tree/master/BINARIES/updater/updater.zip", @"updater.zip");
+                        client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", "updater.zip");
                     }
 
                     ZipFile.ExtractToDirectory("updater.zip", "./updater");
@@ -132,10 +120,9 @@ namespace ASteambot
                     Thread.Sleep(3000);
 
                     Process p = new Process();
-                    p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)+ "/updater/ASteambotUpdater.exe";
+                    p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)+ "\\updater\\ASteambotUpdater.exe";
                     p.StartInfo.Arguments = "V"+ BUILD_VERSION.Split(' ')[0];
-                    p.StartInfo.UseShellExecute = false;
-                    p.StartInfo.CreateNoWindow = true;
+                    p.StartInfo.CreateNoWindow = false;
                     p.Start();
 
                     Environment.Exit(0);
