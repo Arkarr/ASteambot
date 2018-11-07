@@ -31,7 +31,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "5.9 - PUBLIC";
+        private static string BUILD_VERSION = "6.0 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -132,7 +132,7 @@ namespace ASteambot
 
                     Process p = new Process();
                     p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)+ "\\updater\\ASteambotUpdater.exe";
-                    p.StartInfo.Arguments = "V"+ BUILD_VERSION.Split(' ')[0];
+                    p.StartInfo.Arguments = BUILD_VERSION.Split(' ')[0];
                     p.StartInfo.CreateNoWindow = false;
                     p.Start();
 
