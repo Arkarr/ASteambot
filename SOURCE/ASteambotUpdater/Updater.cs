@@ -19,8 +19,6 @@ namespace ASteambotUpdater
 {
     public class Updater
     {
-        private DateTime lastUpdate;
-        private long lastBytes = 0;
         private bool downloadFinished = false;
         public static readonly string ASTEAMBOT_LATEST_BINARIES = "https://github.com/Arkarr/ASteambot/releases/latest";
 
@@ -112,14 +110,14 @@ namespace ASteambotUpdater
                     rewriteConfigFile("config.cfg");
 
                     Directory.SetCurrentDirectory(actualPath);
-
-                    //Now Create all of the directories
+                    
                     foreach (string dirPath in Directory.GetDirectories("tmp", "*", SearchOption.AllDirectories))
                         Directory.CreateDirectory(dirPath.Replace("tmp", ""));
-
-                    //Copy all the files & Replaces any files with the same name
+                    
                     foreach (string newPath in Directory.GetFiles("tmp", "*.*", SearchOption.AllDirectories))
                         File.Copy(newPath, newPath.Replace("tmp", "./"), true);
+
+                    DeleteDirectory("tmp");
                 }
             }
             catch (Exception e)

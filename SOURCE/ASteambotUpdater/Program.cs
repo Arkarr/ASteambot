@@ -21,7 +21,8 @@ namespace ASteambotUpdater
             if(upd.Update(v))
             {
                 Process p = new Process();
-                p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\ASteambot.exe";
+                Console.WriteLine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\..\\ASteambot.exe");
+                p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\..\\ASteambot.exe";
                 p.StartInfo.Arguments = "";
                 p.StartInfo.CreateNoWindow = false;
                 p.Start();
