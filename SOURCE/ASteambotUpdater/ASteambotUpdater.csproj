@@ -61,11 +61,17 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName) == Release xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\ASteambotUpdater.exe" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
-if $(ConfigurationName) == Release xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\CsQuery.dll" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
-if $(ConfigurationName) == Release xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\Mono.Posix.dll" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
-if $(ConfigurationName) == Release xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\System.IO.Compression.dll" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
-if $(ConfigurationName) == Release cd "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
-if $(ConfigurationName) == Release powershell Compress-Archive -Path 'C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\*.*' -DestinationPath "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\updater.zip" -Force</PostBuildEvent>
+    <PostBuildEvent>if $(ConfigurationName) == Release (
+xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\ASteambotUpdater.exe" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\"
+xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\CsQuery.dll" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\"
+xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\Mono.Posix.dll" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\"
+xcopy /y "C:\Users\Arkarr\Documents\GitHub\ASteambot\SOURCE\ASteambotUpdater\bin\Debug\System.IO.Compression.dll" "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\"
+cd "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater"
+(powershell Compress-Archive -Path 'C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\*.*' -DestinationPath "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\updater.zip" -Force)
+del "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\ASteambotUpdater.exe"
+del "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\CsQuery.dll"
+del "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\Mono.Posix.dll"
+del "C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\updater\System.IO.Compression.dll"
+)</PostBuildEvent>
   </PropertyGroup>
 </Project>
