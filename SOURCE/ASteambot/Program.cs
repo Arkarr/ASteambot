@@ -97,11 +97,11 @@ namespace ASteambot
                         Console.WriteLine("Downloading updater...");
                         Console.ForegroundColor = ConsoleColor.White;
                         
-                        client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", "updater.zip");
+                        //client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", "updater.zip");
                     }
 
                     //ZipFile.ExtractToDirectory("updater.zip", "./updater");
-                    using (FileStream zipToOpen = new FileStream("updater.zip", FileMode.Open))
+                    /*using (FileStream zipToOpen = new FileStream("updater.zip", FileMode.Open))
                     {
                         using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
                         {
@@ -111,7 +111,7 @@ namespace ASteambot
                                 file.ExtractToFile(completeFileName, true);
                             }
                         }
-                    }
+                    }*/
                     File.Delete("updater.zip");
                 }
                 catch(Exception e)
