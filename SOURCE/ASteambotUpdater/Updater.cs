@@ -38,19 +38,11 @@ namespace ASteambotUpdater
 
             if (IsLastVersion(currentVersion, out lastVersion))
             {
-                Console.WriteLine("Current version : " + currentVersion + "\tLast version : " + lastVersion);
-
-                Console.WriteLine("'V " + currentVersion + "'-'" + lastVersion + "'");
-
-                PrintInfoMessage("ASteambot already up to date !");
+                PrintInfoMessage("OK");
                 return true;
             }
             else
             {
-                Console.WriteLine("Current version : " + currentVersion + "\tLast version : " + lastVersion);
-
-                Console.WriteLine("'V " + currentVersion + "'-'" + lastVersion + "'");
-
                 PrintInfoMessage("New version found - "+ lastVersion + " ! Updating...");
             }
             
