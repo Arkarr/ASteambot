@@ -35,13 +35,22 @@ namespace ASteambotUpdater
             string lastVersion;
             string actualPath = Directory.GetCurrentDirectory();//Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
+
             if (IsLastVersion(currentVersion, out lastVersion))
             {
+                Console.WriteLine("Current version : " + currentVersion + "\tLast version : " + lastVersion);
+
+                Console.WriteLine("'V " + currentVersion + "'-'" + lastVersion + "'");
+
                 PrintInfoMessage("ASteambot already up to date !");
                 return true;
             }
             else
             {
+                Console.WriteLine("Current version : " + currentVersion + "\tLast version : " + lastVersion);
+
+                Console.WriteLine("'V " + currentVersion + "'-'" + lastVersion + "'");
+
                 PrintInfoMessage("New version found - "+ lastVersion + " ! Updating...");
             }
             
@@ -187,10 +196,7 @@ namespace ASteambotUpdater
                 element = CQ.Create(source);
 
                 lastVersion = element.Select(".octicon-tag").Parent().Attr("title");
-                
-                Console.WriteLine("Current version : " + currentVersions + "\tLast version : " + lastVersion);
 
-                Console.WriteLine("'V " + currentVersions+"'-'"+ lastVersion + "'");
                 return (("V " + currentVersions).Replace(" ", "")).Equals(lastVersion.Replace(" ", ""));
             }
             catch (Exception e)
