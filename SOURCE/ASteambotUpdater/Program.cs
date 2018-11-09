@@ -21,11 +21,15 @@ namespace ASteambotUpdater
             if (args.Length > 0)
                 v = args[0];
 
-            if (upd.IsLastVersion(v, out lsv))
-                Console.WriteLine("OK");
+            v = "6.0";
 
-            if(upd.Update(v))
+            if (upd.IsLastVersion(v, out lsv))
             {
+                Console.WriteLine("OK");
+            }
+            else
+            {
+                upd.Update(v);
                 Process p = new Process();
                 Console.WriteLine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\..\\ASteambot.exe");
                 p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\..\\ASteambot.exe";
