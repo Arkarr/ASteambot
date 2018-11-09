@@ -60,5 +60,4 @@ Version.cpp
 *.sqlite
 /SOURCE/packages/
 /BINARIES/as_ver.exe
-/BINARIES/updater/
 BINARIES/auto_release.sh
