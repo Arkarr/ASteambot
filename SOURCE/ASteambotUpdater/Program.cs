@@ -20,9 +20,7 @@ namespace ASteambotUpdater
 
             if (args.Length > 0)
                 v = args[0];
-
-            v = "6.0";
-
+            
             if (upd.IsLastVersion(v, out lsv))
             {
                 Console.WriteLine("OK");
