@@ -191,7 +191,7 @@ namespace ASteambotUpdater
                 Console.WriteLine("Current version : " + currentVersions + "\tLast version : " + lastVersion);
 
                 Console.WriteLine("'V " + currentVersions+"'-'"+ lastVersion + "'");
-                return ("V " + currentVersions).Equals(lastVersion);
+                return (("V " + currentVersions).Replace(" ", "")).Equals(lastVersion.Replace(" ", ""));
             }
             catch (Exception e)
             {
