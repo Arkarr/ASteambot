@@ -124,20 +124,49 @@ namespace ASteambot
 
                 if (File.Exists(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)  + "\\updater\\ASteambotUpdater.exe"))
                 {
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("Starting updater...");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    var proc = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\ASteambotUpdater.exe",
+                            Arguments = BUILD_VERSION.Split(' ')[0],
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            CreateNoWindow = true
+                        }
+                    };
 
-                    Thread.Sleep(1000);
+                    proc.Start();
 
-                    Console.WriteLine("Executing : " + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\ASteambotUpdater.exe");
-                    Process p = new Process();
-                    p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)+ "\\updater\\ASteambotUpdater.exe";
-                    p.StartInfo.Arguments = BUILD_VERSION.Split(' ')[0];
-                    p.StartInfo.CreateNoWindow = false;
-                    p.Start();
+                    bool updateRequired = false;
+                    while (!proc.StandardOutput.EndOfStream)
+                    {
+                        string line = proc.StandardOutput.ReadLine();
+                        if (line != "OK")
+                            updateRequired = true;
+                    }
 
-                    Environment.Exit(0);
+                    if (updateRequired)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine("Starting updater...");
+                        Console.ForegroundColor = ConsoleColor.White;
+
+                        Thread.Sleep(1000);
+
+                        Console.WriteLine("Executing : " + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\ASteambotUpdater.exe");
+                        Process p = new Process();
+                        p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\ASteambotUpdater.exe";
+                        p.StartInfo.Arguments = BUILD_VERSION.Split(' ')[0];
+                        p.StartInfo.CreateNoWindow = false;
+                        p.Start();
+
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Already to the last version ! ("+ BUILD_VERSION + ")");
+                    }
                 }
             }
 
