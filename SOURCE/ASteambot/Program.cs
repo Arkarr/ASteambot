@@ -86,8 +86,8 @@ namespace ASteambot
             }
             else
             {
-                if (!Directory.Exists("./updater"))
-                    Directory.CreateDirectory("./updater");
+                if (!Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater")))
+                    Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater"));
 
                 try
                 {
@@ -97,21 +97,21 @@ namespace ASteambot
                         Console.WriteLine("Downloading updater...");
                         Console.ForegroundColor = ConsoleColor.White;
                         
-                        //client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", "updater.zip");
+                        client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", "updater.zip");
                     }
 
                     //ZipFile.ExtractToDirectory("updater.zip", "./updater");
-                    /*using (FileStream zipToOpen = new FileStream("updater.zip", FileMode.Open))
+                    using (FileStream zipToOpen = new FileStream(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater.zip"), FileMode.Open))
                     {
                         using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
                         {
                             foreach (ZipArchiveEntry file in archive.Entries)
                             {
-                                string completeFileName = Path.Combine("./updater", file.FullName);
+                                string completeFileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\", file.FullName);
                                 file.ExtractToFile(completeFileName, true);
                             }
                         }
-                    }*/
+                    }
                     File.Delete("updater.zip");
                 }
                 catch(Exception e)
@@ -122,14 +122,15 @@ namespace ASteambot
                     Console.ForegroundColor = ConsoleColor.White;
                 }
 
-                if (File.Exists("./updater/ASteambotUpdater.exe"))
+                if (File.Exists(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)  + "\\updater\\ASteambotUpdater.exe"))
                 {
                     Console.ForegroundColor = ConsoleColor.Cyan;
                     Console.WriteLine("Starting updater...");
                     Console.ForegroundColor = ConsoleColor.White;
 
-                    Thread.Sleep(3000);
+                    Thread.Sleep(1000);
 
+                    Console.WriteLine("Executing : " + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\ASteambotUpdater.exe");
                     Process p = new Process();
                     p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)+ "\\updater\\ASteambotUpdater.exe";
                     p.StartInfo.Arguments = BUILD_VERSION.Split(' ')[0];

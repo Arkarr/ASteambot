@@ -94,6 +94,7 @@ namespace ASteambotUpdater
 
                     downloadFinished = false;
 
+                    Console.WriteLine("Downloading...");
                     client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
                     client.DownloadFileCompleted += new AsyncCompletedEventHandler(client_DownloadFileCompleted);
                     client.DownloadFileAsync(new Uri(downloadURL), "ASteambot_" + lastVersion + ".zip");
@@ -167,29 +168,6 @@ namespace ASteambotUpdater
         {
             downloadFinished = true;
             Console.WriteLine();
-        }
-
-        private FileStream WaitForFile(string fullPath, System.IO.FileMode mode, FileAccess access, FileShare share)
-        {
-            for (int numTries = 0; numTries < 10; numTries++)
-            {
-                FileStream fs = null;
-                try
-                {
-                    fs = new FileStream(fullPath, mode, access, share);
-                    return fs;
-                }
-                catch (IOException)
-                {
-                    if (fs != null)
-                    {
-                        fs.Dispose();
-                    }
-                    Thread.Sleep(50);
-                }
-            }
-
-            return null;
         }
 
         public bool IsLastVersion(string currentVersions, out string lastVersion)
