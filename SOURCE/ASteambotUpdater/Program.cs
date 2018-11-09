@@ -13,11 +13,17 @@ namespace ASteambotUpdater
     {
         static void Main(string[] args)
         {
+            Updater upd = new Updater();
+
             string v = "";
+            string lsv = "";
+
             if (args.Length > 0)
                 v = args[0];
 
-            Updater upd = new Updater();
+            if (upd.IsLastVersion(v, out lsv))
+                Console.WriteLine("OK");
+
             if(upd.Update(v))
             {
                 Process p = new Process();
