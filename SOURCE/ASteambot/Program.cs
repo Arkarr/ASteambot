@@ -31,7 +31,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "6.1 - PUBLIC";
+        private static string BUILD_VERSION = "6.4 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -53,6 +53,9 @@ namespace ASteambot
 
         static void Main(string[] args)
         {
+            //HandleMessage test = new HandleMessage();
+            //test.Execute(null, new GameServerRequest(null, "2", "1", "STEAM_1:1:441712108/https://acego.pl"));
+
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
             AppDomain currentDomain = default(AppDomain);
@@ -74,10 +77,6 @@ namespace ASteambot
             if(config.DisplayLocation)
                 SendLocation();
 
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("Searching for updates...");
-            Console.ForegroundColor = ConsoleColor.White;
-
             if(config.DisableAutoUpdate)
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
@@ -86,8 +85,13 @@ namespace ASteambot
             }
             else
             {
-                if (!Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater")))
-                    Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater"));
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Searching for updates...");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                Console.WriteLine("Creating update directory : " + Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)));
+                if (!Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater")))
+                    Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater"));
 
                 try
                 {
@@ -97,17 +101,19 @@ namespace ASteambot
                         Console.WriteLine("Downloading updater...");
                         Console.ForegroundColor = ConsoleColor.White;
                         
-                        client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", "updater.zip");
+                        client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater.zip"));
                     }
 
+                    Console.WriteLine("Extracting updater...");
+                    Console.WriteLine(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater.zip"));
                     //ZipFile.ExtractToDirectory("updater.zip", "./updater");
-                    using (FileStream zipToOpen = new FileStream(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater.zip"), FileMode.Open))
+                    using (FileStream zipToOpen = new FileStream(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater.zip"), FileMode.Open))
                     {
                         using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
                         {
                             foreach (ZipArchiveEntry file in archive.Entries)
                             {
-                                string completeFileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\", file.FullName);
+                                string completeFileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater/", file.FullName);
                                 file.ExtractToFile(completeFileName, true);
                             }
                         }
@@ -122,13 +128,13 @@ namespace ASteambot
                     Console.ForegroundColor = ConsoleColor.White;
                 }
 
-                if (File.Exists(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)  + "\\updater\\ASteambotUpdater.exe"))
+                if (File.Exists(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)  + "/updater/ASteambotUpdater.exe"))
                 {
                     var proc = new Process
                     {
                         StartInfo = new ProcessStartInfo
                         {
-                            FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\ASteambotUpdater.exe",
+                            FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater/ASteambotUpdater.exe",
                             Arguments = BUILD_VERSION.Split(' ')[0],
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
@@ -154,11 +160,10 @@ namespace ASteambot
 
                         Thread.Sleep(1000);
 
-                        Console.WriteLine("Executing : " + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\ASteambotUpdater.exe");
+                        Console.WriteLine("Executing : " + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater/ASteambotUpdater.exe");
                         Process p = new Process();
-                        p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\updater\\ASteambotUpdater.exe";
+                        p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater/ASteambotUpdater.exe";
                         p.StartInfo.Arguments = BUILD_VERSION.Split(' ')[0];
-                        p.StartInfo.CreateNoWindow = false;
                         p.Start();
 
                         Environment.Exit(0);
@@ -184,19 +189,19 @@ namespace ASteambot
 
             if (!IsLinux())
             {
+                string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
                 if (File.Exists("website.zip"))
                 {
                     Console.WriteLine("Website not extracted ! Doing that now...");
-                    if (!Directory.Exists("website"))
-                        Directory.CreateDirectory("website");
-                    ZipFile.ExtractToDirectory("website.zip", "./website");
+                    ZipFile.ExtractToDirectory("website.zip", path);
+
                     File.Delete("website.zip");
                     Console.WriteLine("Done !");
                 }
 
-                if (Directory.Exists("/website/"))
+                if (Directory.Exists(path + "/website"))
                 {
-                    httpsrv = new HTTPServer("/website/", 85);
+                    httpsrv = new HTTPServer("/website", 85);
                     Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:" + httpsrv.Port + "/index.html");
                 }
                 else
