@@ -428,16 +428,22 @@ namespace ASteambot.Networking
             string[] groupIDHeadlineBody = gsr.Arguments.Split(new char[] { '/' }, 3);
 
             var data = new NameValueCollection();
-            data.Add("sessionID", bot.SteamWeb.SessionId);
             data.Add("action", "post");
-            data.Add("headline", groupIDHeadlineBody[1]);
             data.Add("body", groupIDHeadlineBody[2]);
-            data.Add("languages[0][headline]", groupIDHeadlineBody[1]);
-            data.Add("languages[0][body]", groupIDHeadlineBody[2]);
+            data.Add("headline", groupIDHeadlineBody[1]);
+            for (int i = 0; i < 30; i++)
+            {
+                data.Add("languages["+i+"][body]", groupIDHeadlineBody[2]);
+                data.Add("languages["+i+"][headline]", groupIDHeadlineBody[2]);
+                if(i > 0)
+                    data.Add("languages[" + i + "][updated]", "0");
+            }
+            data.Add("previewVideoInsertType", "leftthumb");
+            data.Add("sessionID", bot.SteamWeb.SessionId);
 
             string link = "https://steamcommunity.com/gid/" + groupIDHeadlineBody[0] + "/announcements";
 
-            bot.SteamWeb.Fetch(link, "POST", data);
+            string ouput = bot.SteamWeb.Fetch(link, "POST", data);
 
             if (gs != null)
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.SGAnnoucement, groupIDHeadlineBody[1]);
@@ -445,17 +451,22 @@ namespace ASteambot.Networking
 
         private void SendChatMessage(Bot bot, GameServerRequest gsr)
         {
-            GameServer gs = bot.Manager.GetServerByID(gsr.ServerID);
-
             string[] steamID_msg = gsr.Arguments.Split(new char[] { '/' }, 2);
             SteamID steamID = new SteamID(steamID_msg[0]);
 
             if (steamID == null)
+            {
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.Simple, "Invalid steam ID (STEAM_X:Y:ZZZZ) !");
-            else if(!bot.Friends.Contains(steamID))
-                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamID_msg[0]);
+            }
+            else if (!bot.Friends.Contains(steamID))
+            {
+                foreach(string line in steamID_msg[0].Split(new[] {"\n"}, StringSplitOptions.None))
+                    bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, line);
+            }
             else
+            {
                 bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, steamID_msg[1]);
+            }
         }
     }
 }
