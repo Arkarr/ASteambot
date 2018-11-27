@@ -78,6 +78,7 @@ namespace ASteambot.Networking
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(e);
+                Console.WriteLine("Is bot null ?! -> " + (bot == null));
                 Console.WriteLine("Crashing while executing net code " + gsr.NetworkCode + " !");
                 Console.WriteLine("Full detail message [MAY CONTAIN SENSITIVE INFOS] :");
                 Console.WriteLine("SRV ID : " + gsr.ServerID + " MDL ID: " + gsr.ModuleID);

@@ -17,6 +17,7 @@ using SteamTrade.SteamMarket;
 using System.Globalization;
 using CsQuery;
 using static ASteambot.SteamProfile;
+using System.Reflection;
 
 namespace ASteambot
 {
@@ -197,7 +198,7 @@ namespace ASteambot
             socket.MessageReceived += Socket_MessageReceived;
 
             Translation = new Translation.Translation();
-            Translation.Load("steamchattexts.xml");
+            Translation.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/steamchattexts.xml");
         }
         
         public void SubscribeToEvents()
