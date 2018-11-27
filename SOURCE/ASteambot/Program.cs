@@ -31,12 +31,9 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "6.4 - PUBLIC";
+        private static string BUILD_VERSION = "6.5 - PUBLIC";
 
         public static bool DEBUG;
-
-        [DllImport("libc", EntryPoint = "chmod", SetLastError = true)]
-        private static extern int sys_chmod(string path, uint mode);
 
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
@@ -53,9 +50,6 @@ namespace ASteambot
 
         static void Main(string[] args)
         {
-            //HandleMessage test = new HandleMessage();
-            //test.Execute(null, new GameServerRequest(null, "2", "1", "STEAM_1:1:441712108/https://acego.pl"));
-
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
             AppDomain currentDomain = default(AppDomain);
