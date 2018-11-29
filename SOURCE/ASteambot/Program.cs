@@ -31,7 +31,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "6.6 - PUBLIC";
+        private static string BUILD_VERSION = "6.7 - PUBLIC";
 
         public static bool DEBUG;
 
