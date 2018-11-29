@@ -31,7 +31,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "6.5 - PUBLIC";
+        private static string BUILD_VERSION = "6.6 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -195,8 +195,10 @@ namespace ASteambot
 
                 if (Directory.Exists(path + "/website"))
                 {
-                    httpsrv = new HTTPServer("/website", 85);
-                    Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:" + httpsrv.Port + "/index.html");
+                    //Webinteface are shit anyway... Worst idea ever!
+                    //httpsrv = new HTTPServer("/website", 85);
+                    //Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:" + httpsrv.Port + "/index.html");
+                    Console.WriteLine("I gave up for now on the webinterface. Worst idea ever.");
                 }
                 else
                 {

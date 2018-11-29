@@ -39,7 +39,7 @@ namespace SteamTrade.SteamMarket
         private List<Item> steamMarketItemsTF2;
         private List<Item> steamMarketItemsCSGO;
         private List<Item> steamMarketItemsDOTA2;
-        private Thread marketScanner;
+        private List<Thread> marketsScanners;
 
         public SteamMarket(string apikey, bool disabled)
         {
@@ -51,6 +51,7 @@ namespace SteamTrade.SteamMarket
             steamMarketItemsTF2 = new List<Item>();
             steamMarketItemsCSGO = new List<Item>();
             steamMarketItemsDOTA2 = new List<Item>();
+            marketsScanners = new List<Thread>();
 
             if (!disabled)
             {
@@ -72,45 +73,76 @@ namespace SteamTrade.SteamMarket
         public void Cancel()
         {
             stop = true;
-            marketScanner.Abort();
+            foreach(Thread t in marketsScanners)
+                t.Abort();
         }
 
         private void RefreshMarket(Games game = Games.None)
         {
-            marketScanner = new Thread(() =>
+            
+            if (game == Games.None)
             {
-                if (game == Games.None)
+                Console.WriteLine("Fetching market's prices...");
+
+                /*if (!stop)
+                    TF2OK = ScanMarket(Games.TF2);
+
+                if (!stop)
+                    CSGOOK = ScanMarket(Games.CSGO);
+
+                if (!stop)
+                    DOTA2OK = ScanMarket(Games.Dota2);*/
+
+                Thread TF2marketScanner = new Thread(() =>
                 {
-                    Console.WriteLine("Fetching market's prices...");
+                    DateTime dt = DateTime.Now;
+                    TF2OK = ScanMarket(Games.TF2);
+                    DateTime now = DateTime.Now;
+                    Console.WriteLine("market scan for tf2 in : " + (now.Subtract(dt).Minutes) + " minutes !");
+                });
 
-                    if (!stop)
-                        TF2OK = ScanMarket(Games.TF2);
-
-                    if (!stop)
-                        CSGOOK = ScanMarket(Games.CSGO);
-
-                    if (!stop)
-                        DOTA2OK = ScanMarket(Games.Dota2);
-
-                    Console.WriteLine("Done !");
-                }
-                else
+                Thread CSGOmarketScanner = new Thread(() =>
                 {
-                    if (!stop)
+                    DateTime dt = DateTime.Now;
+                    CSGOOK = ScanMarket(Games.CSGO);
+                    DateTime now = DateTime.Now;
+                    Console.WriteLine("market scan for csgo done in : " + (now.Subtract(dt).Minutes) + " minutes !");
+                });
+
+                Thread DOTA2marketScanner = new Thread(() =>
+                {
+                    DateTime dt = DateTime.Now;
+                    DOTA2OK = ScanMarket(Games.Dota2);
+                    DateTime now = DateTime.Now;
+                    Console.WriteLine("market scan for dota2 done in : " + (now.Subtract(dt).Minutes) + " minutes !");
+                });
+
+                marketsScanners.Add(TF2marketScanner);
+                marketsScanners.Add(CSGOmarketScanner);
+                marketsScanners.Add(DOTA2marketScanner);
+
+                TF2marketScanner.Start();
+                CSGOmarketScanner.Start();
+                DOTA2marketScanner.Start();
+            }
+            else
+            {
+                if (!stop)
+                {
+                    Console.WriteLine("Fetching " + game + " prices...");
+                    Thread marketScanner = new Thread(() =>
                     {
-                        Console.WriteLine("Fetching " + game + " prices...");
                         switch (game)
                         {
                             case Games.CSGO: CSGOOK = ScanMarket(game); break;
                             case Games.TF2: TF2OK = ScanMarket(game); break;
                             case Games.Dota2: DOTA2OK = ScanMarket(game); break;
                         }
-                        Console.WriteLine("Done !");
-                    }
+                    });
+                    marketsScanners.Add(marketScanner);
+                    marketScanner.Start();
                 }
-            });
-
-            marketScanner.Start();
+            }
         }
 
         public bool IsAvailable()
@@ -132,7 +164,7 @@ namespace SteamTrade.SteamMarket
                 string json = Fetch("http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&start="+startIndex+"&appid=" + (int)game, "GET", null, true, "", false, timeout);
                 RootObject ro = JsonConvert.DeserializeObject<RootObject>(json);
                 List<Item> items = ro.items;
-                if (ro.success)
+                if (ro.success && stop == false)
                 {
                     List<Item> itemToAdd = new List<Item>();
                     foreach (Item item in items)
@@ -169,7 +201,7 @@ namespace SteamTrade.SteamMarket
                     }
 
                     if (ro.nbritems <= startIndex + 500)
-                        Console.WriteLine(game.ToString() + " prices updated !");
+                        Console.WriteLine("Price for game " + game.ToString() + " updated !");
                     else
                         return ScanMarket(game, startIndex + 500);
 
