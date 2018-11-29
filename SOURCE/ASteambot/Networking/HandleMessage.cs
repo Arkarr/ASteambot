@@ -465,7 +465,7 @@ namespace ASteambot.Networking
             }
             else
             {
-                foreach (string line in steamID_msg[0].Split(new[] { "\n" }, StringSplitOptions.None))
+                foreach (string line in steamID_msg[1].Split(new[] { "\n" }, StringSplitOptions.None))
                     bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, line);
             }
         }
