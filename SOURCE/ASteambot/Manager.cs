@@ -145,14 +145,15 @@ namespace ASteambot
             Console.WriteLine("list - List all the bots and there index.");
             Console.WriteLine("select - select a bot to execute commands on.");
             Console.WriteLine("rename - rename a bot through steam.");
-            //Console.WriteLine("createto - create a thread offer.");
             Console.WriteLine("help - show this text.");
             Console.WriteLine("linkauthenticator - link a mobile authenticator through the bot, required to do trade offers correctly.");
             Console.WriteLine("unlinkauthenticator - unlink a mobile authenticator through the bot.");
             Console.WriteLine("withdrawn - Create a trade offer with all the bot's items to a specific steamID.");
             Console.WriteLine("testtcp - Send a small packet to all TCP clients.");
             Console.WriteLine("getsteamcode - Generate an authenticator code.");
-            Console.WriteLine("debug - Toggle debug mode.");
+            Console.WriteLine("debug - Toggle debug mode.");        
+            Console.WriteLine("testapi - refresh market prices.");
+            Console.WriteLine("refreshprices - refresh market prices.");
         }
 
         private void RefreshPrices()

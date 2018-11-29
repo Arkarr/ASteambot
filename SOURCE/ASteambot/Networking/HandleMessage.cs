@@ -461,12 +461,12 @@ namespace ASteambot.Networking
             }
             else if (!bot.Friends.Contains(steamID))
             {
-                foreach(string line in steamID_msg[0].Split(new[] {"\n"}, StringSplitOptions.None))
-                    bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, line);
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamID_msg[0]);
             }
             else
             {
-                bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, steamID_msg[1]);
+                foreach (string line in steamID_msg[0].Split(new[] { "\n" }, StringSplitOptions.None))
+                    bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, line);
             }
         }
     }

@@ -108,8 +108,7 @@ namespace ASteambot
                         TradeOffer to;
                         if (TradeOfferManager.TryGetOffer(values[i][rows[0]], out to))
                         {
-
-                            SteamProfile.SteamProfileInfos spi = GetSteamProfileInfo(to.PartnerSteamId);
+                            SteamProfileInfos spi = GetSteamProfileInfo(to.PartnerSteamId);
 
                             lastTradeInfos.Add(new TradeOfferInfo(spi.CustomURL, spi.Name, spi.AvatarFull, to.TradeOfferId, to.OfferState));
                         }
@@ -337,7 +336,6 @@ namespace ASteambot
                 steamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(authFile));
 
                 string code = steamGuardAccount.GenerateSteamGuardCode();
-                Console.WriteLine("2FA code : " + code);
                 return code;
             }
             else
