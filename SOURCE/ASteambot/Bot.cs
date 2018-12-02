@@ -333,16 +333,17 @@ namespace ASteambot
             var authFile = String.Format("{0}.auth", loginInfo.Username);
             if (File.Exists(authFile))
             {
-                steamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(authFile));
+                steamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamGuardAccount>(File.ReadAllText(authFile));
 
                 string code = steamGuardAccount.GenerateSteamGuardCode();
                 return code;
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
                 Console.WriteLine("Or you can try to input a code now, leave empty to quit : ");
+                Console.ForegroundColor = ConsoleColor.White;
                 string code = Console.ReadLine();
                 if (code.Equals(String.Empty))
                 {
