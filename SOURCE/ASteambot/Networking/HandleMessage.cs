@@ -126,6 +126,8 @@ namespace ASteambot.Networking
             if (spDude != null && spGuy != null)
             {
                 string firstMsg = String.Format("{0} ({1}) reported {2} ({3}) for \"{4}\" @ {5} ({6}) !", spGuy.Name, steamID.ToString(), spDude.Name, reportedDude.ToString(), ids[2], DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm"));
+                /*string[] data = { spGuy.Name, steamID.ToString(), spDude.Name, reportedDude.ToString(), ids[2], DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm") };
+                string firstMsg = String.Format("REPORT_MSG_1", data);*/
                 string secondMsg = String.Format("Name of server : {0}", gs.Name);
                 string thirdMsg = String.Format("Direct URL : steam://connect/{0}:{1}", gs.IP, gs.Port);
 

@@ -94,10 +94,19 @@ namespace ASteambot.Translation
 
         public string GetSentence(string sentence, string language)
         {
-            if (!translations.ContainsKey(sentence))
-                return "Sorry, I don't understand your request.";
+            Dictionary<string, string> s = null;
+            //Shitty
+            foreach (KeyValuePair<string, Dictionary<string, string>> entry in translations)
+            {
+                if(entry.Key.Split(';').Contains(sentence))
+                {
+                    s = entry.Value;
+                    break;
+                }
+            }
 
-            Dictionary<string, string> s = translations[sentence];
+            if (s == null)
+                return "Sorry, I don't understand your request.";
 
             if (s.ContainsKey(language))
                 return s[language];
