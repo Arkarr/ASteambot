@@ -169,8 +169,8 @@ namespace ASteambot
         {
             this.socket = socket;
             this.Config = Config;
-            this.Manager = manager;
             this.loginInfo = loginInfo;
+            Manager = manager;
             steamClient = new SteamClient();
             finishedTO = new List<string>();
             messageHandler = new HandleMessage();
@@ -562,7 +562,7 @@ namespace ASteambot
                 Random rnd = new Random();
                 int unluckyDude = 0;
                 SteamID steamID = Friends[unluckyDude];
-                while (newFriends.Contains(steamID) && !Config.SteamAdmins.Contains(steamID.ToString()))
+                while (newFriends.Contains(steamID) && !Config.SteamAdmins.Contains(steamID.ConvertToUInt64().ToString()))
                 {
                     unluckyDude = rnd.Next(Friends.Count);
                     steamID = Friends[unluckyDude];
@@ -726,7 +726,7 @@ namespace ASteambot
         public void WithDrawn(string steamid)
         {
             SteamID steamID = new SteamID(steamid);
-            if (!Friends.Contains(steamID))
+            if (!Friends.Contains(steamID.ConvertToUInt64()))
             {
                 Console.WriteLine("This user is not in your friend list, unable to send trade offer.");
                 return;
@@ -1209,7 +1209,7 @@ namespace ASteambot
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
-                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
+                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
                 string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
                 TradeOfferValue.Remove(offer.TradeOfferId);
 
@@ -1217,7 +1217,7 @@ namespace ASteambot
             }
             else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
-                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
+                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
                 string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
                 TradeOfferValue.Remove(offer.TradeOfferId);
 
@@ -1233,7 +1233,7 @@ namespace ASteambot
             {
                 double value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
 
-                string msg = offer.PartnerSteamId + "/" + offer.TradeOfferId + "/" + value;
+                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + value;
 
                 if (offer.Items.GetMyItems().Count == 0)
                 {

@@ -131,7 +131,7 @@ namespace ASteambot.Networking
 
                 foreach (SteamID steamid in bot.Friends)
                 {
-                    if (bot.Config.SteamAdmins.Contains(steamid.ToString()))
+                    if (bot.Config.SteamAdmins.Contains(steamid.ToString()) || bot.Config.SteamAdmins.Contains(steamid.ConvertToUInt64().ToString()))
                     {
                         bot.SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, firstMsg);
                         Thread.Sleep(100);
@@ -185,9 +185,9 @@ namespace ASteambot.Networking
             
             SteamID steamID = new SteamID(gsr.Arguments);
 
-            if (!bot.Friends.Contains(steamID))
+            if (!bot.Friends.Contains(steamID.ConvertToUInt64()))
             {
-                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, gsr.Arguments);
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamID.ConvertToUInt64().ToString());
                 return;
             }
 
@@ -380,12 +380,12 @@ namespace ASteambot.Networking
         {
             SteamID steamID = new SteamID(gsr.Arguments);
             if (steamID.IsValid)
-                bot.SteamFriends.AddFriend(steamID);
+                bot.SteamFriends.AddFriend(steamID.ConvertToUInt64());
         }
 
         private void SendSteamID(Bot bot, GameServerRequest gsr)
         {;
-            bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.SteamID, bot.getSteamID().ToString());
+            bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.SteamID, bot.getSteamID().ConvertToUInt64().ToString());
         }
 
         private void InviteToSteamGroup(Bot bot, GameServerRequest gsr)
@@ -400,13 +400,13 @@ namespace ASteambot.Networking
                 SteamID groupID = new SteamID(ulong.Parse(steamIDgroupID[1]));
                 if (steamID.IsValid)
                 {
-                    if (bot.Friends.Contains(steamID))
+                    if (bot.Friends.Contains(steamID.ConvertToUInt64()))
                     {
                         if (groupID.IsValid)
                         {
                             bot.InviteUserToGroup(steamID, groupID);
                             if(gs != null)
-                                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.InviteSteamGroup, steamID.ToString());
+                                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.InviteSteamGroup, steamID.ConvertToUInt64().ToString());
                             else
                                 Console.WriteLine(">>>> COUDLN'T FIND SERVER; NO REPLY SENT !");
                         }
@@ -414,7 +414,7 @@ namespace ASteambot.Networking
                     else
                     {
                         if (gs != null)
-                            bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamIDgroupID[0]);
+                            bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamID.ConvertToUInt64().ToString());
                         else
                             Console.WriteLine(">>>> COUDLN'T FIND SERVER; NO REPLY SENT !");
                     }
@@ -429,22 +429,24 @@ namespace ASteambot.Networking
             string[] groupIDHeadlineBody = gsr.Arguments.Split(new char[] { '/' }, 3);
 
             var data = new NameValueCollection();
+            data.Add("sessionID", bot.SteamWeb.SessionId);
             data.Add("action", "post");
-            data.Add("body", groupIDHeadlineBody[2]);
-            data.Add("headline", groupIDHeadlineBody[1]);
-            for (int i = 0; i < 30; i++)
+            data.Add("languages[0][headline]", groupIDHeadlineBody[1]);
+            data.Add("languages[0][body]", groupIDHeadlineBody[2]);
+            for (int i = 1; i <= 28; i++)
             {
                 data.Add("languages["+i+"][body]", groupIDHeadlineBody[2]);
-                data.Add("languages["+i+"][headline]", groupIDHeadlineBody[2]);
-                if(i > 0)
-                    data.Add("languages[" + i + "][updated]", "0");
+                data.Add("languages[" + i + "][headline]", groupIDHeadlineBody[1]);
+                data.Add("languages[" + i + "][updated]", "0");
             }
+            data.Add("headline", groupIDHeadlineBody[1]);
+            data.Add("body", groupIDHeadlineBody[2]);
+            data.Add("youtubeurl", "");
             data.Add("previewVideoInsertType", "leftthumb");
-            data.Add("sessionID", bot.SteamWeb.SessionId);
 
-            string link = "https://steamcommunity.com/gid/" + groupIDHeadlineBody[0] + "/announcements";
-
-            string ouput = bot.SteamWeb.Fetch(link, "POST", data);
+            string link = "https://steamcommunity.com/gid/" + groupIDHeadlineBody[0] + "/announcements/";
+            
+            bot.SteamWeb.Fetch(link, "POST", data);
 
             if (gs != null)
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.SGAnnoucement, groupIDHeadlineBody[1]);
@@ -459,9 +461,9 @@ namespace ASteambot.Networking
             {
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.Simple, "Invalid steam ID (STEAM_X:Y:ZZZZ) !");
             }
-            else if (!bot.Friends.Contains(steamID))
+            else if (!bot.Friends.Contains(steamID.ConvertToUInt64()))
             {
-                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamID_msg[0]);
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamID.ConvertToUInt64().ToString());
             }
             else
             {
