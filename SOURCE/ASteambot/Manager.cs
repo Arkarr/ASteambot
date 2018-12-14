@@ -210,8 +210,12 @@ namespace ASteambot
         {
             int count = 0;
             string test = "";
+
             foreach (string arg in args)
-                test += arg + " ";
+            {
+                if(!arg.Equals(args[0]))
+                    test += arg + " ";
+            }
 
             foreach(Bot bot in bots)
             {
