@@ -9,6 +9,7 @@ namespace ASteambot.Networking
     public class NetworkCode
     {
         public static readonly int MAX_CHUNK_SIZE = 900;
+        public static readonly int MSG_FOR_ALL_MODULE = -2;
 
         public enum ASteambotCode
         {
