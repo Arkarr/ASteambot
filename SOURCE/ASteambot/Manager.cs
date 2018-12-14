@@ -368,6 +368,16 @@ namespace ASteambot
         public bool Send(int serverID, int moduleID, NetworkCode.ASteambotCode netcode, string data)
         {
             GameServer gs = GetServerByID(serverID);
+
+            if(gs == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Could NOT send mesage to server; server has no valid ID. Restart ASteambot_Core on the problematic server.");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return false;
+            }
+
             if(!gs.Send(moduleID, netcode, data))
             {
                 foreach (Bot bot in OnlineBots)

@@ -42,12 +42,8 @@
     <Compile Include="Exceptions\TradeException.cs" />
     <Compile Include="ForeignInventory.cs" />
     <Compile Include="GenericInventory.cs" />
-    <Compile Include="SteamMarket\OLDSteamMarketPrices.cs" />
     <Compile Include="SteamMarket\Item.cs" />
     <Compile Include="SteamMarket\SteamMarket.cs" />
-    <Compile Include="SteamMarket\SteamMarketOLD.cs" />
-    <Compile Include="SteamMarket\SteamMarketPricesBACKUP.cs" />
-    <Compile Include="SteamMarket\TradeTFBACKUP.cs" />
     <Compile Include="Tf2Value.cs" />
     <Compile Include="Trade.cs" />
     <Compile Include="Schema.cs" />

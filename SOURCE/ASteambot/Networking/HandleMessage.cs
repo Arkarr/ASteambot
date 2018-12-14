@@ -248,7 +248,7 @@ namespace ASteambot.Networking
                         if (description.tradable)
                         {
                             if (i != null)// && i.Value != 0)
-                                items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + i.Value + (img ? "=" + i.Image : "") + ",";
+                                items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + (i.Value.ToString().Replace(',', '.')) + (img ? "=" + i.Image : "") + ",";
                             else
                                 items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + "0" + (img ? "=" + "NOT_FOUND" : "") + ",";
                         }
