@@ -125,7 +125,8 @@ namespace ASteambot
             data = data ?? new string[0];
 
             SteamProfileInfos spi = bot.GetSteamProfileInfo(partenar);
-            string sentences = String.Format(bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi.Location)), data);
+
+            string sentences = String.Format(bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi)), data);
             foreach (string s in sentences.Split(new string[] { "\\n" }, StringSplitOptions.None))
                 SendChatMessage(partenar, s);
         }

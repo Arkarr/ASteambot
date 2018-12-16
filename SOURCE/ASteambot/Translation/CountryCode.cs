@@ -5,26 +5,35 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static ASteambot.SteamProfile;
 
 namespace ASteambot.Translation
 {
     public static class CountryCode
     {
-        public static string GetCountryCode(string country)
+        public static string GetCountryCode(SteamProfileInfos sp)
         {
-            country = RemoveBetween(country.Split(' ')[0], '(', ')').Trim();
-
-            var regions = CultureInfo.GetCultures(CultureTypes.SpecificCultures).Select(x => new RegionInfo(x.LCID));
-            RegionInfo englishRegion = regions.FirstOrDefault(region => region.EnglishName.Contains(country));
-
-            if (englishRegion == null)
+            if (sp == null)
             {
-                Console.WriteLine("Country \"" + country + "\" not found !");
                 return "en";
             }
             else
             {
-                return englishRegion.TwoLetterISORegionName.ToLower();
+                string country = sp.Location;
+                country = RemoveBetween(country.Split(' ')[0], '(', ')').Trim();
+
+                var regions = CultureInfo.GetCultures(CultureTypes.SpecificCultures).Select(x => new RegionInfo(x.LCID));
+                RegionInfo englishRegion = regions.FirstOrDefault(region => region.EnglishName.Contains(country));
+
+                if (englishRegion == null)
+                {
+                    Console.WriteLine("Country \"" + country + "\" not found !");
+                    return "en";
+                }
+                else
+                {
+                    return englishRegion.TwoLetterISORegionName.ToLower();
+                }
             }
         }
 
