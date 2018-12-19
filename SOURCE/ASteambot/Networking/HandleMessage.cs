@@ -433,10 +433,20 @@ namespace ASteambot.Networking
             var data = new NameValueCollection();
             data.Add("sessionID", bot.SteamWeb.SessionId);
             data.Add("action", "post");
+            data.Add("languages[0][headline]", groupIDHeadlineBody[1]);
+            data.Add("languages[0][body]", groupIDHeadlineBody[2]);
+            for (int i = 1; i <= 28; i++)
+            {
+                data.Add("languages["+i+"][body]", "");
+                data.Add("languages[" + i + "][headline]", "");
+                data.Add("languages[" + i + "][updated]", "0");
+            }
             data.Add("headline", groupIDHeadlineBody[1]);
             data.Add("body", groupIDHeadlineBody[2]);
+            data.Add("youtubeurl", "");
+            data.Add("body", "leftthumb");
 
-            string link = "https://steamcommunity.com/gid/" + groupIDHeadlineBody[0] + "/announcements/";
+            string link = "https://steamcommunity.com/gid/" + groupIDHeadlineBody[0] + "/announcements";
             
             bot.SteamWeb.Fetch(link, "POST", data);
 
