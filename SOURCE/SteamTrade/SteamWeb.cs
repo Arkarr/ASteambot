@@ -12,6 +12,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using SteamKit2;
 using System.Threading;
+using System.Collections;
+using System.Reflection;
 
 namespace SteamTrade
 {
@@ -135,6 +137,24 @@ namespace SteamTrade
             // Cookies
             request.CookieContainer = _cookies;
 
+            /*  //If you uncomment this, private data will be printed int the console!!
+            Hashtable table = (Hashtable)_cookies.GetType().InvokeMember("m_domainTable",
+                                                                         BindingFlags.NonPublic |
+                                                                         BindingFlags.GetField |
+                                                                         BindingFlags.Instance,
+                                                                         null,
+                                                                         _cookies,
+                                                                         new object[] { });
+
+            foreach (var key in table.Keys)
+            {
+                foreach (Cookie cookie in _cookies.GetCookies(new Uri(string.Format("http://www{0}/", key))))
+                {
+                    Console.WriteLine("Name = {0} ; Value = {1} ; Domain = {2}", cookie.Name, cookie.Value,
+                                      cookie.Domain);
+                }
+            }*/
+
             // If the request is a GET request return now the response. If not go on. Because then we need to apply data to the request.
             if (isGetMethod || string.IsNullOrEmpty(dataString))
             {
@@ -151,23 +171,23 @@ namespace SteamTrade
             }
 
             // Get the response and return it.
-            try
+            try 
             {
                 return request.GetResponse() as HttpWebResponse;
             }
-            catch (WebException ex)
+            catch (WebException ex) 
             {
                 //this is thrown if response code is not 200
-                if (fetchError)
+                if (fetchError) 
                 {
                     var resp = ex.Response as HttpWebResponse;
-                    if (resp != null)
+                    if (resp != null) 
                     {
                         return resp;
                     }
                 }
-                throw;
-            }
+                throw;                
+            }            
         }
 
         /// <summary>
@@ -180,7 +200,7 @@ namespace SteamTrade
         /// <returns>A bool containing a value, if the login was successful.</returns>
         public bool DoLogin(string username, string password)
         {
-            var data = new NameValueCollection { { "username", username } };
+            var data = new NameValueCollection {{"username", username}};
             // First get the RSA key with which we will encrypt our password.
             string response = Fetch("https://steamcommunity.com/login/getrsakey", "POST", data, false);
             GetRsaKey rsaJson = JsonConvert.DeserializeObject<GetRsaKey>(response);
@@ -229,7 +249,7 @@ namespace SteamTrade
                     capGid = Uri.EscapeDataString(loginJson.captcha_gid);
                 }
 
-                data = new NameValueCollection { { "password", encryptedBase64Password }, { "username", username } };
+                data = new NameValueCollection {{"password", encryptedBase64Password}, {"username", username}};
 
                 // Captcha Check.
                 string capText = "";
@@ -242,7 +262,7 @@ namespace SteamTrade
                     if (!string.IsNullOrEmpty(consoleText))
                     {
                         capText = Uri.EscapeDataString(consoleText);
-                    }
+                }
                 }
 
                 data.Add("captchagid", captcha ? capGid : "");
@@ -286,7 +306,7 @@ namespace SteamTrade
                 data.Add("rsatimestamp", time);
 
                 // Sending the actual login.
-                using (HttpWebResponse webResponse = Request("https://steamcommunity.com/login/dologin/", "POST", data, false))
+                using(HttpWebResponse webResponse = Request("https://steamcommunity.com/login/dologin/", "POST", data, false))
                 {
                     var stream = webResponse.GetResponseStream();
                     if (stream == null)
@@ -385,7 +405,7 @@ namespace SteamTrade
                 return true;
             }
         }
-
+        
         /// <summary>
         /// Authenticate using an array of cookies from a browser or whatever source, without contacting the server.
         /// It is recommended that you call <see cref="VerifyCookies"/> after calling this method to ensure that the cookies are valid.
@@ -436,7 +456,7 @@ namespace SteamTrade
         /// Method to submit cookies to Steam after Login.
         /// </summary>
         /// <param name="cookies">Cookiecontainer which contains cookies after the login to Steam.</param>
-        static void SubmitCookies(CookieContainer cookies)
+        static void SubmitCookies (CookieContainer cookies)
         {
             HttpWebRequest w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
 

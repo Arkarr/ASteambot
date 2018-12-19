@@ -131,6 +131,9 @@ namespace ASteambot
                 case "refreshprices":
                     RefreshPrices();
                     break;
+                case "reloadtranslation":
+                    ReloadTranslation();
+                    break;
                 default:
                     Console.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
                 break;
@@ -154,6 +157,7 @@ namespace ASteambot
             Console.WriteLine("debug - Toggle debug mode.");        
             Console.WriteLine("testapi - refresh market prices.");
             Console.WriteLine("refreshprices - refresh market prices.");
+            Console.WriteLine("reloadtranslation - reload the steamchattext.xml file.");
         }
 
         private void RefreshPrices()
@@ -333,7 +337,11 @@ namespace ASteambot
                 Console.WriteLine("\t[{0}] Name : [{1}] | Logged in : [{2}]", i+1, bots[i].Name, bots[i].LoggedIn);
             Console.WriteLine("----------------------------", bots.Count);
         }
-        
+
+        public void ReloadTranslation()
+        {
+            Console.WriteLine("Does nothing now.");
+        }
 
         public void SelectFirstBot()
         {

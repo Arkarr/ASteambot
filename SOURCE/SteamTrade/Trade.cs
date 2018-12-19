@@ -8,7 +8,6 @@ using SteamKit2;
 using SteamTrade.Exceptions;
 using SteamTrade.TradeWebAPI;
 
-
 namespace SteamTrade
 {
     /// <summary>

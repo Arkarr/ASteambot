@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade.Exceptions;
 
-
 namespace SteamTrade
 {
     public class TradeManager
@@ -369,12 +368,12 @@ namespace SteamTrade
             // print using the console directly. To enable this for debugging put this:
             // #define DEBUG_TRADE_MANAGER
             // at the first line of this file.
-            Console.WriteLine (output);
+            System.Console.WriteLine (output);
         }
 
         private static void DebugError(string output)
         {
-            Console.WriteLine(output);
+            System.Console.WriteLine(output);
         }
     }
 }

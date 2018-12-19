@@ -294,6 +294,7 @@ namespace ASteambot
         {
             steamGuardAccount.Session.SteamLogin = SteamWeb.Token;
             steamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
+
             try
             {
                 foreach (var confirmation in steamGuardAccount.FetchConfirmations())
@@ -302,7 +303,7 @@ namespace ASteambot
                     {
                         long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
                         if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
-                            Console.WriteLine("Confirmed " + confirmation.ToString() + ". (Confirmation ID #" + confirmation.ID + ")");
+                            Console.WriteLine("Confirmed trade. (Confirmation ID #" + confirmation.ID + ")");
                     }
                 }
             }
@@ -334,6 +335,8 @@ namespace ASteambot
             if (File.Exists(authFile))
             {
                 steamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamGuardAccount>(File.ReadAllText(authFile));
+
+                steamGuardAccount.RefreshSession();
 
                 string code = steamGuardAccount.GenerateSteamGuardCode();
                 return code;
