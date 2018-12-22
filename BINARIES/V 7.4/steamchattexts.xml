@@ -1,44 +1,58 @@
 <steamchattexts>
 	<handler msg="Hello">
-		<translation lang="en">World !</translation>
+		<translation lang="en">World!</translation>
+		<translation lang="pl">World!</translation>
 	</handler>
 	<handler msg="PING">
 		<translation lang="en">PONG</translation>
+		<translation lang="pl">PONG</translation>
 	</handler>
 	<handler msg="HELP;help">
 		<translation lang="en">HELP - Print this message.\nSERVER - Print all servers connected to me.\nHOOKCHAT - Listen to what's being sent in the game server.\nSTOPHOOK - Stop listening to what's being sent in the game server.\nEXEC - Execute the specified command in the targeted server.</translation>
+		<translation lang="pl">HELP - Wyświetla tą wiadomość.\nSERVER - Wyświetla wszystkie podłączone serwery.\nHOOKCHAT - Nasłuchuj czat z serwera.\nSTOPHOOK - Zatrzymaj nasłuchiwanie.\nEXEC - Wywołuje podaną komendę na serwerze.</translation>
 	</handler>
 	<handler msg="SERVER">
-		<translation lang="en">Number of registred servers : {0}</translation>
+		<translation lang="en">Number of registred servers: {0}</translation>
+		<translation lang="pl">Lista zarejestrowanych serwerów: {0}</translation>
 	</handler>
 	<handler msg="HOOKCHAT_DONE">
-		<translation lang="en">You are already hooking a chat ! Use : STOPHOOK</translation>
+		<translation lang="en">You are already hooking a chat! Use: STOPHOOK</translation>
+		<translation lang="pl">Już nasłuchujesz czat! Użyj: STOPHOOK</translation>
 	</handler>
 	<handler msg="SERVER_INVALID_ID">
 		<translation lang="en">Use SERVER to get game server ID.</translation>
+		<translation lang="pl">Wpisz SERVER, aby zobaczyć ID serwerów.</translation>
 	</handler>
 	<handler msg="HOOKCHAT_CONNECTING">
 		<translation lang="en">Connecting to server..</translation>
+		<translation lang="pl">Łączenie z serwerem..</translation>
 	</handler>
 	<handler msg="INVALID_SERVER_ID">
-		<translation lang="en">Invalid server ID {0} specified !</translation>
+		<translation lang="en">Invalid server ID {0} specified!</translation>
+		<translation lang="pl">Nieprawidłowe ID serwera {0}</translation>
 	</handler>
 	<handler msg="UNHOOK;STOPHOOK">
 		<translation lang="en">Disconnecting from server...</translation>
+		<translation lang="pl">Odłączanie od serwera...</translation>
 	</handler>
 	<handler msg="STOPHOOK_NOT_CONNECTED">
-		<translation lang="en">Not listening to any servers. Use HOOKCHAT first !</translation>
+		<translation lang="en">Not listening to any servers. Use HOOKCHAT first!</translation>
+		<translation lang="pl">Nie nasłuchujesz żadnego serwera. Użyj HOOKCHAT!</translation>
 	</handler>
 	<handler msg="EXEC_SELEC">
-		<translation lang="en">Not listening to any servers. Use HOOKCHAT first !</translation>
+		<translation lang="en">Not listening to any servers. Use HOOKCHAT first!</translation>
+		<translation lang="pl">Nie nasłuchujesz żadnego serwera. Użyj HOOKCHAT!</translation>
 	</handler>
 	<handler msg="EXEC_DONE">
 		<translation lang="en">Command '{0}' sent to server '{1}' !</translation>
+		<translation lang="pl">Komenda '{0}' wysłana do serwera '{1}' !</translation>
 	</handler>
 	<handler msg="NO_SERVER_CONNECTED">
-		<translation lang="en">No servers connected to me :'( !</translation>
+		<translation lang="en">No servers connected to me :'(</translation>
+		<translation lang="pl">Brak podłączonych serwerów :'(</translation>
 	</handler>
 	<handler msg="DONE">
 		<translation lang="en">Done !</translation>
+		<translation lang="pl">Zrobione!</translation>
 	</handler>
 </steamchattexts>
