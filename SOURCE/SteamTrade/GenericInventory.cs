@@ -203,8 +203,8 @@ namespace SteamTrade
                                         new ItemDescription()
                                         {
                                             name = class_instance.name,
-                                            market_hash_name = class_instance.market_hash_name,
                                             type = class_instance.type,
+                                            market_hash_name = class_instance.market_hash_name,
                                             marketable = (bool)class_instance.marketable,
                                             tradable = (bool)class_instance.tradable,
                                             classid = long.Parse((string)class_instance.classid),

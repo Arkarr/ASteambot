@@ -12,8 +12,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using SteamKit2;
 using System.Threading;
-using System.Collections;
-using System.Reflection;
 
 namespace SteamTrade
 {
@@ -136,24 +134,6 @@ namespace SteamTrade
 
             // Cookies
             request.CookieContainer = _cookies;
-
-            /*  //If you uncomment this, private data will be printed int the console!!
-            Hashtable table = (Hashtable)_cookies.GetType().InvokeMember("m_domainTable",
-                                                                         BindingFlags.NonPublic |
-                                                                         BindingFlags.GetField |
-                                                                         BindingFlags.Instance,
-                                                                         null,
-                                                                         _cookies,
-                                                                         new object[] { });
-
-            foreach (var key in table.Keys)
-            {
-                foreach (Cookie cookie in _cookies.GetCookies(new Uri(string.Format("http://www{0}/", key))))
-                {
-                    Console.WriteLine("Name = {0} ; Value = {1} ; Domain = {2}", cookie.Name, cookie.Value,
-                                      cookie.Domain);
-                }
-            }*/
 
             // If the request is a GET request return now the response. If not go on. Because then we need to apply data to the request.
             if (isGetMethod || string.IsNullOrEmpty(dataString))
@@ -363,7 +343,7 @@ namespace SteamTrade
 
                 // rsa encrypt it with the public key for the universe we're on
                 byte[] cryptedSessionKey;
-                using (RSACrypto rsa = new RSACrypto(KeyDictionary.GetPublicKey(client.ConnectedUniverse)))
+                using (RSACrypto rsa = new RSACrypto(KeyDictionary.GetPublicKey(client.Universe)))
                 {
                     cryptedSessionKey = rsa.Encrypt(sessionKey);
                 }

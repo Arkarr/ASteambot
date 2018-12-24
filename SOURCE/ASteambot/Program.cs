@@ -1,7 +1,6 @@
 ﻿using ASteambot.Networking;
 using ASteambot.Networking.Webinterface;
 using Newtonsoft.Json.Linq;
-using SteamTrade.SteamMarket;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -31,7 +30,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "7.4 - PUBLIC";
+        private static string BUILD_VERSION = "7.6 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -108,7 +107,7 @@ namespace ASteambot
                             foreach (ZipArchiveEntry file in archive.Entries)
                             {
                                 string completeFileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater/", file.FullName);
-                                file.ExtractToFile(completeFileName, true);
+                                //file.(completeFileName, true);
                             }
                         }
                     }
@@ -187,7 +186,7 @@ namespace ASteambot
                 if (File.Exists("website.zip"))
                 {
                     Console.WriteLine("Website not extracted ! Doing that now...");
-                    ZipFile.ExtractToDirectory("website.zip", path);
+                    //ZipFile.ExtractToDirectory("website.zip", path);
 
                     File.Delete("website.zip");
                     Console.WriteLine("Done !");
