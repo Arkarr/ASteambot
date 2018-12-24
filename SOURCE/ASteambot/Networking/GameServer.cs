@@ -148,9 +148,6 @@ namespace ASteambot
                 Socket handler = (Socket)ar.AsyncState;
 
                 int bytesSent = handler.EndSend(ar);
-                Console.WriteLine("Sent {0} bytes to client.", bytesSent);
-
-
             }
             catch (Exception e)
             {

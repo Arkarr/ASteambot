@@ -1,0 +1,44 @@
+<steamchattexts>
+	<handler msg="Hello">
+		<translation lang="en">World !</translation>
+	</handler>
+	<handler msg="PING">
+		<translation lang="en">PONG</translation>
+	</handler>
+	<handler msg="HELP;help">
+		<translation lang="en">HELP - Print this message.\nSERVER - Print all servers connected to me.\nHOOKCHAT - Listen to what's being sent in the game server.\nSTOPHOOK - Stop listening to what's being sent in the game server.\nEXEC - Execute the specified command in the targeted server.</translation>
+	</handler>
+	<handler msg="SERVER">
+		<translation lang="en">Number of registred servers : {0}</translation>
+	</handler>
+	<handler msg="HOOKCHAT_DONE">
+		<translation lang="en">You are already hooking a chat ! Use : STOPHOOK</translation>
+	</handler>
+	<handler msg="SERVER_INVALID_ID">
+		<translation lang="en">Use SERVER to get game server ID.</translation>
+	</handler>
+	<handler msg="HOOKCHAT_CONNECTING">
+		<translation lang="en">Connecting to server..</translation>
+	</handler>
+	<handler msg="INVALID_SERVER_ID">
+		<translation lang="en">Invalid server ID {0} specified !</translation>
+	</handler>
+	<handler msg="UNHOOK;STOPHOOK">
+		<translation lang="en">Disconnecting from server...</translation>
+	</handler>
+	<handler msg="STOPHOOK_NOT_CONNECTED">
+		<translation lang="en">Not listening to any servers. Use HOOKCHAT first !</translation>
+	</handler>
+	<handler msg="EXEC_SELEC">
+		<translation lang="en">Not listening to any servers. Use HOOKCHAT first !</translation>
+	</handler>
+	<handler msg="EXEC_DONE">
+		<translation lang="en">Command '{0}' sent to server '{1}' !</translation>
+	</handler>
+	<handler msg="NO_SERVER_CONNECTED">
+		<translation lang="en">No servers connected to me :'( !</translation>
+	</handler>
+	<handler msg="DONE">
+		<translation lang="en">Done !</translation>
+	</handler>
+</steamchattexts>

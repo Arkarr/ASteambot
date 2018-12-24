@@ -26,25 +26,35 @@ namespace ASteambot.Networking
         private void HandleMessage(Socket handler, string content)
         {
             Console.WriteLine(content);
+
             if (!content.StartsWith(password))
                 return;
 
-            content = content.Replace(password, "");
-
-            string[] codeargsdata = content.Split(new char[] { '&' }, 2);
-
-            string[] idmsgtype = codeargsdata[0].Split(new char[] { '|' }, 2);
-
-            codeargsdata[1] = codeargsdata[1].Replace("\0", string.Empty);
-
             //Must be always true :
-            if (codeargsdata[1].EndsWith("<EOF>"))
-                codeargsdata[1] = codeargsdata[1].Substring(0, codeargsdata[1].Length - 5);
+            if (content.EndsWith("<EOF>"))
+            {
+                content = content.Replace(password, "");
+                content = content.Substring(0, content.Length - 5);
 
-            GameServerRequest gsr = new GameServerRequest(handler, idmsgtype[0], idmsgtype[1], codeargsdata[1]);
+                string[] codeargsdata = content.Split(new char[] { '&' }, 2);
 
-            EventArgGameServer arg = new EventArgGameServer(gsr);
-            OnMessageReceived(arg);
+                string[] idmsgtype = codeargsdata[0].Split(new char[] { '|' }, 2);
+
+                codeargsdata[1] = codeargsdata[1].Replace("\0", string.Empty);
+
+                Console.WriteLine("Data :\n" + codeargsdata[1]);
+
+                GameServerRequest gsr = new GameServerRequest(handler, idmsgtype[0], idmsgtype[1], codeargsdata[1]);
+
+                EventArgGameServer arg = new EventArgGameServer(gsr);
+                OnMessageReceived(arg);
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Received message, but it's incomplete/not correctly formated !");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
         }
 
         public void Stop()
@@ -60,8 +70,6 @@ namespace ASteambot.Networking
 
         public void StartListening()
         {
-            byte[] bytes = new Byte[1024];
-
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Parse("0.0.0.0"), Port);
 
             try
@@ -125,8 +133,6 @@ namespace ASteambot.Networking
 
         public void ReadCallback(IAsyncResult ar)
         {
-            String content = String.Empty;
-            
             StateObject state = (StateObject)ar.AsyncState;
             Socket handler = state.workSocket;
 
@@ -136,13 +142,11 @@ namespace ASteambot.Networking
 
                 if (bytesRead > 0)
                 {
-                    state.sb.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead));
+                    state.sb.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead).Replace("\0", String.Empty));
 
-                    content = state.sb.ToString().Replace("\0", String.Empty);
-
-                    if (content.EndsWith("<EOF>"))
+                    if (state.sb.ToString().EndsWith("<EOF>"))
                     {
-                        HandleMessage(handler, content);
+                        HandleMessage(handler, state.sb.ToString());
                         state.sb.Clear();
                     }
 
