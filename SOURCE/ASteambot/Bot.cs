@@ -13,11 +13,11 @@ using ASteambot.SteamGroups;
 using ASteambot.Networking;
 using System.Net;
 using System.Net.Sockets;
-using SteamTrade.SteamMarket;
 using System.Globalization;
 using CsQuery;
 using static ASteambot.SteamProfile;
 using System.Reflection;
+using ASteambot.SteamMarketUtility;
 
 namespace ASteambot
 {
@@ -273,7 +273,7 @@ namespace ASteambot
         {
             List<long> contextId = new List<long>();
             contextId.Add(2);
-            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.TF2, contextId, steamClient.SteamID);
+            MyGenericInventory.load((int)Games.TF2, contextId, steamClient.SteamID);
 
             SteamID partenar = new SteamID(otherSteamID);
             TradeOffer to = TradeOfferManager.NewOffer(partenar);
@@ -472,7 +472,7 @@ namespace ASteambot
 
             SteamProfileInfo = GetSteamProfileInfo(steamClient.SteamID);
 
-            ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan);
+            ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan, SteamWeb);
 
             TradeOfferManager = new TradeOfferManager(loginInfo.API, SteamWeb);
             SubscribeTradeOffer(TradeOfferManager);
@@ -655,7 +655,7 @@ namespace ASteambot
             int backup = 0;
 
             SteamInventoryTF2Items = 0;
-            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.TF2, contextID, steamUser.SteamID);
+            MyGenericInventory.load((int)Games.TF2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
                 GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
@@ -673,7 +673,7 @@ namespace ASteambot
             backup = SteamInventoryItemCount;
 
             SteamInventoryCSGOItems = 0;
-            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.CSGO, contextID, steamUser.SteamID);
+            MyGenericInventory.load((int)Games.CSGO, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
                 GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
@@ -695,7 +695,7 @@ namespace ASteambot
             backup += SteamInventoryItemCount;
 
             SteamInventoryDOTA2Items = 0;
-            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.Dota2, contextID, steamUser.SteamID);
+            MyGenericInventory.load((int)Games.Dota2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
                 GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
@@ -754,7 +754,7 @@ namespace ASteambot
             long[] contextID = new long[1];
             contextID[0] = 2;
 
-            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.TF2, contextID, steamUser.SteamID);
+            MyGenericInventory.load((int)Games.TF2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
                 GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
@@ -762,7 +762,7 @@ namespace ASteambot
                     to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
             }
 
-            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.CSGO, contextID, steamUser.SteamID);
+            MyGenericInventory.load((int)Games.CSGO, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
                 GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
@@ -770,7 +770,7 @@ namespace ASteambot
                     to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
             }
 
-            MyGenericInventory.load((int)SteamTrade.SteamMarket.Games.Dota2, contextID, steamUser.SteamID);
+            MyGenericInventory.load((int)Games.Dota2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
                 GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);

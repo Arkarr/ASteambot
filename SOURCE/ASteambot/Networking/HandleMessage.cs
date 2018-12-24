@@ -1,6 +1,6 @@
-﻿using SteamKit2;
+﻿using ASteambot.SteamMarketUtility;
+using SteamKit2;
 using SteamTrade;
-using SteamTrade.SteamMarket;
 using SteamTrade.TradeOffer;
 using System;
 using System.Collections.Generic;
@@ -83,7 +83,7 @@ namespace ASteambot.Networking
                 Console.WriteLine("Full detail message [MAY CONTAIN SENSITIVE INFOS] :");
                 Console.WriteLine("SRV ID : " + gsr.ServerID + " MDL ID: " + gsr.ModuleID);
                 Console.WriteLine(gsr.Arguments);
-                Console.ForegroundColor = ConsoleColor.Red;
+                Console.ForegroundColor = ConsoleColor.White;
             }
         }
 
@@ -183,7 +183,7 @@ namespace ASteambot.Networking
         private void ScanInventory(Bot bot, GameServerRequest gsr, bool withImg)
         {
             if (bot.ArkarrSteamMarket == null)
-                bot.ArkarrSteamMarket = new SteamMarket(bot.Config.ArkarrAPIKey, bot.Config.DisableMarketScan);
+                bot.ArkarrSteamMarket = new SteamMarket(bot.Config.ArkarrAPIKey, bot.Config.DisableMarketScan, bot.SteamWeb);
             
             SteamID steamID = new SteamID(gsr.Arguments);
 

@@ -1,4 +1,5 @@
-﻿using CsQuery;
+﻿using ASteambot.SteamMarketUtility;
+using CsQuery;
 using SteamTrade;
 using SteamTrade.TradeOffer;
 using System;

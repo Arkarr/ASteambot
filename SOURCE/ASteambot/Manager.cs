@@ -9,6 +9,7 @@ using System.Threading;
 
 using System.Web;
 using System.Globalization;
+using ASteambot.SteamMarketUtility;
 
 namespace ASteambot
 {
@@ -186,7 +187,7 @@ namespace ASteambot
             }
             
             itemName = HttpUtility.HtmlEncode(itemName);
-            SteamTrade.SteamMarket.Item item = SelectedBot.ArkarrSteamMarket.GetItemByName(itemName);
+            Item item = SelectedBot.ArkarrSteamMarket.GetItemByName(itemName);
 
             if (item != null)
             {
