@@ -469,8 +469,15 @@ namespace ASteambot.Networking
             }
             else
             {
-                foreach (string line in steamID_msg[1].Split(new[] { "\n" }, StringSplitOptions.None))
-                    bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, line);
+                new Thread(() =>
+                {
+                    Thread.CurrentThread.IsBackground = true;
+                    foreach (string line in steamID_msg[1].Split(new[] { "\n" }, StringSplitOptions.None))
+                    {
+                        bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, line);
+                        Thread.Sleep(1300);
+                    }
+                }).Start();
             }
         }
     }
