@@ -1,5 +1,4 @@
 ﻿using System;
-using SteamKit2;
 using SteamAuth;
 using System.IO;
 using SteamTrade;
@@ -18,6 +17,7 @@ using CsQuery;
 using static ASteambot.SteamProfile;
 using System.Reflection;
 using ASteambot.SteamMarketUtility;
+using SteamKit2;
 
 namespace ASteambot
 {
@@ -404,7 +404,7 @@ namespace ASteambot
                 var addAuthResult = authLinker.AddAuthenticator();
                 if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
                 {
-                    while (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                    while (addAuthResult == AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
                     {
                         Console.WriteLine("Enter phone number with country code, e.g. +1XXXXXXXXXXX :");
                         var phoneNumber = Console.ReadLine();
