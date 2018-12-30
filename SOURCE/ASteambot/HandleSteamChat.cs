@@ -21,10 +21,10 @@ namespace ASteambot
         public void HandleMessage(SteamID partenar, string msg)
         {
             if (!bot.Manager.Config.SteamAdmins.Contains(partenar.ToString()))
-                return;
-
-            if (!bot.Manager.Config.SteamAdmins.Contains(partenar.ConvertToUInt64().ToString()))
-                return;
+            {
+                if (!bot.Manager.Config.SteamAdmins.Contains(partenar.ConvertToUInt64().ToString()))
+                    return;
+            }
 
             string command = msg.Split(' ')[0];
             string message = msg.Replace(command+" ", "");
