@@ -78,16 +78,35 @@ namespace ASteambot.Networking
                
                 listener.Bind(localEndPoint);
                 listener.Listen(100);
-
+                
                 var host = Dns.GetHostEntry(Dns.GetHostName());
+
+                for (int cwidth = Console.WindowWidth; cwidth-2 > 0; cwidth--)
+                    Console.Write("*");
+                Console.WriteLine("*");
+
+                Console.ForegroundColor = ConsoleColor.Red;
                 foreach (var ip in host.AddressList)
                 {
                     if (ip.AddressFamily == AddressFamily.InterNetwork)
                     {
-                        Console.WriteLine("Listening on " + ip + ":" + Port);
-                        break;
+                        Console.WriteLine("Use this ip/port if ASteambot **IS** running on the same machine as the server :");
+                        Console.WriteLine("IP : " + ip + " PORT : " + Port);
                     }
                 }
+
+                Console.WriteLine("Use this ip/port if ASteambot **IS NOT** running on the same machine as the server :");
+                Console.WriteLine("IP : " + new WebClient().DownloadString("http://icanhazip.com").Replace("\n", "") + " PORT : " + Port);
+                Console.ForegroundColor = ConsoleColor.White;
+
+
+                Console.WriteLine("  Example (in ASteambot_Core.cfg) : ");
+                Console.WriteLine("    sm_asteambot_server_ip \"XXX.XXX.XX.XX\" ");
+                Console.WriteLine("    sm_asteambot_server_port \""+Port+"\" ");
+
+                for (int cwidth = Console.WindowWidth; cwidth - 2 > 0; cwidth--)
+                    Console.Write("*");
+                Console.WriteLine("*");
 
                 Running = true;
                 while (Running)
