@@ -28,9 +28,11 @@ namespace ASteambot.Networking
 
             if (Program.DEBUG)
                 Console.WriteLine("Trying to parse " + idmid[1] + " to Int32 !");
-            Int32.TryParse(idmid[1], out tmpInt);
-            ModuleID = tmpInt;
 
+            Int32.TryParse(idmid[1], out tmpInt);
+
+
+            ModuleID = tmpInt;
             this.NetworkCode = Int32.Parse(code);
             this.Arguments = args;
             this.Socket = socket;

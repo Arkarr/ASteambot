@@ -12,6 +12,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using SteamKit2;
 using System.Threading;
+using System.Collections;
+using System.Reflection;
 
 namespace SteamTrade
 {
@@ -64,7 +66,7 @@ namespace SteamTrade
         /// <param name="fetchError">If true, response codes other than HTTP 200 will still be returned, rather than throwing exceptions</param>
         /// <returns>The string of the http return stream.</returns>
         /// <remarks>If you want to know how the request method works, use: <see cref="SteamWeb.Request"/></remarks>
-        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
+        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = true)
         {
             // Reading the response as stream and read it to the end. After that happened return the result as string.
             using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError))
@@ -94,7 +96,7 @@ namespace SteamTrade
         /// <param name="referer">Gets information about the URL of the client's previous request that linked to the current URL.</param>
         /// <param name="fetchError">Return response even if its status code is not 200</param>
         /// <returns>An instance of a HttpWebResponse object.</returns>
-        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
+        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = true)
         {
             // Append the data to the URL for GET-requests.
             bool isGetMethod = (method.ToLower() == "get");
@@ -134,6 +136,26 @@ namespace SteamTrade
 
             // Cookies
             request.CookieContainer = _cookies;
+
+            Hashtable table = (Hashtable)request.CookieContainer.GetType().InvokeMember("m_domainTable",
+                                                                         BindingFlags.NonPublic |
+                                                                         BindingFlags.GetField |
+                                                                         BindingFlags.Instance,
+                                                                         null,
+                                                                         request.CookieContainer,
+                                                                         new object[] { });
+
+
+
+            foreach (var key in table.Keys)
+            {
+                foreach (Cookie cookie in request.CookieContainer.GetCookies(new Uri(string.Format("http://www{0}/", key))))
+                {
+                    Console.WriteLine("Name = {0} ; Value = {1} ; Domain = {2}", cookie.Name, cookie.Value,
+                                      cookie.Domain);
+                }
+            }
+
 
             // If the request is a GET request return now the response. If not go on. Because then we need to apply data to the request.
             if (isGetMethod || string.IsNullOrEmpty(dataString))
