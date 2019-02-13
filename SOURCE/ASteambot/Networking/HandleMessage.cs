@@ -76,13 +76,16 @@ namespace ASteambot.Networking
             }
             catch(Exception e)
             {
+                int linenum = -1;
+                try { linenum = Convert.ToInt32(e.StackTrace.Substring(e.StackTrace.LastIndexOf(' ')));  } catch { }
+
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(e);
-                Console.WriteLine("Is bot null ?! -> " + (bot == null));
                 Console.WriteLine("Crashing while executing net code " + gsr.NetworkCode + " !");
                 Console.WriteLine("Full detail message [MAY CONTAIN SENSITIVE INFOS] :");
                 Console.WriteLine("SRV ID : " + gsr.ServerID + " MDL ID: " + gsr.ModuleID);
                 Console.WriteLine(gsr.Arguments);
+                Console.WriteLine("Line number : " + linenum);
                 Console.ForegroundColor = ConsoleColor.White;
             }
         }

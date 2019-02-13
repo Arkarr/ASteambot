@@ -37,10 +37,13 @@ namespace ASteambot.SteamMarketUtility
         private bool CSGOOK;
         private bool DOTA2OK;
         private SteamWeb fetcher;
+        private Thread TF2marketScanner;
+        private Thread CSGOmarketScanner;
+        private Thread DOTA2marketScanner;
+        private Thread marketScanner;
         private List<Item> steamMarketItemsTF2;
         private List<Item> steamMarketItemsCSGO;
         private List<Item> steamMarketItemsDOTA2;
-        private List<Thread> marketsScanners;
 
         public SteamMarket(string apikey, bool disabled, SteamWeb fetcher)
         {
@@ -53,7 +56,6 @@ namespace ASteambot.SteamMarketUtility
             steamMarketItemsTF2 = new List<Item>();
             steamMarketItemsCSGO = new List<Item>();
             steamMarketItemsDOTA2 = new List<Item>();
-            marketsScanners = new List<Thread>();
 
             if (!disabled)
             {
@@ -75,8 +77,6 @@ namespace ASteambot.SteamMarketUtility
         public void Cancel()
         {
             stop = true;
-            foreach(Thread t in marketsScanners)
-                t.Abort();
         }
 
         private void RefreshMarket(Games game = Games.None)
@@ -95,33 +95,39 @@ namespace ASteambot.SteamMarketUtility
                 if (!stop)
                     DOTA2OK = ScanMarket(Games.Dota2);*/
 
-                Thread TF2marketScanner = new Thread(() =>
+                if (TF2marketScanner == null || !TF2marketScanner.IsAlive)
                 {
-                    DateTime dt = DateTime.Now;
-                    TF2OK = ScanMarket(Games.TF2);
-                    DateTime now = DateTime.Now;
-                    Console.WriteLine("market scan for tf2 in : " + (now.Subtract(dt).Minutes) + " minutes !");
-                });
+                    TF2marketScanner = new Thread(() =>
+                    {
+                        DateTime dt = DateTime.Now;
+                        TF2OK = ScanMarket(Games.TF2);
+                        DateTime now = DateTime.Now;
+                        Console.WriteLine("market scan for tf2 in : " + (now.Subtract(dt).Minutes) + " minutes !");
+                    });
+                }
 
-                Thread CSGOmarketScanner = new Thread(() =>
+                if (CSGOmarketScanner == null || !CSGOmarketScanner.IsAlive)
                 {
-                    DateTime dt = DateTime.Now;
-                    CSGOOK = ScanMarket(Games.CSGO);
-                    DateTime now = DateTime.Now;
-                    Console.WriteLine("market scan for csgo done in : " + (now.Subtract(dt).Minutes) + " minutes !");
-                });
+                    CSGOmarketScanner = new Thread(() =>
+                    {
+                        DateTime dt = DateTime.Now;
+                        CSGOOK = ScanMarket(Games.CSGO);
+                        DateTime now = DateTime.Now;
+                        Console.WriteLine("market scan for csgo done in : " + (now.Subtract(dt).Minutes) + " minutes !");
+                    });
+                }
 
-                Thread DOTA2marketScanner = new Thread(() =>
+
+                if (DOTA2marketScanner == null || !DOTA2marketScanner.IsAlive)
                 {
-                    DateTime dt = DateTime.Now;
-                    DOTA2OK = ScanMarket(Games.Dota2);
-                    DateTime now = DateTime.Now;
-                    Console.WriteLine("market scan for dota2 done in : " + (now.Subtract(dt).Minutes) + " minutes !");
-                });
-
-                marketsScanners.Add(TF2marketScanner);
-                marketsScanners.Add(CSGOmarketScanner);
-                marketsScanners.Add(DOTA2marketScanner);
+                    DOTA2marketScanner = new Thread(() =>
+                    {
+                        DateTime dt = DateTime.Now;
+                        DOTA2OK = ScanMarket(Games.Dota2);
+                        DateTime now = DateTime.Now;
+                        Console.WriteLine("market scan for dota2 done in : " + (now.Subtract(dt).Minutes) + " minutes !");
+                    });
+                }
 
                 TF2marketScanner.Start();
                 CSGOmarketScanner.Start();
@@ -131,18 +137,20 @@ namespace ASteambot.SteamMarketUtility
             {
                 if (!stop)
                 {
-                    Console.WriteLine("Fetching " + game + " prices...");
-                    Thread marketScanner = new Thread(() =>
+                    if (marketScanner == null || !marketScanner.IsAlive)
                     {
-                        switch (game)
+                        Console.WriteLine("Fetching " + game + " prices...");
+                        marketScanner = new Thread(() =>
                         {
-                            case Games.CSGO: CSGOOK = ScanMarket(game); break;
-                            case Games.TF2: TF2OK = ScanMarket(game); break;
-                            case Games.Dota2: DOTA2OK = ScanMarket(game); break;
-                        }
-                    });
-                    marketsScanners.Add(marketScanner);
-                    marketScanner.Start();
+                            switch (game)
+                            {
+                                case Games.CSGO: CSGOOK = ScanMarket(game); break;
+                                case Games.TF2: TF2OK = ScanMarket(game); break;
+                                case Games.Dota2: DOTA2OK = ScanMarket(game); break;
+                            }
+                        });
+                        marketScanner.Start();
+                    }
                 }
             }
         }
