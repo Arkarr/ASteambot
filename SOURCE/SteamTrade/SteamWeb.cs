@@ -137,7 +137,7 @@ namespace SteamTrade
             // Cookies
             request.CookieContainer = _cookies;
 
-            Hashtable table = (Hashtable)request.CookieContainer.GetType().InvokeMember("m_domainTable",
+            /*Hashtable table = (Hashtable)request.CookieContainer.GetType().InvokeMember("m_domainTable",
                                                                          BindingFlags.NonPublic |
                                                                          BindingFlags.GetField |
                                                                          BindingFlags.Instance,
@@ -154,7 +154,7 @@ namespace SteamTrade
                     Console.WriteLine("Name = {0} ; Value = {1} ; Domain = {2}", cookie.Name, cookie.Value,
                                       cookie.Domain);
                 }
-            }
+            }*/
 
 
             // If the request is a GET request return now the response. If not go on. Because then we need to apply data to the request.

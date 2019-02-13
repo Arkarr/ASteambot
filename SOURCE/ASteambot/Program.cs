@@ -30,7 +30,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "8.2 - PUBLIC";
+        private static string BUILD_VERSION = "8.5 - PUBLIC";
 
         public static bool DEBUG;
 

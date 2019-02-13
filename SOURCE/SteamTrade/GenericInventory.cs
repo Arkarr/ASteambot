@@ -137,6 +137,7 @@ namespace SteamTrade
         public void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
         {
             dynamic invResponse;
+            string url = "<empty>";
             isLoaded = false;
             Dictionary<string, string> tmpAppData;
 
@@ -152,7 +153,7 @@ namespace SteamTrade
                     do
                     {
                         var data = String.IsNullOrEmpty(moreStart) ? null : new NameValueCollection {{"start", moreStart}};
-                        string url = String.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId);
+                        url = String.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId);
                         
                         string response = SteamWeb.Fetch(url, "GET", data);
                         invResponse = JsonConvert.DeserializeObject(response);
@@ -232,8 +233,8 @@ namespace SteamTrade
             }//end try
             catch (Exception e)
             {
-                Console.WriteLine(e);
                 _errors.Add("Exception: " + e.Message);
+                _errors.Add("For more infos; visit this link :\n" + url);
             }
             isLoaded = true;
         }
