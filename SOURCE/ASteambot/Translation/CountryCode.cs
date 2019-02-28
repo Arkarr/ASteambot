@@ -19,7 +19,7 @@ namespace ASteambot.Translation
             }
             else
             {
-                string country = sp.Location;
+                string country = sp.Location.Substring(sp.Location.LastIndexOf(" ") + 1);
                 country = RemoveBetween(country.Split(' ')[0], '(', ')').Trim();
 
                 var regions = CultureInfo.GetCultures(CultureTypes.SpecificCultures).Select(x => new RegionInfo(x.LCID));

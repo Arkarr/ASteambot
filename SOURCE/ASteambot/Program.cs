@@ -30,7 +30,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "8.5 - PUBLIC";
+        private static string BUILD_VERSION = "8.6 - PUBLIC";
 
         public static bool DEBUG;
 
@@ -93,7 +93,8 @@ namespace ASteambot
                         Console.ForegroundColor = ConsoleColor.Cyan;
                         Console.WriteLine("Downloading updater...");
                         Console.ForegroundColor = ConsoleColor.White;
-                        
+
+                        //https://api.github.com/repos/arkarr/asteambot/releases/latest
                         client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater.zip"));
                     }
 
