@@ -1,5 +1,6 @@
 ﻿using ASteambot.Networking;
 using ASteambot.Networking.Webinterface;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ using System.Net.Cache;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -30,7 +32,8 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "8.6 - PUBLIC";
+        private static string BUILD_VERSION = "V9.0";
+        private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
 
@@ -40,7 +43,7 @@ namespace ASteambot
 
             using (var file = File.Exists("./SEND_TO_ARKARR.log") ? File.Open("./SEND_TO_ARKARR.log", FileMode.Append) : File.Open("./SEND_TO_ARKARR.log", FileMode.CreateNew))
             using (var stream = new StreamWriter(file))
-                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_VERSION + ") LINUX : " + (IsLinux() ? "YES" : "NO") + "\n*************************\n" + ex.HResult + ex.Source + "\n" + ex.TargetSite + "\n" + ex.InnerException + "\n" + ex.HelpLink + "\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
+                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_NAME + ") LINUX : " + (IsLinux() ? "YES" : "NO") + "\n*************************\n" + ex.HResult + ex.Source + "\n" + ex.TargetSite + "\n" + ex.InnerException + "\n" + ex.HelpLink + "\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
 
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Log file (" + "SEND_TO_ARKARR.log" + ") generated ! Send it to Arkarr !!");
@@ -49,6 +52,8 @@ namespace ASteambot
 
         static void Main(string[] args)
         {
+            Console.Title = "Akarr's steambot";
+
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
             AppDomain currentDomain = default(AppDomain);
@@ -70,7 +75,7 @@ namespace ASteambot
             if(config.DisplayLocation)
                 SendLocation();
 
-            if(config.DisableAutoUpdate)
+            if (config.DisableAutoUpdate)
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine("Updater disabled. Not fetching for last updates.");
@@ -82,89 +87,127 @@ namespace ASteambot
                 Console.WriteLine("Searching for updates...");
                 Console.ForegroundColor = ConsoleColor.White;
 
-                Console.WriteLine("Creating update directory : " + Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)));
-                if (!Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater")))
-                    Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater"));
-
-                try
+                JObject json = null;
+                using (var client = new WebClient())
                 {
-                    using (var client = new WebClient())
-                    {
-                        Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine("Downloading updater...");
-                        Console.ForegroundColor = ConsoleColor.White;
+                    client.Headers.Add("Content-Type", "application/json");
+                    client.Headers.Add("User-Agent", "Super-Secret-Agent");
 
-                        //https://api.github.com/repos/arkarr/asteambot/releases/latest
-                        client.DownloadFile("https://raw.githubusercontent.com/Arkarr/ASteambot/master/BINARIES/updater/updater.zip", Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater.zip"));
-                    }
-
-                    Console.WriteLine("Extracting updater...");
-                    Console.WriteLine(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater.zip"));
-                    //ZipFile.ExtractToDirectory("updater.zip", "./updater");
-                    using (FileStream zipToOpen = new FileStream(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater.zip"), FileMode.Open))
+                    try
                     {
-                        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
-                        {
-                            foreach (ZipArchiveEntry file in archive.Entries)
-                            {
-                                string completeFileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater/", file.FullName);
-                                //file.(completeFileName, true);
-                            }
-                        }
+                        json = JObject.Parse(client.DownloadString("https://api.github.com/repos/arkarr/asteambot/releases/latest"));
                     }
-                    File.Delete("updater.zip");
+                    catch(Exception e)
+                    {
+                        Console.WriteLine("Couldn't download the last release. Too many request ? Wait about 15 minutes and try again.");
+                    }
                 }
-                catch(Exception e)
+                
+                string version = json.SelectToken("tag_name").ToString();
+
+                Console.WriteLine("Installed version " + BUILD_VERSION + " Most up-to-date version " + version);
+
+                if (BUILD_VERSION.Equals(version))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Error while downloading the updater, aborting update process.");
-                    Console.WriteLine(e.Message);
+                    Console.WriteLine("Already up to date !");
+                }
+                else
+                {
+                    Console.WriteLine("Update found ! Updating...");
+                    if (Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update")))
+                        Directory.Delete(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update"), true);
+
+                    Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update"));
+
+                    
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine("Downloading update...");
                     Console.ForegroundColor = ConsoleColor.White;
-                }
-
-                if (File.Exists(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)  + "/updater/ASteambotUpdater.exe"))
-                {
-                    var proc = new Process
+                        
+                    using (WebClient client = new WebClient())
                     {
-                        StartInfo = new ProcessStartInfo
-                        {
-                            FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater/ASteambotUpdater.exe",
-                            Arguments = BUILD_VERSION.Split(' ')[0],
-                            UseShellExecute = false,
-                            RedirectStandardOutput = true,
-                            CreateNoWindow = true
-                        }
-                    };
-
-                    proc.Start();
-
-                    bool updateRequired = false;
-                    while (!proc.StandardOutput.EndOfStream)
-                    {
-                        string line = proc.StandardOutput.ReadLine();
-                        if (line != "OK")
-                            updateRequired = true;
+                        JToken lastRealse = json.SelectToken("assets[0].browser_download_url");
+                        client.DownloadFile((string)lastRealse, Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update.zip"));
                     }
 
-                    if (updateRequired)
+                    var self = Assembly.GetExecutingAssembly().Location;
+                    string selfFileName = Path.GetFileName(self);
+                    string directory = Path.GetDirectoryName(self) + "/";
+
+                    if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
                     {
-                        Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine("Starting updater...");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine("Extracting the update...");
+                        Console.WriteLine(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update.zip"));
 
-                        Thread.Sleep(1000);
+                        ZipFile.ExtractToDirectory("update.zip", "./update");
+                        
+                        List<String> files = Directory.GetFiles(directory + "update", "*.*", SearchOption.AllDirectories).ToList();
 
-                        Console.WriteLine("Executing : " + Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater/ASteambotUpdater.exe");
+                        foreach (string file in files)
+                        {
+                            if (file.EndsWith("config.cfg"))
+                                continue;
+
+                            string updateFile = directory + Path.GetFileName(file);
+                            Console.WriteLine(file);
+                            if (File.Exists(@updateFile))
+                            {
+                                File.Delete(@updateFile);
+                            }
+                            File.Move(@file, @updateFile);
+                        }
+
+                        File.Delete("update.zip");
+                        Directory.Delete("./update", true);
+
+                        Console.WriteLine("Press a key to restart...");
+                        Console.ReadKey();
+
                         Process p = new Process();
-                        p.StartInfo.FileName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/updater/ASteambotUpdater.exe";
-                        p.StartInfo.Arguments = BUILD_VERSION.Split(' ')[0];
+                        p.StartInfo.FileName = self;
+                        p.StartInfo.UseShellExecute = false;
+                        p.StartInfo.RedirectStandardInput = true;
                         p.Start();
-
+                                
+                        Thread.Sleep(500);
                         Environment.Exit(0);
                     }
                     else
                     {
-                        Console.WriteLine("Already to the last version ! ("+ BUILD_VERSION + ")");
+                        Console.WriteLine("Extracting the update...");
+                        Console.WriteLine(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update.zip"));
+
+                        ZipFile.ExtractToDirectory("update.zip", "./update");
+
+                        using (var batFile = new StreamWriter(File.Create(directory + "Update.bat")))
+                        {
+                            batFile.WriteLine("@ECHO OFF");
+                            batFile.WriteLine("TASKKILL /IM \"{0}\" > NUL", selfFileName);
+                            batFile.WriteLine("TIMEOUT /t 5 /nobreak > NUL");
+
+                            List<String> files = Directory.GetFiles("./update", "*.*", SearchOption.AllDirectories).ToList();
+
+                            foreach (string file in files)
+                            {
+                                FileInfo mFile = new FileInfo(file);
+                                if(!mFile.Name.Contains("config.cfg"))
+                                    batFile.WriteLine("MOVE \"{0}\" \"{1}\"", @directory+"update\\" +mFile.Name, @directory+mFile.Name);
+                            }
+
+
+                            batFile.WriteLine("DEL \"%~f0\" & START /d \"{0}\" ASteambot.exe", directory);
+                        }
+
+                        ProcessStartInfo startInfo = new ProcessStartInfo(directory + "Update.bat");
+                        // Hide the terminal window
+                        startInfo.CreateNoWindow = true;
+                        startInfo.UseShellExecute = false;
+                        startInfo.WorkingDirectory = Path.GetDirectoryName(self);
+                        Process.Start(startInfo);
+                            
+                        File.Delete("update.zip");
+
+                        Environment.Exit(0);
                     }
                 }
             }
@@ -192,29 +235,27 @@ namespace ASteambot
                     File.Delete("website.zip");
                     Console.WriteLine("Done !");
                 }
-
-                if (Directory.Exists(path + "/website"))
+                
+                Console.WriteLine("I gave up for now on the webinterface. Worst idea ever.");
+                /*if (Directory.Exists(path + "/website"))
                 {
                     //Webinteface are shit anyway... Worst idea ever!
                     //httpsrv = new HTTPServer("/website", 85);
                     //Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:" + httpsrv.Port + "/index.html");
-                    Console.WriteLine("I gave up for now on the webinterface. Worst idea ever.");
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Website folder not present, can't start web interface. Re-download ASteambot from original github.");
                     Console.ForegroundColor = ConsoleColor.White;
-                }
+                }*/
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Red;
+                /*Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("HTTP Server disabled for UNIX users. Wait for a fix :) !");
-                Console.ForegroundColor = ConsoleColor.White;
+                Console.ForegroundColor = ConsoleColor.White;*/
             }
-            
-            Console.Title = "Akarr's steambot";
 
             string command = "";
             while (command != "quit")
@@ -376,7 +417,7 @@ namespace ASteambot
             Console.WriteLine("\tAll informations related to this software can be found here :");
             Console.WriteLine("\thttps://forums.alliedmods.net/showthread.php?t=273091");
             Console.WriteLine("");
-            Console.WriteLine("\tVersion " + BUILD_VERSION);
+            Console.WriteLine("\tVersion " + BUILD_NAME);
             Console.WriteLine("");
             Console.WriteLine("");
             Console.WriteLine("\tArkarr's message for you :");

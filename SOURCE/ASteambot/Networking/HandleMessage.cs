@@ -5,6 +5,7 @@ using SteamTrade.TradeOffer;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -76,8 +77,9 @@ namespace ASteambot.Networking
             }
             catch(Exception e)
             {
-                int linenum = -1;
-                try { linenum = Convert.ToInt32(e.StackTrace.Substring(e.StackTrace.LastIndexOf(' ')));  } catch { }
+                var st = new StackTrace(e, true);
+                var frame = st.GetFrame(0);
+                var line = frame.GetFileLineNumber();
 
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(e);
@@ -85,7 +87,7 @@ namespace ASteambot.Networking
                 Console.WriteLine("Full detail message [MAY CONTAIN SENSITIVE INFOS] :");
                 Console.WriteLine("SRV ID : " + gsr.ServerID + " MDL ID: " + gsr.ModuleID);
                 Console.WriteLine(gsr.Arguments);
-                Console.WriteLine("Line number : " + linenum);
+                Console.WriteLine("Line number : " + line);
                 Console.ForegroundColor = ConsoleColor.White;
             }
         }

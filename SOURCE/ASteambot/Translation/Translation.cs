@@ -23,10 +23,9 @@ namespace ASteambot.Translation
             catch(Exception e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Translation file ("+ path + ") can't be found or is corrupted ! Bot won't respond to user message. Presse a key to continue...");
+                Console.WriteLine("Translation file ("+ path + ") can't be found or is corrupted ! Bot won't respond to user message.");
                 Console.WriteLine("More infos here :");
                 Console.WriteLine(e.Message);
-                Console.ReadKey();
                 Console.ForegroundColor = ConsoleColor.White;
                 return false;
             }
