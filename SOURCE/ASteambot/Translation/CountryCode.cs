@@ -13,27 +13,43 @@ namespace ASteambot.Translation
     {
         public static string GetCountryCode(SteamProfileInfos sp)
         {
-            if (sp == null)
+            try
             {
-                return "en";
-            }
-            else
-            {
-                string country = sp.Location.Substring(sp.Location.LastIndexOf(" ") + 1);
-                country = RemoveBetween(country.Split(' ')[0], '(', ')').Trim();
-
-                var regions = CultureInfo.GetCultures(CultureTypes.SpecificCultures).Select(x => new RegionInfo(x.LCID));
-                RegionInfo englishRegion = regions.FirstOrDefault(region => region.EnglishName.Contains(country));
-
-                if (englishRegion == null)
+                if (sp == null)
                 {
-                    Console.WriteLine("Country \"" + country + "\" not found !");
                     return "en";
                 }
                 else
                 {
-                    return englishRegion.TwoLetterISORegionName.ToLower();
+                    string country = sp.Location.Substring(sp.Location.LastIndexOf(" ") + 1);
+                    country = RemoveBetween(country.Split(' ')[0], '(', ')').Trim();
+
+                    var regions = CultureInfo.GetCultures(CultureTypes.SpecificCultures).Select(x => new RegionInfo(x.LCID));
+                    RegionInfo englishRegion = regions.FirstOrDefault(region => region.EnglishName.Contains(country));
+
+                    if (englishRegion == null)
+                    {
+                        Console.WriteLine("Country \"" + country + "\" not found !");
+                        return "en";
+                    }
+                    else
+                    {
+                        return englishRegion.TwoLetterISORegionName.ToLower();
+                    }
                 }
+            }
+            catch(Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error while fetching country code. Assumed 'en'. Details here : ");
+                if (sp.Location == null)
+                    Console.WriteLine("Location null !");
+                else
+                    Console.WriteLine("Faulty country >>> " + sp.Location.Substring(sp.Location.LastIndexOf(" ") + 1));
+                Console.WriteLine("Send to Arkarr please!");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return "en";
             }
         }
 
