@@ -589,6 +589,8 @@ namespace ASteambot
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Error while reading the steam level of own profile. DEBUG: " + steamClient);
+                    Console.WriteLine("Is steam profile configured ?");
+                    Console.ForegroundColor = ConsoleColor.White;
                     maxfriendCount = 250;
                 }
             }
