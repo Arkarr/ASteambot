@@ -85,6 +85,8 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutoUpdater\Option.cs" />
+    <Compile Include="AutoUpdater\Updater.cs" />
     <Compile Include="Bot.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Networking\DataQueue.cs" />

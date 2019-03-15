@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -111,22 +111,22 @@ namespace ASteambot
 
         private bool ValidateConfig()
         {
-            if (SteamUsername.Length == 0) return false;
-            if (SteamPassword.Length == 0) return false;
-            if (SteamAPIKey.Length == 0) return false;
-            if (SteamAdmins.Length == 0) return false;
-            if (DatabaseServer.Length == 0) return false;
-            if (DatabaseUser.Length == 0) return false;
-            if (DatabasePassword.Length == 0) return false;
-            if (DatabaseName.Length == 0) return false;
-            if (DatabasePort.Length == 0) return false;
-            if (TCPServerPort.Length == 0) return false;
-            if (TCPPassword.Length == 0) return false;
-            if (ArkarrAPIKey.Length == 0) return false;
+            if (SteamUsername == null || SteamUsername.Length == 0) return false;
+            if (SteamPassword == null || SteamPassword.Length == 0) return false;
+            if (SteamAPIKey == null || SteamAPIKey.Length == 0) return false;
+            if (SteamAdmins == null || SteamAdmins.Length == 0) return false;
+            if (DatabaseServer == null || DatabaseServer.Length == 0) return false;
+            if (DatabaseUser == null || DatabaseUser.Length == 0) return false;
+            if (DatabasePassword == null || DatabasePassword.Length == 0) return false;
+            if (DatabaseName == null || DatabaseName.Length == 0) return false;
+            if (DatabasePort == null || DatabasePort.Length == 0) return false;
+            if (TCPServerPort == null || TCPServerPort.Length == 0) return false;
+            if (TCPPassword == null || TCPPassword.Length == 0) return false;
+            if (ArkarrAPIKey == null || ArkarrAPIKey.Length == 0) return false;
 
             return true;
         }
-        
+
         private bool IsValidTCPPassword(string pswd)
         {
             foreach (char c in pswd)
