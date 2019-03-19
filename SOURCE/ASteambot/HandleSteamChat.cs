@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static ASteambot.SteamProfile;
 
@@ -129,9 +130,24 @@ namespace ASteambot
 
             SteamProfileInfos spi = bot.GetSteamProfileInfo(partenar);
 
-            string sentences = String.Format(bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi)), data);
+            string sentences = "";
+            try
+            {
+                sentences = String.Format(bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi)), data);
+            }
+            catch(Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(ex);
+                Console.ForegroundColor = ConsoleColor.White;
+                sentences = "Error while loading the response... Sorry!";
+            }
+
             foreach (string s in sentences.Split(new string[] { "\\n" }, StringSplitOptions.None))
+            {
+                //Timeout to prevent spam here.
                 SendChatMessage(partenar, s);
+            }
         }
 
         private void ExecuteServerCommand(SteamID partenar, string message)

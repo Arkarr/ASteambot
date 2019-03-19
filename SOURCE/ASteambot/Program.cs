@@ -21,7 +21,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V9.2";
+        private static string BUILD_VERSION = "V9.3";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -110,8 +110,7 @@ namespace ASteambot
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("HTTP Server disabled for UNIX users. Wait for a fix :) !");
                 Console.ForegroundColor = ConsoleColor.White;
-            }
-            */
+            }*/
 
            Console.WriteLine("I gave up for now on the webinterface. Worst idea ever.");
 

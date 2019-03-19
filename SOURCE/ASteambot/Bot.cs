@@ -292,24 +292,33 @@ namespace ASteambot
 
         public void AcceptMobileTradeConfirmation(string offerId)
         {
-            steamGuardAccount.Session.SteamLogin = SteamWeb.Token;
-            steamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
-
             try
             {
-                foreach (var confirmation in steamGuardAccount.FetchConfirmations())
+                steamGuardAccount.Session.SteamLogin = SteamWeb.Token;
+                steamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
+
+                try
                 {
-                    if (confirmation.ConfType == Confirmation.ConfirmationType.Trade)
+                    foreach (var confirmation in steamGuardAccount.FetchConfirmations())
                     {
-                        long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
-                        if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
-                            Console.WriteLine("Confirmed trade. (Confirmation ID #" + confirmation.ID + ")");
+                        if (confirmation.ConfType == Confirmation.ConfirmationType.Trade)
+                        {
+                            long confID = steamGuardAccount.GetConfirmationTradeOfferID(confirmation);
+                            if (confID == long.Parse(offerId) && steamGuardAccount.AcceptConfirmation(confirmation))
+                                Console.WriteLine("Confirmed trade. (Confirmation ID #" + confirmation.ID + ")");
+                        }
                     }
                 }
+                catch (SteamGuardAccount.WGTokenInvalidException)
+                {
+                    Console.WriteLine("Invalid session when trying to fetch trade confirmations.");
+                }
             }
-            catch (SteamGuardAccount.WGTokenInvalidException)
+            catch(Exception e)
             {
-                 Console.WriteLine("Invalid session when trying to fetch trade confirmations.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Couldn't find steam auth data. Did you linked the bot steam account to steamguard with ASteambot ?");
+                Console.ForegroundColor = ConsoleColor.White;
             }
         }
 
