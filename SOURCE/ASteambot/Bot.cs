@@ -161,11 +161,11 @@ namespace ASteambot
         private Thread tradeOfferThread;
         private BackgroundWorker botThread;
         private HandleMessage messageHandler;
-        private AsynchronousSocketListener socket;
+        private TCPInterface socket;
         private SteamGuardAccount steamGuardAccount;
         private List<SteamProfile> steamprofiles;
 
-        public Bot(Manager manager, LoginInfo loginInfo, Config Config, AsynchronousSocketListener socket)
+        public Bot(Manager manager, LoginInfo loginInfo, Config Config, TCPInterface socket)
         {
             this.socket = socket;
             this.Config = Config;

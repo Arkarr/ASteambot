@@ -84,6 +84,8 @@ namespace ASteambot
                     DisableAutoUpdate = line.Replace("DisableUpdater=", "").Equals("YES");
                 else if (line.StartsWith("DisplayLocation="))
                     DisplayLocation = line.Replace("DisplayLocation=", "").Equals("YES");
+                else if (line.StartsWith("DebugInformation="))
+                    Program.DEBUG = line.Replace("DebugInformation=", "").Equals("YES");
             }
 
             if (!ValidateConfig())

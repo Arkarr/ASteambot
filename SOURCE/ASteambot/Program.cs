@@ -21,7 +21,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V9.3";
+        private static string BUILD_VERSION = "V9.4";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -41,6 +41,8 @@ namespace ASteambot
 
         static void Main(string[] args)
         {
+            DEBUG = false;
+
             Console.Title = "Akarr's steambot";
 
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");

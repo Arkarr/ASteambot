@@ -254,7 +254,7 @@ namespace SteamTrade
             {
                 IsTradeThreadRunning = true;
 
-                DebugPrint ("Trade thread starting.");
+                //DebugPrint ("Trade thread starting.");
                 
                 // main thread loop for polling
                 try
@@ -360,8 +360,7 @@ namespace SteamTrade
             }
             return false;
         }
-
-        [Conditional ("DEBUG_TRADE_MANAGER")]
+        
         private static void DebugPrint (string output)
         {
             // I don't really want to add the Logger as a dependecy to TradeManager so I 

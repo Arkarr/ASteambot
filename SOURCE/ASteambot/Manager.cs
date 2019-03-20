@@ -23,7 +23,7 @@ namespace ASteambot
 
         private bool Running;
         private List<Bot> bots;
-        private AsynchronousSocketListener socketServer;
+        private TCPInterface socketServer;
         private Thread threadSocket;
 
         public Manager(Config Config)
@@ -69,7 +69,7 @@ namespace ASteambot
         private void StartSocketServer(int port)
         {
             Console.WriteLine("Starting TCP server on port {0}", port);
-            socketServer = new AsynchronousSocketListener(port, Config.TCPPassword);
+            socketServer = new TCPInterface(port, Config.TCPPassword);
             threadSocket = new Thread(new ThreadStart(socketServer.StartListening));
             threadSocket.CurrentUICulture = new CultureInfo("en-US");
             threadSocket.Start();
@@ -174,9 +174,6 @@ namespace ASteambot
                 return;
             }
 
-            //int index = Int32.Parse(args[1]);
-
-            //SteamTrade.SteamMarket.Item item = SelectedBot.ArkarrSteamMarket.GetItemByID(index);
             string itemName = "";
             for (int i = 1; i < args.Length; i++)
             {

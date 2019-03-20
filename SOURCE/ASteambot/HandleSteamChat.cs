@@ -126,13 +126,12 @@ namespace ASteambot
 
         private void PrintChatMessage(SteamID partenar, string message, string[] data = null)
         {
+            string sentences = "";
             data = data ?? new string[0];
 
-            SteamProfileInfos spi = bot.GetSteamProfileInfo(partenar);
-
-            string sentences = "";
             try
             {
+                SteamProfileInfos spi = bot.GetSteamProfileInfo(partenar);
                 sentences = String.Format(bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi)), data);
             }
             catch(Exception ex)
