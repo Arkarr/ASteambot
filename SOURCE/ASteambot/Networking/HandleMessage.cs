@@ -91,6 +91,16 @@ namespace ASteambot.Networking
                 Console.ForegroundColor = ConsoleColor.White;
             }
         }
+        
+        private SteamID GetSteamIDFromString(string ssID)
+        {
+            if (ssID.StartsWith("STEAM_"))
+                return new SteamID(ssID);
+            else if (ssID.Trim('[').Trim(']').StartsWith("U:"))
+                return new SteamID(ssID);
+            else
+                return new SteamID(ulong.Parse(ssID));
+        }
 
         private void RegisterBot(Bot bot, GameServerRequest gsr)
         {
@@ -122,8 +132,8 @@ namespace ASteambot.Networking
             GameServer gs = bot.Manager.GetServerByID(gsr.ServerID);
 
             string[] ids = gsr.Arguments.Split('/');
-            SteamID steamID = new SteamID(ids[0]);
-            SteamID reportedDude = new SteamID(ids[1]);
+            SteamID steamID = GetSteamIDFromString(ids[0]);
+            SteamID reportedDude = GetSteamIDFromString(ids[1]);
 
             SteamProfileInfos spGuy = bot.GetSteamProfileInfo(steamID);
             SteamProfileInfos spDude = bot.GetSteamProfileInfo(reportedDude);
@@ -190,7 +200,7 @@ namespace ASteambot.Networking
             if (bot.ArkarrSteamMarket == null)
                 bot.ArkarrSteamMarket = new SteamMarket(bot.Config.ArkarrAPIKey, bot.Config.DisableMarketScan, bot.SteamWeb);
             
-            SteamID steamID = new SteamID(gsr.Arguments);
+            SteamID steamID = GetSteamIDFromString(gsr.Arguments);
 
             if (!bot.Friends.Contains(steamID.ConvertToUInt64()))
             {
@@ -277,7 +287,7 @@ namespace ASteambot.Networking
             string[] assetIDs = null;
             string[] myAssetIDs = null;
             string[] steamIDitems = message.Split('/');
-            SteamID steamid = new SteamID(steamIDitems[0]);
+            SteamID steamid = GetSteamIDFromString(steamIDitems[0]);
 
             TradeOffer to = bot.TradeOfferManager.NewOffer(steamid);
 
@@ -385,13 +395,13 @@ namespace ASteambot.Networking
 
         private void SendFriendInvitation(Bot bot, GameServerRequest gsr)
         {
-            SteamID steamID = new SteamID(gsr.Arguments);
+            SteamID steamID = GetSteamIDFromString(gsr.Arguments);
             if (steamID.IsValid)
                 bot.SteamFriends.AddFriend(steamID.ConvertToUInt64());
         }
 
         private void SendSteamID(Bot bot, GameServerRequest gsr)
-        {;
+        {
             bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.SteamID, bot.getSteamID().ConvertToUInt64().ToString());
         }
 
@@ -403,8 +413,8 @@ namespace ASteambot.Networking
 
             if (steamIDgroupID.Length == 2)
             {
-                SteamID steamID = new SteamID(steamIDgroupID[0]);
-                SteamID groupID = new SteamID(ulong.Parse(steamIDgroupID[1]));
+                SteamID steamID = GetSteamIDFromString(steamIDgroupID[0]);
+                SteamID groupID = GetSteamIDFromString(steamIDgroupID[1]);
                 if (steamID.IsValid)
                 {
                     if (bot.Friends.Contains(steamID.ConvertToUInt64()))
@@ -454,7 +464,7 @@ namespace ASteambot.Networking
         private void SendChatMessage(Bot bot, GameServerRequest gsr)
         {
             string[] steamID_msg = gsr.Arguments.Split(new char[] { '/' }, 2);
-            SteamID steamID = new SteamID(steamID_msg[0]);
+            SteamID steamID = GetSteamIDFromString(steamID_msg[0]);
 
             if (steamID == null)
             {

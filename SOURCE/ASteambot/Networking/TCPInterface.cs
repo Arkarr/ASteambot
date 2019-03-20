@@ -7,13 +7,14 @@ using System.Net.Sockets;
 
 namespace ASteambot.Networking
 {
-    public class AsynchronousSocketListener
+    public class TCPInterface
     {
         public int Port { get; private set; }
         public bool Running { get; private set; }
         public event EventHandler<EventArgGameServer> MessageReceived;
 
         private string password;
+        private string data;
 
         protected virtual void OnMessageReceived(EventArgGameServer e)
         {
@@ -25,36 +26,24 @@ namespace ASteambot.Networking
 
         private void HandleMessage(Socket handler, string content)
         {
-            Console.WriteLine(content);
+            if(Program.DEBUG)
+                Console.WriteLine("Received message from server :\n"+content+"\n\n");
 
             if (!content.StartsWith(password))
                 return;
+            
+            content = content.Replace(password, "");
 
-            //Must be always true :
-            if (content.EndsWith("<EOF>"))
-            {
-                content = content.Replace(password, "");
-                content = content.Substring(0, content.Length - 5);
+            string[] codeargsdata = content.Split(new char[] { '&' }, 2);
 
-                string[] codeargsdata = content.Split(new char[] { '&' }, 2);
+            string[] idmsgtype = codeargsdata[0].Split(new char[] { '|' }, 2);
 
-                string[] idmsgtype = codeargsdata[0].Split(new char[] { '|' }, 2);
+            codeargsdata[1] = codeargsdata[1].Replace("\0", string.Empty);
 
-                codeargsdata[1] = codeargsdata[1].Replace("\0", string.Empty);
+            GameServerRequest gsr = new GameServerRequest(handler, idmsgtype[0], idmsgtype[1], codeargsdata[1]);
 
-                Console.WriteLine("Data :\n" + codeargsdata[1]);
-
-                GameServerRequest gsr = new GameServerRequest(handler, idmsgtype[0], idmsgtype[1], codeargsdata[1]);
-
-                EventArgGameServer arg = new EventArgGameServer(gsr);
-                OnMessageReceived(arg);
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Received message, but it's incomplete/not correctly formated !");
-                Console.ForegroundColor = ConsoleColor.White;
-            }
+            EventArgGameServer arg = new EventArgGameServer(gsr);
+            OnMessageReceived(arg);
         }
 
         public void Stop()
@@ -62,10 +51,11 @@ namespace ASteambot.Networking
             Running = false;
         }
 
-        public AsynchronousSocketListener(int port, string password)
+        public TCPInterface(int port, string password)
         {
             Port = port;
             this.password = password;
+            this.data = "";
         }
 
         public void StartListening()
@@ -163,15 +153,56 @@ namespace ASteambot.Networking
                 {
                     state.sb.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead).Replace("\0", String.Empty));
 
-                    if (state.sb.ToString().EndsWith("<EOF>"))
+                    /*Dirty :
+                    //if (state.sb.ToString().EndsWith("<EOF>"))
                     {
                         HandleMessage(handler, state.sb.ToString());
                         state.sb.Clear();
+                    }*/
+
+                    //Fulll message<EOF>
+                    // message<EOF>
+                    //Full Message<EOF>FUll
+                    //<EOF>
+
+                    if (state.sb.ToString().Contains("<EOF>"))
+                    {
+                        bool lastMessageFinished = false;
+                        if (state.sb.ToString().EndsWith("<EOF>"))
+                            lastMessageFinished = true;
+
+                        string[] msg = state.sb.ToString().Split(new string[] { "<EOF>" }, StringSplitOptions.None);
+
+                        for(int i = 0; i < msg.Length; i++)
+                        {
+                            if (i < msg.Length - 1)
+                            {
+                                string finalMsg = data + msg[i];
+
+                                HandleMessage(handler, finalMsg);
+                            }
+
+                            if (i == msg.Length - 1 && lastMessageFinished)
+                            {
+                                string finalMsg = data + msg[i];
+
+                                HandleMessage(handler, finalMsg);
+                            }
+                            else
+                            {
+                                data = msg[i];
+                            }
+
+                            if (i == 0)
+                                data = "";
+                        }
+
+                        state.sb.Clear();
                     }
 
-                    handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                    new AsyncCallback(ReadCallback), state);
+                    handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReadCallback), state);
                 }
+
             }
             catch (SocketException ex) { Console.WriteLine(ex.Message); }
             /*catch (Exception e)

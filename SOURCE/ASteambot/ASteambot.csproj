@@ -95,7 +95,7 @@
     <Compile Include="HandleSteamChat.cs" />
     <Compile Include="Manager.cs" />
     <Compile Include="LoginInfo.cs" />
-    <Compile Include="Networking\AsynchronousSocketListener.cs" />
+    <Compile Include="Networking\TCPInterface.cs" />
     <Compile Include="Networking\Database.cs" />
     <Compile Include="Networking\EventArgGameServer.cs" />
     <Compile Include="Networking\GameServerRequest.cs" />
