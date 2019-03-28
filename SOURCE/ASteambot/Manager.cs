@@ -10,6 +10,7 @@ using System.Threading;
 using System.Web;
 using System.Globalization;
 using ASteambot.SteamMarketUtility;
+using System.IO;
 
 namespace ASteambot
 {
@@ -349,26 +350,49 @@ namespace ASteambot
             Select(data);
         }
 
-        public void Auth(LoginInfo loginInfo)
+        public bool Auth(LoginInfo loginInfo)
         {
-            Bot result = bots.Find(x => x.LoginInfoMatch(loginInfo) == true);
-
-            if (result == null)
+            try
             {
-                while (socketServer == null || !socketServer.Running)
-                    Thread.Sleep(2000);
+                Bot result = bots.Find(x => x.LoginInfoMatch(loginInfo) == true);
 
-                result = new Bot(this, loginInfo, Config, socketServer);
-                lock (bots) { bots.Add(result); }
+                if (result == null)
+                {
+                    while (socketServer == null || !socketServer.Running)
+                        Thread.Sleep(2000);
+
+                    result = new Bot(this, loginInfo, Config, socketServer);
+                    lock (bots) { bots.Add(result); }
+                }
+
+                result.Auth();
             }
+            catch(FileNotFoundException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("DLL is missing. Re-Download ASteambot from the original repository :");
+                Console.WriteLine("https://github.com/Arkarr/ASteambot/releases/latest");
+                Console.WriteLine("Also read this :");
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("https://www.reddit.com/r/SteamBot/comments/3h3xau/steamtradedll_shows_up_as_a_virus/");
+                Console.WriteLine("https://www.reddit.com/r/SteamBot/comments/2ynxv6/steamtradedll_missing/");
+                Console.WriteLine("https://forums.alliedmods.net/showpost.php?p=2352454&postcount=8");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("More info below :");
+                Console.WriteLine("DLL missing : " + e.FileName);
+                Console.WriteLine("ASteambot won't continue.");
+                Console.ForegroundColor = ConsoleColor.White;
 
-            result.Auth();
+                return false;
+            }
 
             if (SelectedBot == null)
             {
                 //SelectedBot = result;
                 Console.Title = "Akarr's steambot - [NO STEAMBOT SELECTED USE 'select']";
             }
+
+            return true;
         }
 
         public bool Send(int serverID, int moduleID, NetworkCode.ASteambotCode netcode, string data)
