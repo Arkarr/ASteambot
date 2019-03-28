@@ -182,7 +182,7 @@ namespace ASteambot.Networking
                                 HandleMessage(handler, finalMsg);
                             }
 
-                            if (i == msg.Length - 1 && lastMessageFinished)
+                            if (i == msg.Length - 1 && lastMessageFinished && msg[i].Length > 0)
                             {
                                 string finalMsg = data + msg[i];
 
