@@ -71,6 +71,9 @@ namespace SteamTrade
             // Reading the response as stream and read it to the end. After that happened return the result as string.
             using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError))
             {
+                if (response == null)
+                    return String.Empty;
+
                 using (Stream responseStream = response.GetResponseStream())
                 {
                     // If the response stream is null it cannot be read. So return an empty string.
@@ -160,7 +163,14 @@ namespace SteamTrade
             // If the request is a GET request return now the response. If not go on. Because then we need to apply data to the request.
             if (isGetMethod || string.IsNullOrEmpty(dataString))
             {
-                return request.GetResponse() as HttpWebResponse;
+                try
+                {
+                    return null;// request.GetResponse() as HttpWebResponse;
+                }
+                catch (WebException ex)
+                {
+                    return null;
+                }
             }
 
             // Write the data to the body for POST and other methods.

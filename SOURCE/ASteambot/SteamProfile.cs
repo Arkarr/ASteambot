@@ -16,6 +16,10 @@ namespace ASteambot
             get
             {
                 infos = LoadSteamProfile(steamWeb, this.steamID);
+
+                if (infos == null)
+                    infos = new SteamProfileInfos();
+
                 return infos;
             }
             private set

@@ -1,3 +1,4 @@
+using SteamKit2;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,7 +14,7 @@ namespace ASteambot
         public string SteamUsername { get; private set; }
         public string SteamPassword { get; private set; }
         public string SteamAPIKey { get; private set; }
-        public string SteamAdmins { get; private set; }
+        public List<SteamID> SteamAdmins { get; private set; }
         public string DatabaseServer { get; private set; }
         public string DatabaseUser { get; private set; }
         public string DatabasePassword { get; private set; }
@@ -53,7 +54,7 @@ namespace ASteambot
                 else if (line.StartsWith("steam_apikey="))
                     SteamAPIKey = line.Replace("steam_apikey=", "");
                 else if (line.StartsWith("steam_admins="))
-                    SteamAdmins = line.Replace("steam_admins=", "");
+                    SteamAdmins = ValidateSteamID(line.Replace("steam_admins=", ""));
                 else if (line.StartsWith("database_server="))
                     DatabaseServer = line.Replace("database_server=", "");
                 else if (line.StartsWith("database_user="))
@@ -113,10 +114,10 @@ namespace ASteambot
 
         private bool ValidateConfig()
         {
+            if (SteamAdmins == null) return false;
             if (SteamUsername == null || SteamUsername.Length == 0) return false;
             if (SteamPassword == null || SteamPassword.Length == 0) return false;
             if (SteamAPIKey == null || SteamAPIKey.Length == 0) return false;
-            if (SteamAdmins == null || SteamAdmins.Length == 0) return false;
             if (DatabaseServer == null || DatabaseServer.Length == 0) return false;
             if (DatabaseUser == null || DatabaseUser.Length == 0) return false;
             if (DatabasePassword == null || DatabasePassword.Length == 0) return false;
@@ -127,6 +128,38 @@ namespace ASteambot
             if (ArkarrAPIKey == null || ArkarrAPIKey.Length == 0) return false;
 
             return true;
+        }
+
+        private List<SteamID> ValidateSteamID(string steamIDs)
+        {
+            List<SteamID> validateIDS = new List<SteamID>();
+            string[] steamID = steamIDs.Split(',');
+
+            foreach (string sid in steamID)
+            {
+                SteamID id = null;
+                ulong longID;
+                if (sid.Contains("STEAM_"))
+                    id = new SteamID(sid);
+                else if (ulong.TryParse(sid, out longID))
+                    id = new SteamID(longID);
+
+                if (id != null && id.IsValid && !validateIDS.Contains(id))
+                    validateIDS.Add(id);
+            }
+
+            return validateIDS;
+        }
+
+        public bool IsAdmin(SteamID target)
+        {
+            foreach(SteamID id in SteamAdmins)
+            {
+                if (id.Equals(target))
+                    return true;
+            }
+
+            return false;
         }
 
         private bool IsValidTCPPassword(string pswd)

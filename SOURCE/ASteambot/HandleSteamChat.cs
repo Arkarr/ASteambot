@@ -21,9 +21,9 @@ namespace ASteambot
 
         public void HandleMessage(SteamID partenar, string msg)
         {
-            if (!bot.Manager.Config.SteamAdmins.Contains(partenar.ToString()))
+            if (!bot.Config.IsAdmin(partenar))
             {
-                if (!bot.Manager.Config.SteamAdmins.Contains(partenar.ConvertToUInt64().ToString()))
+                if (!bot.Config.IsAdmin(partenar))
                     return;
             }
 
