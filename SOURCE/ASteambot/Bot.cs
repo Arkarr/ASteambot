@@ -23,6 +23,24 @@ namespace ASteambot
 {
     public class Bot
     {
+        private bool stop;
+        private Database DB;
+        private bool renaming;
+        private string myUniqueId;
+        private int maxfriendCount;
+        private string myUserNonce;
+        private LoginInfo loginInfo;
+        private SteamUser steamUser;
+        private TCPInterface socket;
+        private List<string> finishedTO;
+        private SteamClient steamClient;
+        private Thread tradeOfferThread;
+        private CallbackManager cbManager;
+        private BackgroundWorker botThread;
+        private HandleMessage messageHandler;
+        private List<SteamProfile> steamprofiles;
+        private SteamGuardAccount steamGuardAccount;
+
         public string Name { get; private set; }
         public SteamProfile.SteamProfileInfos SteamProfileInfo { get; private set; }
         public bool Running { get; private set; }
@@ -146,24 +164,6 @@ namespace ASteambot
                 inventoryValue = value;
             }
         }
-
-        private bool stop;
-        private Database DB;
-        private bool renaming;
-        private string myUniqueId;
-        private int maxfriendCount;
-        private string myUserNonce;
-        private LoginInfo loginInfo;
-        private SteamUser steamUser;
-        private List<string> finishedTO;
-        private SteamClient steamClient;
-        private CallbackManager cbManager;
-        private Thread tradeOfferThread;
-        private BackgroundWorker botThread;
-        private HandleMessage messageHandler;
-        private TCPInterface socket;
-        private SteamGuardAccount steamGuardAccount;
-        private List<SteamProfile> steamprofiles;
 
         public Bot(Manager manager, LoginInfo loginInfo, Config Config, TCPInterface socket)
         {
@@ -574,7 +574,7 @@ namespace ASteambot
                 Random rnd = new Random();
                 int unluckyDude = 0;
                 SteamID steamID = Friends[unluckyDude];
-                while (newFriends.Contains(steamID) && !Config.SteamAdmins.Contains(steamID.ConvertToUInt64().ToString()))
+                while (newFriends.Contains(steamID) && !Config.IsAdmin(steamID))
                 {
                     unluckyDude = rnd.Next(Friends.Count);
                     steamID = Friends[unluckyDude];
@@ -1028,7 +1028,7 @@ namespace ASteambot
 
         private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
         {
-            if (callback.EntryType == EChatEntryType.ChatMsg && Config.SteamAdmins.Contains(callback.Sender.ToString()))
+            if (callback.EntryType == EChatEntryType.ChatMsg && Config.IsAdmin(callback.Sender))
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
         }
 

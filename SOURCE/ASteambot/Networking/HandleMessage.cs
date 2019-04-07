@@ -148,7 +148,7 @@ namespace ASteambot.Networking
 
                 foreach (SteamID steamid in bot.Friends)
                 {
-                    if (bot.Config.SteamAdmins.Contains(steamid.ToString()) || bot.Config.SteamAdmins.Contains(steamid.ConvertToUInt64().ToString()))
+                    if (bot.Config.IsAdmin(steamid) || bot.Config.IsAdmin(steamid))
                     {
                         bot.SteamFriends.SendChatMessage(steamid, EChatEntryType.ChatMsg, firstMsg);
                         Thread.Sleep(100);
