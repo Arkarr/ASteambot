@@ -165,7 +165,7 @@ namespace SteamTrade
             {
                 try
                 {
-                    return null;// request.GetResponse() as HttpWebResponse;
+                    return request.GetResponse() as HttpWebResponse;
                 }
                 catch (WebException ex)
                 {
