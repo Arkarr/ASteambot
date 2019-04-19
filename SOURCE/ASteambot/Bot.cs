@@ -11,10 +11,8 @@ using System.Security.Cryptography;
 using ASteambot.SteamGroups;
 using ASteambot.Networking;
 using System.Net;
-using System.Net.Sockets;
 using System.Globalization;
 using CsQuery;
-using static ASteambot.SteamProfile;
 using System.Reflection;
 using ASteambot.SteamMarketUtility;
 using SteamKit2;
@@ -42,7 +40,7 @@ namespace ASteambot
         private SteamGuardAccount steamGuardAccount;
 
         public string Name { get; private set; }
-        public SteamProfile.SteamProfileInfos SteamProfileInfo { get; private set; }
+        public SteamProfile.Infos SteamProfileInfo { get; private set; }
         public bool Running { get; private set; }
         public Config Config { get; private set; }
         public bool LoggedIn { get; private set; }
@@ -126,7 +124,7 @@ namespace ASteambot
                         TradeOffer to;
                         if (TradeOfferManager.TryGetOffer(values[i][rows[0]], out to))
                         {
-                            SteamProfileInfos spi = GetSteamProfileInfo(to.PartnerSteamId);
+                            SteamProfile.Infos spi = GetSteamProfileInfo(to.PartnerSteamId);
 
                             lastTradeInfos.Add(new TradeOfferInfo(spi.CustomURL, spi.Name, spi.AvatarFull, to.TradeOfferId, to.OfferState));
                         }
@@ -197,7 +195,7 @@ namespace ASteambot
             socket.MessageReceived += Socket_MessageReceived;
 
             Translation = new Translation.Translation();
-            Translation.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/steamchattexts.xml");
+            Translation.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/configs/steamchattexts.xml");
         }
         
         public void SubscribeToEvents()
@@ -340,7 +338,7 @@ namespace ASteambot
 
         private string GetMobileAuthCode()
         {
-            var authFile = String.Format("{0}.auth", loginInfo.Username);
+            var authFile = String.Format("auth/{0}.auth", loginInfo.Username);
             if (File.Exists(authFile))
             {
                 steamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamGuardAccount>(File.ReadAllText(authFile));
@@ -426,7 +424,7 @@ namespace ASteambot
                     steamGuardAccount = authLinker.LinkedAccount;
                     try
                     {
-                        var authFile = String.Format("{0}.auth", loginInfo.Username);
+                        var authFile = String.Format("auth/{0}.auth", loginInfo.Username);
                         Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "authfiles"));
                         File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(steamGuardAccount));
                         Console.WriteLine("Enter SMS code :");
@@ -1037,7 +1035,7 @@ namespace ASteambot
             Console.WriteLine("Updating sentryfile...");
             int fileSize;
             byte[] sentryHash;
-            using (var fs = File.Open(loginInfo.SentryFileName, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+            using (var fs = File.Open("auth/"+loginInfo.SentryFileName, FileMode.OpenOrCreate, FileAccess.ReadWrite))
             {
                 fs.Seek(callback.Offset, SeekOrigin.Begin);
                 fs.Write(callback.Data, 0, callback.BytesToWrite);
@@ -1280,20 +1278,20 @@ namespace ASteambot
             }
         }
 
-        public SteamProfileInfos GetSteamProfileInfo(SteamID steamID)
+        public SteamProfile.Infos GetSteamProfileInfo(SteamID steamID)
         {
-            SteamProfile sp = steamprofiles.Find(x => x.Infos.SteamID64.Equals(steamID.ConvertToUInt64().ToString()));
+            SteamProfile sp = steamprofiles.Find(x => x.Informations.SteamID64.Equals(steamID));
             if (sp == null)
             {
                 SteamProfile steamProfile = new SteamProfile(SteamWeb, steamID);
-                SteamProfileInfos spi = steamProfile.Infos;
+                SteamProfile.Infos spi = steamProfile.Informations;
                 steamprofiles.Add(steamProfile);
 
                 return spi;
             }
             else
             {
-                return sp.Infos;
+                return sp.Informations;
             }
         }
 

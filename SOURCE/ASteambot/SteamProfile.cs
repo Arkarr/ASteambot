@@ -9,32 +9,19 @@ namespace ASteambot
     public class SteamProfile
     {
         public DateTime LastTimeRefreshed { get; private set; }
-
-        private SteamProfileInfos infos;
-        public SteamProfileInfos Infos
-        {
-            get
-            {
-                infos = LoadSteamProfile(steamWeb, this.steamID);
-
-                if (infos == null)
-                    infos = new SteamProfileInfos();
-
-                return infos;
-            }
-            private set
-            {
-                infos = value;
-            }
-        }
-
+        
+        public Infos Informations;
+        
         private SteamTrade.SteamWeb steamWeb;
         private SteamID steamID;
+        private Infos backup;
 
         public SteamProfile(SteamTrade.SteamWeb steamWeb, SteamID steamID)
         {
             this.steamWeb = steamWeb;
             this.steamID = steamID;
+
+            Informations = LoadSteamProfile(steamWeb, this.steamID);
         }
 
         [XmlRoot(ElementName = "mostPlayedGame")]
@@ -66,7 +53,7 @@ namespace ASteambot
         }
 
         [XmlRoot(ElementName = "profile")]
-        public class SteamProfileInfos
+        public class Infos
         {
             [XmlElement(ElementName = "steamID64")]
             public string SteamID64 { get; set; }
@@ -112,9 +99,7 @@ namespace ASteambot
             public MostPlayedGames MostPlayedGames { get; set; }
         }
 
-        private SteamProfileInfos backup;
-
-        private SteamProfileInfos LoadSteamProfile(SteamTrade.SteamWeb steamWeb, SteamID steamID)
+        private Infos LoadSteamProfile(SteamTrade.SteamWeb steamWeb, SteamID steamID)
         {
             if (LastTimeRefreshed == null || (DateTime.Now - LastTimeRefreshed).TotalMinutes > 5)
             {
@@ -128,10 +113,10 @@ namespace ASteambot
                     if (index != -1)
                     {
                         response = response.Substring(index);
-                        XmlSerializer serializer = new XmlSerializer(typeof(SteamProfileInfos));
+                        XmlSerializer serializer = new XmlSerializer(typeof(Infos));
                         using (TextReader reader = new StringReader(response))
                         {
-                            backup = (SteamProfileInfos)serializer.Deserialize(reader);
+                            backup = (Infos)serializer.Deserialize(reader);
                             return backup;
                         }
                     }

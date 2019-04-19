@@ -67,7 +67,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.ComponentModel, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
@@ -116,6 +115,9 @@
     <Compile Include="Translation\Translation.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -127,7 +129,7 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName) == Release C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\as_ver.exe</PostBuildEvent>
+    <PostBuildEvent></PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>
@@ -140,4 +142,21 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <MoveToLibFolder Include="$(OutputPath)*.dll ; $(OutputPath)*.pdb ; $(OutputPath)*.xml" />
+    </ItemGroup>
+    <ItemGroup>
+      <MoveToAuthFolder Include="$(OutputPath)*.auth ; $(OutputPath)*.bin" />
+    </ItemGroup>
+    <ItemGroup>
+      <MoveToConfFolder Include="$(OutputPath)*.cfg" />
+    </ItemGroup>
+    <Move SourceFiles="@(MoveToLibFolder)" DestinationFolder="$(OutputPath)libraries" OverwriteReadOnlyFiles="true" />
+    <Move SourceFiles="@(MoveToAuthFolder)" DestinationFolder="$(OutputPath)auth" OverwriteReadOnlyFiles="true" />
+    <Move SourceFiles="@(MoveToConfFolder)" DestinationFolder="$(OutputPath)configs" OverwriteReadOnlyFiles="true" />
+    <Delete Files="$(OutputPath)ASteambot.exe.config" />
+    <Delete Files="$(OutputPath)SteamTrade.dll.config" />
+	<Exec Command="if $(ConfigurationName) == Release C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\as_ver.exe" />
+  </Target>
 </Project>

@@ -11,7 +11,7 @@ namespace ASteambot.Translation
 {
     public static class CountryCode
     {
-        public static string GetCountryCode(SteamProfileInfos sp)
+        public static string GetCountryCode(Infos sp)
         {
             try
             {
