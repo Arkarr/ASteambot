@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Cache;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V9.7";
+        private static string BUILD_VERSION = "V9.8";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -39,20 +40,31 @@ namespace ASteambot
             Console.ForegroundColor = ConsoleColor.White;
         }
 
+        private static Assembly LoadFromSameFolder(object sender, ResolveEventArgs args)
+        {
+            string folderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\libraries\\";
+            string assemblyPath = Path.Combine(folderPath, new AssemblyName(args.Name).Name + ".dll");
+            if (!File.Exists(assemblyPath))
+                return null;
+
+            Assembly assembly = Assembly.LoadFrom(assemblyPath);
+            return assembly;
+        }
+
         static void Main(string[] args)
         {
             DEBUG = false;
 
+            AppDomain currentDomain = AppDomain.CurrentDomain;
+            currentDomain.AssemblyResolve += new ResolveEventHandler(LoadFromSameFolder);
+            currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
+            
             Console.Title = "Akarr's steambot";
 
             Console.ForegroundColor = ConsoleColor.White;
 
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-
-            AppDomain currentDomain = default(AppDomain);
-            currentDomain = AppDomain.CurrentDomain;
-            currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
-
+            
             Console.Title = "Akarr's steambot";
             
             config = new Config();
@@ -84,6 +96,7 @@ namespace ASteambot
 
             steambotManager.SelectFirstBot();
 
+            httpsrv = new HTTPServer();
             /*if (!IsLinux())
             {
                 string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
@@ -126,8 +139,9 @@ namespace ASteambot
                 steambotManager.Command(command);
             }
 
-            if(httpsrv != null)
-                httpsrv.Stop();
+            steambotManager.Stop();
+            /*if(httpsrv != null)
+                httpsrv.Stop();*/
         }
 
         private static void AttemptLoginBot(string username, string password, string api)

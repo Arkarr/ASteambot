@@ -131,7 +131,7 @@ namespace ASteambot
 
             try
             {
-                SteamProfileInfos spi = bot.GetSteamProfileInfo(partenar);
+                Infos spi = bot.GetSteamProfileInfo(partenar);
                 sentences = String.Format(bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi)), data);
             }
             catch(Exception ex)

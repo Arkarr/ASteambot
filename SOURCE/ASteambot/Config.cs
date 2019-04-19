@@ -2,9 +2,6 @@ using SteamKit2;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ASteambot
 {
@@ -31,11 +28,14 @@ namespace ASteambot
         public bool DisableAutoUpdate { get; private set; }
         public bool DisplayLocation { get; private set; }
 
-        public Config() { }
+        public Config()
+        {
+
+        }
 
         public bool LoadConfig()
         {
-            string path = AppDomain.CurrentDomain.BaseDirectory + "config.cfg";
+            string path = AppDomain.CurrentDomain.BaseDirectory + "/configs/config.cfg";
 
             if (!File.Exists(path))
                 return false;
