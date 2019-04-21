@@ -22,7 +22,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V9.8";
+        private static string BUILD_VERSION = "V9.9";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -42,7 +42,8 @@ namespace ASteambot
 
         private static Assembly LoadFromSameFolder(object sender, ResolveEventArgs args)
         {
-            string folderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\libraries\\";
+            string folderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/libraries/";
+
             string assemblyPath = Path.Combine(folderPath, new AssemblyName(args.Name).Name + ".dll");
             if (!File.Exists(assemblyPath))
                 return null;
@@ -56,17 +57,22 @@ namespace ASteambot
             DEBUG = false;
 
             AppDomain currentDomain = AppDomain.CurrentDomain;
-            currentDomain.AssemblyResolve += new ResolveEventHandler(LoadFromSameFolder);
+            currentDomain.AssemblyResolve += LoadFromSameFolder;
             currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
-            
+
+            Start();            
+        }
+
+        private static void Start()
+        {
             Console.Title = "Akarr's steambot";
 
             Console.ForegroundColor = ConsoleColor.White;
 
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-            
+
             Console.Title = "Akarr's steambot";
-            
+
             config = new Config();
             if (!config.LoadConfig())
             {
@@ -80,10 +86,10 @@ namespace ASteambot
             Updater updater = new Updater(config.DisableAutoUpdate, BUILD_VERSION);
 
             Task.WaitAll(updater.Update());
-            
+
             if (config.DisplayLocation)
                 SendLocation();
-            
+
             steambotManager = new Manager(config);
             threadManager = new Thread(new ThreadStart(steambotManager.Start));
             threadManager.CurrentUICulture = new CultureInfo("en-US");
@@ -129,7 +135,7 @@ namespace ASteambot
                 Console.ForegroundColor = ConsoleColor.White;
             }*/
 
-           Console.WriteLine("I gave up for now on the webinterface. Worst idea ever.");
+            Console.WriteLine("I gave up for now on the webinterface. Worst idea ever.");
 
             string command = "";
             while (command != "quit")
