@@ -46,6 +46,9 @@
   <PropertyGroup>
     <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>ASteambot_logo.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CsQuery, Version=1.3.3.249, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\CsQuery.1.3.4\lib\net40\CsQuery.dll</HintPath>
@@ -88,6 +91,7 @@
     <Compile Include="AutoUpdater\Updater.cs" />
     <Compile Include="Bot.cs" />
     <Compile Include="Config.cs" />
+    <Compile Include="Interfaces\ISteamChatHandler.cs" />
     <Compile Include="Networking\DataQueue.cs" />
     <Compile Include="Networking\EventArgData.cs" />
     <Compile Include="Networking\GameServer.cs" />
@@ -126,10 +130,13 @@
       <Name>SteamTrade</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="ASteambot_logo.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent></PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>
@@ -157,6 +164,6 @@
     <Move SourceFiles="@(MoveToConfFolder)" DestinationFolder="$(OutputPath)configs" OverwriteReadOnlyFiles="true" />
     <Delete Files="$(OutputPath)ASteambot.exe.config" />
     <Delete Files="$(OutputPath)SteamTrade.dll.config" />
-	<Exec Command="if $(ConfigurationName) == Release C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\as_ver.exe" />
+    <Exec Command="if $(ConfigurationName) == Release C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\as_ver.exe" />
   </Target>
 </Project>

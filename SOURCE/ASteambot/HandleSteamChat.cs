@@ -1,4 +1,5 @@
-﻿using ASteambot.Translation;
+﻿using ASteambot.Interfaces;
+using ASteambot.Translation;
 using SteamKit2;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using static ASteambot.SteamProfile;
 
 namespace ASteambot
 {
-    public class HandleSteamChat
+    public class HandleSteamChat : ISteamChatHandler
     {
         private Bot bot;
 
