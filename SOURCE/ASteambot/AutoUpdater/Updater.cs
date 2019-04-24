@@ -55,30 +55,34 @@ namespace ASteambot.AutoUpdater
                     }
                 }
 
-                string version = json.SelectToken("tag_name").ToString();
-
-                Console.WriteLine("Installed version " + actualVersion + " Most up-to-date version " + version);
-
-                if (actualVersion.Equals(version))
+                if (json == null)
                 {
-                    Console.WriteLine("Already up to date !");
-                }
-                else
-                {
-                    Console.WriteLine("Update found ! Updating...");
-                    if (Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update")))
-                        Directory.Delete(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update"), true);
 
-                    Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update"));
+                    string version = json.SelectToken("tag_name").ToString();
+
+                    Console.WriteLine("Installed version " + actualVersion + " Most up-to-date version " + version);
+
+                    if (actualVersion.Equals(version))
+                    {
+                        Console.WriteLine("Already up to date !");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Update found ! Updating...");
+                        if (Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update")))
+                            Directory.Delete(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update"), true);
+
+                        Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update"));
 
 
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("Downloading update...");
-                    Console.ForegroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine("Downloading update...");
+                        Console.ForegroundColor = ConsoleColor.White;
 
-                    JToken lastRealse = json.SelectToken("assets[0].browser_download_url");
+                        JToken lastRealse = json.SelectToken("assets[0].browser_download_url");
 
-                    await DownloadUpdate((string)lastRealse);
+                        await DownloadUpdate((string)lastRealse);
+                    }
                 }
             }
         }
