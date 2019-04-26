@@ -55,7 +55,7 @@ namespace ASteambot.AutoUpdater
                     }
                 }
 
-                if (json == null)
+                if (json != null)
                 {
 
                     string version = json.SelectToken("tag_name").ToString();
