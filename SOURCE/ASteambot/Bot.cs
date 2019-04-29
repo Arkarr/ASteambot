@@ -18,6 +18,7 @@ using static ASteambot.SteamProfile;
 using System.Reflection;
 using ASteambot.SteamMarketUtility;
 using SteamKit2;
+using Newtonsoft.Json.Linq;
 
 namespace ASteambot
 {
@@ -591,8 +592,10 @@ namespace ASteambot
             {
                 try
                 {
-                    CQ dom = CQ.CreateFromUrl("http://steamcommunity.com/profiles/" + steamClient.SteamID.ConvertToUInt64());
-                    maxfriendCount = 250 + 5 * Int32.Parse(dom["div[class='persona_name persona_level']"].Children().Children()[0].InnerText);
+                    string profileLink = "http://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key="+ Config.SteamAPIKey +"&steamid=" + steamClient.SteamID.ConvertToUInt64();
+                    string json = SteamWeb.Fetch(profileLink, "GET");
+                    string output = JObject.Parse(json)["response"]["player_level"].ToString();
+                    maxfriendCount = 250 + 5 * Int32.Parse(output);
                 }
                 catch (Exception)
                 {
