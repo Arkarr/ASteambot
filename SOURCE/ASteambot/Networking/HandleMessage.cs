@@ -476,6 +476,16 @@ namespace ASteambot.Networking
             }
             else
             {
+                if(steamID_msg[1].StartsWith("steam://connect/"))
+                {
+                    Random rnd = new Random();
+                    string key = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10).Select(s => s[rnd.Next(s.Length)]).ToArray());
+                    while (!Program.httpsrv.AddToRedirectTable(key, steamID_msg[1], out key))
+                        key = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10).Select(s => s[rnd.Next(s.Length)]).ToArray());
+
+                    steamID_msg[1] = key;
+                }
+
                 new Thread(() =>
                 {
                     Thread.CurrentThread.IsBackground = true;
