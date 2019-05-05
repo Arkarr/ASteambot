@@ -1,6 +1,10 @@
 using ASteambot.AutoUpdater;
 using ASteambot.Networking;
+using ASteambot.Networking.Webinterface;
+using ASteambot.Networking.Webinterface.Models;
+using ASteambot.Networking.Webinterface.Models.SimpleHttpServer.Models;
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
@@ -10,22 +14,21 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace ASteambot
 {
     class Program
     {
         private static Config config;
-        private static HTTPServer httpsrv;
         private static LoginInfo logininfo;
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V9.9.2";
+        private static string BUILD_VERSION = "V9.9.3";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
+        public static HTTPServer httpsrv;
 
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
@@ -85,6 +88,13 @@ namespace ASteambot
 
             Updater updater = new Updater(config.DisableAutoUpdate, BUILD_VERSION);
 
+            /*httpsrv = new HTTPServer(Int32.Parse(config.TCPServerPort));
+
+            httpsrv.Start();*/
+
+            httpsrv = new HTTPServer(config.WebinterfacePort);
+            httpsrv.Listen();
+
             Task.WaitAll(updater.Update());
 
             if (config.DisplayLocation)
@@ -102,7 +112,6 @@ namespace ASteambot
 
             steambotManager.SelectFirstBot();
 
-            httpsrv = new HTTPServer();
             /*if (!IsLinux())
             {
                 string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
@@ -207,7 +216,7 @@ namespace ASteambot
         {
 
             bool isGetMethod = (method.ToLower() == "get");
-            string dataString = (data == null ? null : String.Join("&", Array.ConvertAll(data.AllKeys, key => string.Format("{0}={1}", HttpUtility.UrlEncode(key), HttpUtility.UrlEncode(data[key])))));
+            string dataString = (data == null ? null : String.Join("&", Array.ConvertAll(data.AllKeys, key => string.Format("{0}={1}", System.Web.HttpUtility.UrlEncode(key), System.Web.HttpUtility.UrlEncode(data[key])))));
 
             if (isGetMethod && !string.IsNullOrEmpty(dataString))
             {
@@ -238,7 +247,7 @@ namespace ASteambot
                 }
                 catch (WebException ex)
                 {
-                    if (((HttpWebResponse)ex.Response).StatusCode == HttpStatusCode.InternalServerError)
+                    if (((HttpWebResponse)ex.Response).StatusCode == System.Net.HttpStatusCode.InternalServerError)
                     {
                         var resp = ex.Response as HttpWebResponse;
                         if (resp != null)

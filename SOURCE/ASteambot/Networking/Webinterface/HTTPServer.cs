@@ -1,7 +1,6 @@
-﻿using ASteambot.Networking.Webinterface;
+﻿using ASteambot.Networking.Webinterface.Models;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -9,20 +8,47 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ASteambot.Networking
+namespace ASteambot.Networking.Webinterface
 {
-    public class HTTPServer// : NancyModule
+    public class HTTPServer
     {
-        public HTTPServer()
+        private int port;
+        private string ip;
+        private TcpListener listener;
+        private HttpProcessor processor;
+        private bool isactive = true;
+        
+        public HTTPServer(int port)
         {
-            //fefewgewg
-            /*Get["/"] = x => { return "Hello World"; };
+            this.ip = new WebClient().DownloadString("http://icanhazip.com").Replace("\n", "");
+            this.port = port;
+            this.processor = new HttpProcessor(ip, port);
+        }
 
-            var host = new NancyHost(new Uri("http://localhost:12345"));
-            host.Start(); // start hosting
+        public void Listen()
+        {
+            this.listener = new TcpListener(IPAddress.Any, this.port);
+            this.listener.Start();
 
-            Console.ReadKey();
-            host.Stop(); // stop hosting*/
+            Thread thread = new Thread(() =>
+            {
+                while (this.isactive)
+                {
+                    TcpClient s = this.listener.AcceptTcpClient();
+                    Thread t = new Thread(() =>
+                    {
+                        this.processor.HandleClient(s);
+                    });
+                    t.Start();
+                    Thread.Sleep(1);
+                }
+            });
+            thread.Start();
+        }
+        
+        public bool AddToRedirectTable(string id, string target, out string key)
+        {
+            return processor.AddRedirectRoute(id, target, out key);
         }
     }
 }

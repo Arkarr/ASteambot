@@ -27,6 +27,7 @@ namespace ASteambot
         public bool DisableWelcomeMessage { get; private set; }
         public bool DisableAutoUpdate { get; private set; }
         public bool DisplayLocation { get; private set; }
+        public int WebinterfacePort { get; private set; }
 
         public Config()
         {
@@ -87,6 +88,8 @@ namespace ASteambot
                     DisplayLocation = line.Replace("DisplayLocation=", "").Equals("YES");
                 else if (line.StartsWith("DebugInformation="))
                     Program.DEBUG = line.Replace("DebugInformation=", "").Equals("YES");
+                else if (line.StartsWith("WebinterfacePort="))
+                    WebinterfacePort = Int32.Parse(line.Replace("WebinterfacePort=", "")); 
             }
 
             if (!ValidateConfig())
