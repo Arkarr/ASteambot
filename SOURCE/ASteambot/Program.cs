@@ -24,7 +24,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
         
-        private static string BUILD_VERSION = "V9.6";
+        private static string BUILD_VERSION = "V9.9.4";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -144,7 +144,7 @@ namespace ASteambot
                 Console.ForegroundColor = ConsoleColor.White;
             }*/
 
-            Console.WriteLine("I gave up for now on the webinterface. Worst idea ever.");
+            //Console.WriteLine("I gave up for now on the webinterface. Worst idea ever.");
 
             string command = "";
             while (command != "quit")
