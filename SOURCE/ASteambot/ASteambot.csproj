@@ -94,7 +94,8 @@
     <Compile Include="AutoUpdater\Updater.cs" />
     <Compile Include="Bot.cs" />
     <Compile Include="Config.cs" />
-    <Compile Include="Interfaces\ISteamChatHandler.cs" />
+    <Compile Include="Modules\Module.cs" />
+    <Compile Include="Modules\ModuleLoader.cs" />
     <Compile Include="Networking\DataQueue.cs" />
     <Compile Include="Networking\EventArgData.cs" />
     <Compile Include="Networking\GameServer.cs" />
@@ -134,6 +135,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Interfaces\ASteambot_Intefaces.csproj">
+      <Project>{7612b1fa-b6af-4560-9952-c2406792ae14}</Project>
+      <Name>ASteambot_Intefaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SteamTrade\SteamTrade.csproj">
       <Project>{6cec0333-81eb-40ee-85d1-941363626fc7}</Project>
       <Name>SteamTrade</Name>
