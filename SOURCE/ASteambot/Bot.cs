@@ -587,9 +587,8 @@ namespace ASteambot
 
         private void GetMaxFriends()
         {
-            maxfriendCount = 250;
-            SteamFriends.RequestProfileInfo(steamClient.SteamID.ConvertToUInt64());
-            /*if (maxfriendCount == 0)
+            //SteamFriends.RequestProfileInfo(steamClient.SteamID.ConvertToUInt64());
+            if (maxfriendCount == 0)
             {
                 try
                 {
@@ -606,7 +605,7 @@ namespace ASteambot
                     Console.ForegroundColor = ConsoleColor.White;
                     maxfriendCount = 250;
                 }
-            }*/
+            }
         }
 
         private void CreateFriendsListIfNecessary()
