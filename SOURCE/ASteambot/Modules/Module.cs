@@ -44,7 +44,7 @@ namespace ASteambot.Modules
         public object RunMethod(string methodeName, object[] args)
         {
             Method m = GetMethodeByName(methodeName);
-            if (m.MethodeInfo.GetParameters().Count() != args.Count())
+            if (m != null && m.MethodeInfo.GetParameters().Count() != args.Count())
             {
                 //ConsolePrinter.PrintMessage(Properties.Resources.ERROR_ArgumentsCountMismatch);
                 Console.WriteLine(">>>>>>>>>> error methode args count");

@@ -10,9 +10,9 @@ namespace ASteambot_TestModules
 {
     public class ASteambot_ChatTest : ISteamChatHandler
     {
-        public void HandleMessage(SteamID partenar, string message)
+        public void HandleMessage(SteamFriends steamFriends, SteamID partenar, string message)
         {
-            Console.WriteLine(partenar + " wrote me a message : '" + message + "' !");
+            steamFriends.SendChatMessage(partenar, EChatEntryType.ChatMsg, "Hey ! You wrote me a message : '" + message + "' !");
         }
     }
 }
