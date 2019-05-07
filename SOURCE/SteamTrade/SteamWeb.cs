@@ -140,22 +140,15 @@ namespace SteamTrade
             // Cookies
             request.CookieContainer = _cookies;
 
-            /*Hashtable table = (Hashtable)request.CookieContainer.GetType().InvokeMember("m_domainTable",
-                                                                         BindingFlags.NonPublic |
-                                                                         BindingFlags.GetField |
-                                                                         BindingFlags.Instance,
+            /*Hashtable table = (Hashtable)request.CookieContainer.GetType().InvokeMember("m_domainTable", BindingFlags.NonPublic | BindingFlags.GetField | BindingFlags.Instance,
                                                                          null,
                                                                          request.CookieContainer,
                                                                          new object[] { });
-
-
-
             foreach (var key in table.Keys)
             {
                 foreach (Cookie cookie in request.CookieContainer.GetCookies(new Uri(string.Format("http://www{0}/", key))))
                 {
-                    Console.WriteLine("Name = {0} ; Value = {1} ; Domain = {2}", cookie.Name, cookie.Value,
-                                      cookie.Domain);
+                    Console.WriteLine("Name = {0} ; Value = {1} ; Domain = {2}", cookie.Name, cookie.Value, cookie.Domain);
                 }
             }*/
 
@@ -165,7 +158,7 @@ namespace SteamTrade
             {
                 try
                 {
-                    return null;// request.GetResponse() as HttpWebResponse;
+                    return request.GetResponse() as HttpWebResponse;
                 }
                 catch (WebException ex)
                 {
