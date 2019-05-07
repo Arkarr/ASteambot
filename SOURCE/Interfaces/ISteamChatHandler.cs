@@ -14,6 +14,6 @@ namespace ASteambot.Interfaces
         /// </summary>
         /// <param name="partenar">The steamID of the partenar wich wrote the message</param>
         /// <param name="message">The message sent by the partenar</param>
-        void HandleMessage(SteamID partenar, string message);
+        void HandleMessage(SteamFriends steamFriends, SteamID partenar, string message);
     }
 }

@@ -11,7 +11,7 @@ using static ASteambot.SteamProfile;
 
 namespace ASteambot
 {
-    public class HandleSteamChat : ISteamChatHandler
+    public class HandleSteamChat
     {
         private Bot bot;
 
@@ -127,6 +127,13 @@ namespace ASteambot
 
         private void PrintChatMessage(SteamID partenar, string message, string[] data = null)
         {
+            object[] args = new object[3];
+            args[0] = bot.SteamFriends;
+            args[1] = partenar;
+            args[2] = message;
+
+            Program.ExecuteModuleFonction("HandleMessage", args);
+
             string sentences = "";
             data = data ?? new string[0];
 

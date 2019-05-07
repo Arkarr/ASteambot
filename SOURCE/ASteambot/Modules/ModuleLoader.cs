@@ -12,24 +12,32 @@ namespace ASteambot.Modules
     {
         public static Module LoadASteambotModule(Assembly assembly)
         {
-            //Loop through all types
-            foreach (Type type in assembly.GetTypes())
+            try
             {
-                //Check for the type we actually want, in our case : ISteamChatHandler
-                if (type.GetInterfaces().Contains(typeof(ISteamChatHandler)))
+                //Loop through all types
+                foreach (Type type in assembly.GetTypes())
                 {
-                    //Copy our class
-                    object objectClass = Activator.CreateInstance(type);
+                    //Check for the type we actually want, in our case : ISteamChatHandler
+                    if (type.GetInterfaces().Contains(typeof(ISteamChatHandler)))
+                    {
+                        //Copy our class
+                        object objectClass = Activator.CreateInstance(type);
 
-                    //Create the new module object, wich contains infos and basic stuff
-                    Module m = new Module(type, objectClass);
+                        //Create the new module object, wich contains infos and basic stuff
+                        Module m = new Module(type, objectClass);
 
-                    //Loop through all methodes, and add them to the module
-                    foreach (MethodInfo mi in objectClass.GetType().GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
-                        m.Methods.Add(new Method(m, mi));
+                        //Loop through all methodes, and add them to the module
+                        foreach (MethodInfo mi in objectClass.GetType().GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public))
+                            m.Methods.Add(new Method(m, mi));
 
-                    return m;
+                        return m;
+                    }
                 }
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                foreach(Exception e in ex.LoaderExceptions)
+                    Console.WriteLine(e);
             }
 
             return null;

@@ -31,7 +31,7 @@ namespace ASteambot
         public static bool DEBUG;
         public static HTTPServer httpsrv;
 
-        public static List<Modules.Module> modules;
+        private static List<Modules.Module> modules;
 
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
@@ -70,18 +70,27 @@ namespace ASteambot
             foreach (string file in files)
             {
                 Assembly ass = Assembly.LoadFrom(file);
-                if (ass == null) //B. Larson AKA Cpt Marvel
+                Modules.Module m = ModuleLoader.LoadASteambotModule(ass);
+                if (m == null || ass == null)
                     Console.WriteLine("Could not load " + file + " ! Invalid module.");
                 else
-                    modules.Add(ModuleLoader.LoadASteambotModule(ass));
+                    modules.Add(m);
             }
+        }
 
-            object[] args = new object[2];
-            args[0] = new SteamKit2.SteamID("STEAM_1:1:42047781");
-            args[1] = "sweg";
-
-            if (modules.Count > 0)
-                modules[0].RunMethod("HandleMessage", args);
+        public static void ExecuteModuleFonction(string i, object[] args)
+        {
+            foreach (Modules.Module m in modules)
+            {
+                try
+                {
+                    m.RunMethod(i, args);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
         }
 
         static void Main(string[] args)

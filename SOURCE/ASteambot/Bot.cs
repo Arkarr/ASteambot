@@ -215,6 +215,7 @@ namespace ASteambot
             cbManager.Subscribe<SteamFriends.FriendMsgCallback>(OnSteamFriendMessage);
             cbManager.Subscribe<SteamFriends.PersonaChangeCallback>(OnSteamNameChange);
             cbManager.Subscribe<SteamFriends.FriendsListCallback>(OnSteamFriendsList);
+            //cbManager.Subscribe<SteamFriends.ProfileInfoCallback>(OnSteamProfileInfo);
         }
 
         //*************//
@@ -564,9 +565,9 @@ namespace ASteambot
                 }
             }
 
-            Console.WriteLine("Recorded steam friends : {0} / {1}", SteamFriends.GetFriendCount(), getMaxFriends());
+            Console.WriteLine("Recorded steam friends : {0} / {1}", SteamFriends.GetFriendCount(), maxfriendCount);
 
-            if (SteamFriends.GetFriendCount() == getMaxFriends())
+            if (SteamFriends.GetFriendCount() == maxfriendCount)
             {
                 Console.WriteLine("Too much friends. Removing one.");
 
@@ -584,9 +585,11 @@ namespace ASteambot
             }
         }
 
-        private int getMaxFriends()
+        private void GetMaxFriends()
         {
-            if (maxfriendCount == 0)
+            maxfriendCount = 250;
+            SteamFriends.RequestProfileInfo(steamClient.SteamID.ConvertToUInt64());
+            /*if (maxfriendCount == 0)
             {
                 try
                 {
@@ -603,9 +606,7 @@ namespace ASteambot
                     Console.ForegroundColor = ConsoleColor.White;
                     maxfriendCount = 250;
                 }
-            }
-
-            return maxfriendCount;
+            }*/
         }
 
         private void CreateFriendsListIfNecessary()
@@ -1120,6 +1121,8 @@ namespace ASteambot
                 case EResult.OK:
                     myUserNonce = callback.WebAPIUserNonce;
                     Console.WriteLine("Logged in to steam !");
+                    
+                    GetMaxFriends();
                     break;
 
                 case EResult.AccountLoginDeniedNeedTwoFactor:
