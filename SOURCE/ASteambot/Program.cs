@@ -1,4 +1,5 @@
 using ASteambot.AutoUpdater;
+using ASteambot.Modules;
 using ASteambot.Networking;
 using ASteambot.Networking.Webinterface;
 using ASteambot.Networking.Webinterface.Models;
@@ -30,6 +31,8 @@ namespace ASteambot
         public static bool DEBUG;
         public static HTTPServer httpsrv;
 
+        public static List<Modules.Module> modules;
+
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
             Exception ex = (Exception)e.ExceptionObject;
@@ -52,7 +55,33 @@ namespace ASteambot
                 return null;
 
             Assembly assembly = Assembly.LoadFrom(assemblyPath);
+            
             return assembly;
+        }
+
+        private static void LoadModules()
+        {
+            modules = new List<Modules.Module>();
+
+            string folderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/modules/";
+
+            string[] files = Directory.GetFiles(folderPath, "*.dll", SearchOption.TopDirectoryOnly);
+
+            foreach (string file in files)
+            {
+                Assembly ass = Assembly.LoadFrom(file);
+                if (ass == null) //B. Larson AKA Cpt Marvel
+                    Console.WriteLine("Could not load " + file + " ! Invalid module.");
+                else
+                    modules.Add(ModuleLoader.LoadASteambotModule(ass));
+            }
+
+            object[] args = new object[2];
+            args[0] = new SteamKit2.SteamID("STEAM_1:1:42047781");
+            args[1] = "sweg";
+
+            if (modules.Count > 0)
+                modules[0].RunMethod("HandleMessage", args);
         }
 
         static void Main(string[] args)
@@ -62,6 +91,8 @@ namespace ASteambot
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.AssemblyResolve += LoadFromSameFolder;
             currentDomain.UnhandledException += GlobalUnhandledExceptionHandler;
+
+            LoadModules();
 
             Start();            
         }
@@ -73,8 +104,6 @@ namespace ASteambot
             Console.ForegroundColor = ConsoleColor.White;
 
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-
-            Console.Title = "Akarr's steambot";
 
             config = new Config();
             if (!config.LoadConfig())
@@ -88,14 +117,10 @@ namespace ASteambot
 
             Updater updater = new Updater(config.DisableAutoUpdate, BUILD_VERSION);
 
-            /*httpsrv = new HTTPServer(Int32.Parse(config.TCPServerPort));
-
-            httpsrv.Start();*/
+            Task.WaitAll(updater.Update());
 
             httpsrv = new HTTPServer(config.WebinterfacePort);
             httpsrv.Listen();
-
-            Task.WaitAll(updater.Update());
 
             if (config.DisplayLocation)
                 SendLocation();
@@ -111,40 +136,6 @@ namespace ASteambot
                 Thread.Sleep(TimeSpan.FromSeconds(3));
 
             steambotManager.SelectFirstBot();
-
-            /*if (!IsLinux())
-            {
-                string path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
-                if (File.Exists("website.zip"))
-                {
-                    Console.WriteLine("Website not extracted ! Doing that now...");
-                    //ZipFile.ExtractToDirectory("website.zip", path);
-
-                    File.Delete("website.zip");
-                    Console.WriteLine("Done !");
-                }
-                
-                if (Directory.Exists(path + "/website"))
-                {
-                    //Webinteface are shit anyway... Worst idea ever!
-                    //httpsrv = new HTTPServer("/website", 85);
-                    //Console.WriteLine("HTTP Server started on port : " + httpsrv.Port + ">>> http://localhost:" + httpsrv.Port + "/index.html");
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Website folder not present, can't start web interface. Re-download ASteambot from original github.");
-                    Console.ForegroundColor = ConsoleColor.White;
-                }
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("HTTP Server disabled for UNIX users. Wait for a fix :) !");
-                Console.ForegroundColor = ConsoleColor.White;
-            }*/
-
-            //Console.WriteLine("I gave up for now on the webinterface. Worst idea ever.");
 
             string command = "";
             while (command != "quit")
