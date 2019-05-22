@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace ASteambot.Translation
             XElement translationsXML = null;
             try
             {
-                translationsXML = XElement.Load(path);
+                translationsXML = XDocument.Parse(File.ReadAllText(path, Encoding.UTF8)).Elements().FirstOrDefault();
                 //Console.WriteLine(translationsXML);
             }
             catch(Exception e)
