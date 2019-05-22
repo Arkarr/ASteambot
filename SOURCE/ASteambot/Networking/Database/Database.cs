@@ -219,10 +219,9 @@ namespace ASteambot.Networking
             }
             catch(MySqlException e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
                 if(e.Message.EndsWith("'utf8'"))
                 {
-                    Console.WriteLine("Couldn't find character set \"utf8mb4\" !");
+                    Program.PrintErrorMessage("Couldn't find character set \"utf8mb4\" !");
                     throw new Exception("UPDATE YOUR MySQL SERVER TO AT LEAST 5.5.3 !");
                 }                
             }

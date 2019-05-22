@@ -81,14 +81,12 @@ namespace ASteambot.Networking
                 var frame = st.GetFrame(0);
                 var line = frame.GetFileLineNumber();
 
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(e);
-                Console.WriteLine("Crashing while executing net code " + gsr.NetworkCode + " !");
-                Console.WriteLine("Full detail message [MAY CONTAIN SENSITIVE INFOS] :");
-                Console.WriteLine("SRV ID : " + gsr.ServerID + " MDL ID: " + gsr.ModuleID);
-                Console.WriteLine(gsr.Arguments);
-                Console.WriteLine("Line number : " + line);
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage(e.ToString());
+                Program.PrintErrorMessage("Crashing while executing net code " + gsr.NetworkCode + " !");
+                Program.PrintErrorMessage("Full detail message [MAY CONTAIN SENSITIVE INFOS] :");
+                Program.PrintErrorMessage("SRV ID : " + gsr.ServerID + " MDL ID: " + gsr.ModuleID);
+                Program.PrintErrorMessage(gsr.Arguments);
+                Program.PrintErrorMessage("Line number : " + line);
             }
         }
         
@@ -160,12 +158,10 @@ namespace ASteambot.Networking
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("One of the following steam ID is wrong !");
-                Console.WriteLine("> " + ids[0]);
-                Console.WriteLine("> " + ids[1]);
-                Console.WriteLine("Report was denied !");
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("One of the following steam ID is wrong !");
+                Program.PrintErrorMessage("> " + ids[0]);
+                Program.PrintErrorMessage("> " + ids[1]);
+                Program.PrintErrorMessage("Report was denied !");
             }
         }
 
@@ -239,13 +235,11 @@ namespace ASteambot.Networking
 
             if (bot.OtherGenericInventory.errors.Count > 0)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Error while inventory scan :");
+                Program.PrintErrorMessage("Error while inventory scan :");
                 foreach (string error in bot.OtherGenericInventory.errors)
                 {
-                    Console.WriteLine(error);
+                    Program.PrintErrorMessage(error);
                 }
-                Console.ForegroundColor = ConsoleColor.White;
                 items = "EMPTY";
             }
             else

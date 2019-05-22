@@ -40,14 +40,13 @@ namespace ASteambot.Translation
             }
             catch(Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Error while fetching country code. Assumed 'en'. Details here : ");
+                Program.PrintErrorMessage("Error while fetching country code. Assumed 'en'. Details here : ");
                 if (sp.Location == null)
-                    Console.WriteLine("Location null !");
+                    Program.PrintErrorMessage("Location null !");
                 else
-                    Console.WriteLine("Faulty country >>> " + sp.Location.Substring(sp.Location.LastIndexOf(" ") + 1));
-                Console.WriteLine("Send to Arkarr please!");
-                Console.ForegroundColor = ConsoleColor.White;
+                    Program.PrintErrorMessage("Faulty country >>> " + sp.Location.Substring(sp.Location.LastIndexOf(" ") + 1));
+
+                Program.PrintErrorMessage("Send to Arkarr please!");
 
                 return "en";
             }

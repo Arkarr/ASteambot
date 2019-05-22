@@ -46,8 +46,9 @@ namespace ASteambot.Modules
             Method m = GetMethodeByName(methodeName);
             if (m != null && m.MethodeInfo.GetParameters().Count() != args.Count())
             {
-                //ConsolePrinter.PrintMessage(Properties.Resources.ERROR_ArgumentsCountMismatch);
-                Console.WriteLine(">>>>>>>>>> error methode args count");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("ERROR with module '"+m.ToString()+"' argument count for methode " + methodeName + " is invalid ! Update module !");
+                Console.ForegroundColor = ConsoleColor.White;
                 return null;
             }
 

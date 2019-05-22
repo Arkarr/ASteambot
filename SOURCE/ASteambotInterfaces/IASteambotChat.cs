@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ASteambot.Interfaces
+namespace ASteambotInterfaces
 {
-    public interface ISteamChatHandler
+    public interface IASteambotChat
     {
         /// <summary>
         /// Triggered when the bot receive a steam chat message

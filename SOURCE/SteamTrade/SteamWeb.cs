@@ -188,10 +188,8 @@ namespace SteamTrade
                     var resp = ex.Response as HttpWebResponse;
                     if (resp != null) 
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("For more info; visit this link : ");
                         Console.WriteLine(url);
-                        Console.ForegroundColor = ConsoleColor.White;
                         return resp;
                     }
                 }

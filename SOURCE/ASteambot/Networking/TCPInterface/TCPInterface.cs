@@ -90,9 +90,9 @@ namespace ASteambot.Networking
                 Console.ForegroundColor = ConsoleColor.White;
 
 
-                Console.WriteLine("  Example (in ASteambot_Core.cfg) : ");
-                Console.WriteLine("    sm_asteambot_server_ip \"XXX.XXX.XX.XX\" ");
-                Console.WriteLine("    sm_asteambot_server_port \""+Port+"\" ");
+                Console.WriteLine("Example (in ASteambot_Core.cfg) : ");
+                Console.WriteLine("   sm_asteambot_server_ip \"XXX.XXX.XX.XX\" ");
+                Console.WriteLine("   sm_asteambot_server_port \"" + Port+"\" ");
 
                 for (int cwidth = Console.WindowWidth; cwidth - 2 > 0; cwidth--)
                     Console.Write("*");
@@ -115,11 +115,8 @@ namespace ASteambot.Networking
             }
             catch (SocketException e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("Error while creating socket ! It may be because of the port being already usued! Use another TCP port number.");
-                Console.WriteLine(e);
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("Error while creating socket ! It may be because of the port being already usued! Use another TCP port number.");
+                Program.PrintErrorMessage(e.ToString());
             }
             catch (Exception e)
             {
@@ -151,19 +148,7 @@ namespace ASteambot.Networking
                 if (bytesRead > 0)
                 {
                     state.sb.Append(Encoding.UTF8.GetString(state.buffer, 0, bytesRead).Replace("\0", String.Empty));
-
-                    /*Dirty :
-                    //if (state.sb.ToString().EndsWith("<EOF>"))
-                    {
-                        HandleMessage(handler, state.sb.ToString());
-                        state.sb.Clear();
-                    }*/
-
-                    //Fulll message<EOF>
-                    // message<EOF>
-                    //Full Message<EOF>FUll
-                    //<EOF>
-
+                    
                     if (state.sb.ToString().Contains("<EOF>"))
                     {
                         bool lastMessageFinished = false;
@@ -203,17 +188,10 @@ namespace ASteambot.Networking
                 }
 
             }
-            catch (SocketException ex) { Console.WriteLine(ex.Message); }
-            /*catch (Exception e)
+            catch (SocketException ex)
             {
-                Console.WriteLine("Error while processing a message sent by the game server!");
-                Console.WriteLine(e.Message);
-                Console.WriteLine("Command : " + content);
-                Console.WriteLine(e.StackTrace);
-
-                handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), state);
-            }*/
+                Program.PrintErrorMessage(ex.Message);
+            }
         }
     }
 }

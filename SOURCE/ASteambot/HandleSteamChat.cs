@@ -1,5 +1,4 @@
-﻿using ASteambot.Interfaces;
-using ASteambot.Translation;
+﻿using ASteambot.Translation;
 using SteamKit2;
 using System;
 using System.Collections.Generic;
@@ -87,17 +86,13 @@ namespace ASteambot
         {
             if(partenar == null)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("partenar is NULL ?!");
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("partenar is NULL ?!");
                 return;
             }
             
             if(bot.ChatListener == null)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ChatListener is NULL ?!");
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("ChatListener is NULL ?!");
                 return;
             }
 
@@ -140,15 +135,15 @@ namespace ASteambot
             try
             {
                 Infos spi = bot.GetSteamProfileInfo(partenar);
-                sentences = String.Format(bot.Translation.GetSentence(message, CountryCode.GetCountryCode(spi)), data);
             }
             catch(Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(ex);
-                Console.ForegroundColor = ConsoleColor.White;
-                sentences = "Error while loading the response... Sorry!";
+                Program.PrintErrorMessage("Error while loading the profile of '" + partenar + "' ... Sorry!");
+                Program.PrintErrorMessage(ex.ToString());
+                Program.PrintErrorMessage("As a result, I'll use the 'en' language !");
             }
+
+            sentences = String.Format(bot.Translation.GetSentence(message, "en"), data);
 
             foreach (string s in sentences.Split(new string[] { "\\n" }, StringSplitOptions.None))
             {

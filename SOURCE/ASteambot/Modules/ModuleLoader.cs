@@ -1,5 +1,4 @@
-﻿using ASteambot.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -18,7 +17,7 @@ namespace ASteambot.Modules
                 foreach (Type type in assembly.GetTypes())
                 {
                     //Check for the type we actually want, in our case : ISteamChatHandler
-                    if (type.GetInterfaces().Contains(typeof(ISteamChatHandler)))
+                    if (type.GetInterfaces().Contains(typeof(int))) //ISteamChatHandler
                     {
                         //Copy our class
                         object objectClass = Activator.CreateInstance(type);
@@ -37,7 +36,7 @@ namespace ASteambot.Modules
             catch (ReflectionTypeLoadException ex)
             {
                 foreach(Exception e in ex.LoaderExceptions)
-                    Console.WriteLine(e);
+                    Program.PrintErrorMessage(e.ToString());
             }
 
             return null;

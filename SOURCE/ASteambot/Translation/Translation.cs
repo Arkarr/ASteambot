@@ -22,20 +22,16 @@ namespace ASteambot.Translation
             }
             catch(Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Translation file ("+ path + ") can't be found or is corrupted ! Bot won't respond to user message.");
-                Console.WriteLine("More infos here :");
-                Console.WriteLine(e.Message);
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("Translation file ("+ path + ") can't be found or is corrupted ! Bot won't respond to user message.");
+                Program.PrintErrorMessage("More infos here :");
+                Program.PrintErrorMessage(e.Message);
                 return false;
             }
 
             if (!translationsXML.HasElements)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Translation file (" + path + ") is corrupted ! Bot won't respond to user message. Presse a key to continue...");
+                Program.PrintErrorMessage("Translation file (" + path + ") is corrupted ! Bot won't respond to user message. Presse a key to continue...");
                 Console.ReadKey();
-                Console.ForegroundColor = ConsoleColor.White;
                 return false;
             }
 
@@ -65,15 +61,9 @@ namespace ASteambot.Translation
                     else if (xmlReader.Name.Equals("translation"))
                     {
                         if (languages.ContainsKey(xmlReader.GetAttribute(0)))
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Translation for " + msg + " exist twice in " + xmlReader.GetAttribute(0) + " ! Skipping...");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
+                            Program.PrintErrorMessage("Translation for " + msg + " exist twice in " + xmlReader.GetAttribute(0) + " ! Skipping...");
                         else
-                        {
                             languages.Add(xmlReader.GetAttribute(0), xmlReader.ReadInnerXml());
-                        }
                     }
                     else
                     {
