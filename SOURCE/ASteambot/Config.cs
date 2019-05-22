@@ -94,18 +94,14 @@ namespace ASteambot
 
             if (!ValidateConfig())
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Some fields haven't been set in config file. Press a key to close ASteambot.");
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("Some fields haven't been set in config file. Press a key to close ASteambot.");
                 Console.ReadKey();
                 Environment.Exit(0);
             }
 
             if (!IsValidTCPPassword(TCPPassword))
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("TCP_Password can not contains '/', '&' or '|' characters.");
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("TCP_Password can not contains '/', '&' or '|' characters.");
                 Console.ReadKey();
                 Environment.Exit(0);
             }

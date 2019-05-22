@@ -316,9 +316,7 @@ namespace ASteambot
             }
             catch(Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Couldn't find steam auth data. Did you linked the bot steam account to steamguard with ASteambot ?");
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("Couldn't find steam auth data. Did you linked the bot steam account to steamguard with ASteambot ?");
             }
         }
 
@@ -352,10 +350,8 @@ namespace ASteambot
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
-                Console.WriteLine("Or you can try to input a code now, leave empty to quit : ");
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
+                Program.PrintErrorMessage("Or you can try to input a code now, leave empty to quit : ");
                 string code = Console.ReadLine();
                 if (code.Equals(String.Empty))
                 {
@@ -599,10 +595,8 @@ namespace ASteambot
                 }
                 catch (Exception)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Error while reading the steam level of own profile. DEBUG: " + steamClient);
-                    Console.WriteLine("Is steam profile configured ?");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    Program.PrintErrorMessage("Error while reading the steam level of own profile. DEBUG: " + steamClient);
+                    Program.PrintErrorMessage("Is steam profile configured ?");
                     maxfriendCount = 250;
                 }
             }
@@ -792,9 +786,7 @@ namespace ASteambot
 
             if (to.Items.GetMyItems().Count <= 0)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Couldn't send trade offer, inventory is empty.");
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.PrintErrorMessage("Couldn't send trade offer, inventory is empty.");
             }
             else
             {

@@ -157,11 +157,9 @@ namespace ASteambot
 
         private void PrintSocketError(string msg)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Could not send data : ");
-            Console.WriteLine(msg);
-            Console.WriteLine("to " + Name + " (" + ServerID + ") because the socket is not connected (" + IP + ":" + Port + ") !");
-            Console.ForegroundColor = ConsoleColor.White;
+            Program.PrintErrorMessage("Could not send data : ");
+            Program.PrintErrorMessage(msg);
+            Program.PrintErrorMessage("to " + Name + " (" + ServerID + ") because the socket is not connected (" + IP + ":" + Port + ") !");
         }
 
         class ArrayView<T> : IEnumerable<T>

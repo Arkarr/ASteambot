@@ -96,19 +96,19 @@
     <Compile Include="Config.cs" />
     <Compile Include="Modules\Module.cs" />
     <Compile Include="Modules\ModuleLoader.cs" />
-    <Compile Include="Networking\DataQueue.cs" />
-    <Compile Include="Networking\EventArgData.cs" />
-    <Compile Include="Networking\GameServer.cs" />
+    <Compile Include="Networking\TCPInterface\DataQueue.cs" />
+    <Compile Include="Networking\TCPInterface\EventArgData.cs" />
+    <Compile Include="Networking\TCPInterface\GameServer.cs" />
     <Compile Include="HandleSteamChat.cs" />
     <Compile Include="Manager.cs" />
     <Compile Include="LoginInfo.cs" />
-    <Compile Include="Networking\TCPInterface.cs" />
-    <Compile Include="Networking\Database.cs" />
-    <Compile Include="Networking\EventArgGameServer.cs" />
-    <Compile Include="Networking\GameServerRequest.cs" />
-    <Compile Include="Networking\HandleMessage.cs" />
-    <Compile Include="Networking\NetworkCode.cs" />
-    <Compile Include="Networking\StateObject.cs" />
+    <Compile Include="Networking\TCPInterface\TCPInterface.cs" />
+    <Compile Include="Networking\Database\Database.cs" />
+    <Compile Include="Networking\TCPInterface\EventArgGameServer.cs" />
+    <Compile Include="Networking\TCPInterface\GameServerRequest.cs" />
+    <Compile Include="Networking\TCPInterface\HandleMessage.cs" />
+    <Compile Include="Networking\TCPInterface\NetworkCode.cs" />
+    <Compile Include="Networking\TCPInterface\StateObject.cs" />
     <Compile Include="Networking\Webinterface\HttpBuilder.cs" />
     <Compile Include="Networking\Webinterface\HttpProcessor.cs" />
     <Compile Include="Networking\Webinterface\HTTPServer.cs" />
@@ -135,10 +135,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Interfaces\ASteambot_Intefaces.csproj">
-      <Project>{7612b1fa-b6af-4560-9952-c2406792ae14}</Project>
-      <Name>ASteambot_Intefaces</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SteamTrade\SteamTrade.csproj">
       <Project>{6cec0333-81eb-40ee-85d1-941363626fc7}</Project>
       <Name>SteamTrade</Name>

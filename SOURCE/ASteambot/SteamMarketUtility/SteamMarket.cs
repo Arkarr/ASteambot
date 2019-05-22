@@ -102,7 +102,8 @@ namespace ASteambot.SteamMarketUtility
                         DateTime dt = DateTime.Now;
                         TF2OK = ScanMarket(Games.TF2);
                         DateTime now = DateTime.Now;
-                        Console.WriteLine("market scan for tf2 in : " + (now.Subtract(dt).Minutes) + " minutes !");
+                        TimeSpan difference = now.Subtract(dt);
+                        Console.WriteLine("market scan for tf2 in : " + difference.Hours.ToString("00") + "h:" + difference.Minutes.ToString("00") + "m:" + difference.Seconds.ToString("00") + "s");
                     });
                 }
 
@@ -113,7 +114,8 @@ namespace ASteambot.SteamMarketUtility
                         DateTime dt = DateTime.Now;
                         CSGOOK = ScanMarket(Games.CSGO);
                         DateTime now = DateTime.Now;
-                        Console.WriteLine("market scan for csgo done in : " + (now.Subtract(dt).Minutes) + " minutes !");
+                        TimeSpan difference = now.Subtract(dt);
+                        Console.WriteLine("market scan for CS:GO in : " + difference.Hours.ToString("00") + "h:" + difference.Minutes.ToString("00") + "m:" + difference.Seconds.ToString("00") + "s");
                     });
                 }
 
@@ -125,7 +127,8 @@ namespace ASteambot.SteamMarketUtility
                         DateTime dt = DateTime.Now;
                         DOTA2OK = ScanMarket(Games.Dota2);
                         DateTime now = DateTime.Now;
-                        Console.WriteLine("market scan for dota2 done in : " + (now.Subtract(dt).Minutes) + " minutes !");
+                        TimeSpan difference = now.Subtract(dt);
+                        Console.WriteLine("market scan for DOTA 2 in : " + difference.Hours.ToString("00") + "h:" + difference.Minutes.ToString("00") + "m:" + difference.Seconds.ToString("00") + "s");
                     });
                 }
 
@@ -210,9 +213,7 @@ namespace ASteambot.SteamMarketUtility
                         itemToAdd.Clear();
                     }
 
-                    if (ro.nbritems <= startIndex + 500)
-                        Console.WriteLine("Price for game " + game.ToString() + " updated !");
-                    else
+                    if (ro.nbritems > startIndex + 500)
                         return ScanMarket(game, startIndex + 500);
 
                     return true;

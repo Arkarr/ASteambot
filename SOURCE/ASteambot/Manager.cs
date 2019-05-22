@@ -448,5 +448,10 @@ namespace ASteambot
 
             return g;
         }
+
+        public List<GameServer> GetGameServers()
+        {
+            return Servers;
+        }
     }
 }
