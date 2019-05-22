@@ -25,7 +25,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
         
-        private static string BUILD_VERSION = "V9.9.5";
+        private static string BUILD_VERSION = "V9.9.6";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -60,8 +60,11 @@ namespace ASteambot
         private static void LoadModules()
         {
             modules = new List<Modules.Module>();
-
+            
             string folderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/modules/";
+
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
 
             string[] files = Directory.GetFiles(folderPath, "*.dll", SearchOption.TopDirectoryOnly);
 
