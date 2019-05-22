@@ -12,7 +12,7 @@ namespace ASteambot.Networking.Webinterface
     {
         public static HttpResponse InternalServerError()
         {
-            string content = File.ReadAllText("website/statuscode/500.html");
+            string content = File.ReadAllText("website/500.html");
 
             return new HttpResponse()
             {
@@ -24,7 +24,7 @@ namespace ASteambot.Networking.Webinterface
 
         public static HttpResponse NotFound()
         {
-            string content = File.ReadAllText("website/statuscode/404.html");
+            string content = File.ReadAllText("website/404.html");
 
             return new HttpResponse()
             {

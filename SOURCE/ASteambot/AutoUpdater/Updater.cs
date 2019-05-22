@@ -121,35 +121,36 @@ namespace ASteambot.AutoUpdater
                 Console.WriteLine("Extracting the update...");
                 Console.WriteLine(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update.zip"));
 
-                ZipFile.ExtractToDirectory("update.zip", "./update");
+                if(Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)+Path.DirectorySeparatorChar+"update")))
+                    Directory.Delete(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + Path.DirectorySeparatorChar + "update"), true);
 
-                List<String> files = Directory.GetFiles(directory + "update", "*.*", SearchOption.AllDirectories).ToList();
+                ZipFile.ExtractToDirectory("update.zip", Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + Path.DirectorySeparatorChar + "update");
+
+                List<String> files = Directory.GetFiles(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + Path.DirectorySeparatorChar + "update", "*.*", SearchOption.AllDirectories).ToList();
 
                 foreach (string file in files)
                 {
-                    if (file.EndsWith("config.cfg"))
+                    FileInfo mFile = new FileInfo(file);
+                    if (mFile.Name.Contains("config.cfg"))
                     {
-                        RewriteConfigFile(directory + "config.cfg", file);
-                        continue;
+                        RewriteConfigFile(directory + "config.cfg", mFile.FullName);
+                        break;
                     }
+                    
+                    string updateFile = Directory.GetParent(mFile.FullName).ToString().Replace(Path.DirectorySeparatorChar+"update", "") + Path.DirectorySeparatorChar + mFile.Name;
 
-                    string updateFile = directory + Path.GetFileName(file);
-                    Console.WriteLine(file);
+                    Console.WriteLine(updateFile + " is being replaced by " + file);
+
                     if (File.Exists(@updateFile))
-                    {
                         File.Delete(@updateFile);
-                    }
+
                     File.Move(@file, @updateFile);
                 }
 
                 File.Delete("update.zip");
-                Directory.Delete("./update", true);
+                Directory.Delete(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + Path.DirectorySeparatorChar + "update"), true);
 
-                Process p = new Process();
-                p.StartInfo.FileName = self;
-                p.StartInfo.UseShellExecute = false;
-                p.StartInfo.RedirectStandardInput = true;
-                p.Start();
+                Program.PrintErrorMessage("UPDATE DONE ! RESTART ASteambot.exe !!");
 
                 Thread.Sleep(500);
                 Environment.Exit(0);
@@ -172,16 +173,28 @@ namespace ASteambot.AutoUpdater
                     foreach (string file in files)
                     {
                         FileInfo mFile = new FileInfo(file);
-                        if (!mFile.Name.Contains("config.cfg"))
-                            batFile.WriteLine("MOVE \"{0}\" \"{1}\"", @directory + "update\\" + mFile.Name, @directory + mFile.Name);
-                        else
-                            RewriteConfigFile(directory + "config.cfg", mFile.Name);
+                        if (mFile.Name.Contains("config.cfg"))
+                        {
+                            RewriteConfigFile(directory + "config.cfg", mFile.FullName);
+                            break;
+                        }
                     }
 
+                    foreach (string file in files)
+                    {
+                        FileInfo mFile = new FileInfo(file);
+
+                        if (mFile.Name.EndsWith("config.cfg"))
+                            continue;
+
+                        string dstFolder = Directory.GetParent(mFile.FullName).ToString().Replace("\\update", "") + "\\" + mFile.Name;
+                        batFile.WriteLine("MOVE \"{0}\" \"{1}\"", mFile.FullName, dstFolder);
+                    }
 
                     batFile.WriteLine("DEL \"%~f0\" & START /d \"{0}\" ASteambot.exe", directory);
+                    batFile.WriteLine("del / q {0}", directory.Substring(0, directory.Length-1)+ "\\update");
                 }
-
+                
                 ProcessStartInfo startInfo = new ProcessStartInfo(directory + "Update.bat");
                 // Hide the terminal window
                 startInfo.CreateNoWindow = true;
@@ -199,6 +212,11 @@ namespace ASteambot.AutoUpdater
         {
             List<Option> options = new List<Option>();
 
+            if (!File.Exists(oldConfigFile))
+            {
+                oldConfigFile = Path.GetDirectoryName(oldConfigFile) + "\\configs\\config.cfg";
+            }
+
             options = LoadOptions(@newConfigFile);
 
             if (File.Exists(oldConfigFile))
@@ -211,8 +229,8 @@ namespace ASteambot.AutoUpdater
                     options.Where(w => w.Name == opt.Name).ToList().ForEach(s => s.Value = opt.Value);
             }
 
-            File.Delete("config.cfg");
-            using (StreamWriter w = File.AppendText("config.cfg"))
+            File.Delete(oldConfigFile);
+            using (StreamWriter w = File.AppendText(oldConfigFile))
             {
                 foreach (Option opt in options)
                 {
@@ -269,8 +287,8 @@ namespace ASteambot.AutoUpdater
                 {
                     continue;
                 }
-
-                if (!configLine.Contains('='))
+                
+                if (configLine == null || !configLine.Contains('='))
                     continue;
 
                 string[] cl = configLine.Split('=');
