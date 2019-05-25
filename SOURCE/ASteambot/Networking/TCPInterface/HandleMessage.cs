@@ -92,6 +92,9 @@ namespace ASteambot.Networking
         
         private SteamID GetSteamIDFromString(string ssID)
         {
+            if (ssID.Equals("BOT"))
+                return new SteamID();
+
             if (ssID.StartsWith("STEAM_"))
                 return new SteamID(ssID);
             else if (ssID.Trim('[').Trim(']').StartsWith("U:"))
@@ -131,7 +134,14 @@ namespace ASteambot.Networking
 
             string[] ids = gsr.Arguments.Split('/');
             SteamID steamID = GetSteamIDFromString(ids[0]);
+            
+            if (!steamID.IsValid)
+                return;
+
             SteamID reportedDude = GetSteamIDFromString(ids[1]);
+
+            if (!steamID.IsValid)
+                return;
 
             Infos spGuy = bot.GetSteamProfileInfo(steamID);
             Infos spDude = bot.GetSteamProfileInfo(reportedDude);
@@ -197,6 +207,9 @@ namespace ASteambot.Networking
                 bot.ArkarrSteamMarket = new SteamMarket(bot.Config.ArkarrAPIKey, bot.Config.DisableMarketScan, bot.SteamWeb);
             
             SteamID steamID = GetSteamIDFromString(gsr.Arguments);
+
+            if (!steamID.IsValid)
+                return;
 
             if (!bot.Friends.Contains(steamID.ConvertToUInt64()))
             {
@@ -282,6 +295,9 @@ namespace ASteambot.Networking
             string[] myAssetIDs = null;
             string[] steamIDitems = message.Split('/');
             SteamID steamid = GetSteamIDFromString(steamIDitems[0]);
+
+            if (!steamid.IsValid)
+                return;
 
             TradeOffer to = bot.TradeOfferManager.NewOffer(steamid);
 
@@ -460,7 +476,7 @@ namespace ASteambot.Networking
             string[] steamID_msg = gsr.Arguments.Split(new char[] { '/' }, 2);
             SteamID steamID = GetSteamIDFromString(steamID_msg[0]);
 
-            if (steamID == null)
+            if (steamID == null || !steamID.IsValid)
             {
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.Simple, "Invalid steam ID (STEAM_X:Y:ZZZZ) !");
             }
