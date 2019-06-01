@@ -1,4 +1,5 @@
-﻿using ASteambot.Translation;
+﻿using ASteambot.Networking;
+using ASteambot.Translation;
 using SteamKit2;
 using System;
 using System.Collections.Generic;
@@ -180,9 +181,7 @@ namespace ASteambot
                 else
                 {
                     //SendChatMessage(partenar, "No server found with id " + id + " ! No command sent.");
-                    string[] param = { id.ToString() };
-                    PrintChatMessage(partenar, "INVALID_SERVER_ID", param);
-                    PrintChatMessage(partenar, "SERVER_INVALID_ID");
+                    PrintChatMessage(partenar, "INVALID_SERVER_ID");
                 }
             }
             else
