@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ASteambot</RootNamespace>
     <AssemblyName>ASteambot</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <ShouldCreateLogs>True</ShouldCreateLogs>
@@ -160,16 +160,16 @@
   </Target>
   -->
   <Target Name="AfterBuild">
-    <ItemGroup>
+    <!--<ItemGroup>
       <MoveToLibFolder Include="$(OutputPath)*.dll ; $(OutputPath)*.pdb ; $(OutputPath)*.xml" />
-    </ItemGroup>
+    </ItemGroup>-->
     <ItemGroup>
       <MoveToAuthFolder Include="$(OutputPath)*.auth ; $(OutputPath)*.bin" />
     </ItemGroup>
     <ItemGroup>
       <MoveToConfFolder Include="$(OutputPath)*.cfg" />
     </ItemGroup>
-    <Move SourceFiles="@(MoveToLibFolder)" DestinationFolder="$(OutputPath)libraries" OverwriteReadOnlyFiles="true" />
+    <!--<Move SourceFiles="@(MoveToLibFolder)" DestinationFolder="$(OutputPath)libraries" OverwriteReadOnlyFiles="true" />-->
     <Move SourceFiles="@(MoveToAuthFolder)" DestinationFolder="$(OutputPath)auth" OverwriteReadOnlyFiles="true" />
     <Move SourceFiles="@(MoveToConfFolder)" DestinationFolder="$(OutputPath)configs" OverwriteReadOnlyFiles="true" />
     <Delete Files="$(OutputPath)ASteambot.exe.config" />
