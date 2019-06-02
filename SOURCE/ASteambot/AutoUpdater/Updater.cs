@@ -66,7 +66,7 @@ namespace ASteambot.AutoUpdater
                     {
                         Console.WriteLine("Already up to date !");
                     }
-                    else
+                    else if(Environment.OSVersion.Platform != PlatformID.MacOSX && Environment.OSVersion.Platform != PlatformID.Unix)
                     {
                         Console.WriteLine("Update found ! Updating...");
                         if (Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update")))
@@ -82,6 +82,18 @@ namespace ASteambot.AutoUpdater
                         JToken lastRealse = json.SelectToken("assets[0].browser_download_url");
 
                         await DownloadUpdate((string)lastRealse);
+                    }
+                    else
+                    {
+                        var info = new ProcessStartInfo();
+                        info.FileName = "LINUX_auto_start.sh";
+
+                        info.UseShellExecute = true;
+                        info.CreateNoWindow = false;
+
+                        var p = Process.Start(info);
+
+                        Environment.Exit(0);
                     }
                 }
             }
@@ -118,7 +130,7 @@ namespace ASteambot.AutoUpdater
 
             if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
             {
-                Console.WriteLine("Extracting the update...");
+                /*Console.WriteLine("Extracting the update...");
                 Console.WriteLine(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/update.zip"));
 
                 if(Directory.Exists(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)+Path.DirectorySeparatorChar+"update")))
@@ -153,7 +165,7 @@ namespace ASteambot.AutoUpdater
                 Program.PrintErrorMessage("UPDATE DONE ! RESTART ASteambot.exe !!");
 
                 Thread.Sleep(500);
-                Environment.Exit(0);
+                Environment.Exit(0);*/
             }
             else
             {
