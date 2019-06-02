@@ -62,12 +62,24 @@ namespace ASteambot
 
         public bool SocketConnected()
         {
-            string finaldata = tcppasswd + -1 + ")" + ((int)NetworkCode.ASteambotCode.Simple).ToString() + "|" + "ARE_YOU_ALIVE" + " <EOF>";
+            string finaldata = tcppasswd + -1 + ")" + ((int)NetworkCode.ASteambotCode.Simple).ToString() + "|" + "ARE_YOU_ALIVE" + "<EOF>";
             byte[] bytes = Encoding.UTF8.GetBytes(finaldata);
 
             try
             {
-                socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
+                //socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
+                int size = Encoding.ASCII.GetByteCount(finaldata);
+
+                if (size > NetworkCode.MAX_CHUNK_SIZE)
+                {
+                    List<string> chunks = ChunksUpto(finaldata, NetworkCode.MAX_CHUNK_SIZE).ToList();
+                    foreach (string chunk in chunks)
+                        dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
+                }
+                else
+                {
+                    dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
+                }
                 return true;
             }
             catch(Exception e)
@@ -81,8 +93,21 @@ namespace ASteambot
             string finaldata = tcppasswd + "-1)SRVID| " + serverID + "<EOF>";
 
             //Console.WriteLine(finaldata);
-            byte[] byteData = Encoding.UTF8.GetBytes(finaldata);
-            socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
+            /*byte[] byteData = Encoding.UTF8.GetBytes(finaldata);
+            socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);*/
+
+            int size = Encoding.ASCII.GetByteCount(finaldata);
+
+            if (size > NetworkCode.MAX_CHUNK_SIZE)
+            {
+                List<string> chunks = ChunksUpto(finaldata, NetworkCode.MAX_CHUNK_SIZE).ToList();
+                foreach (string chunk in chunks)
+                    dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
+            }
+            else
+            {
+                dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
+            }
         }
 
         private IEnumerable<string> ChunksUpto(string str, int maxChunkSize)
