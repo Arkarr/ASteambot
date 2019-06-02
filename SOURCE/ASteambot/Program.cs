@@ -24,8 +24,8 @@ namespace ASteambot
         private static LoginInfo logininfo;
         private static Manager steambotManager;
         private static Thread threadManager;
-        
-        private static string BUILD_VERSION = "V10.0.3";
+
+        private static string BUILD_VERSION = "V10.0.5";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
