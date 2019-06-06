@@ -88,22 +88,25 @@ namespace ASteambot.Translation
             //Shitty
             foreach (KeyValuePair<string, Dictionary<string, string>> entry in translations)
             {
-                if(entry.Key.Split(';').Contains(sentence))
+                if (entry.Key.Split(';').Contains(sentence))
                 {
                     s = entry.Value;
                     break;
                 }
             }
 
-            if (s == null)
-                return "Sorry, I don't understand your request.";
+            if (s == null && sentence != "COMMAND_NOT_FOUND")
+                return GetSentence("COMMAND_NOT_FOUND", language);
 
-            if (s.ContainsKey(language))
-                return s[language];
-            else if (s.ContainsKey("en"))
-                return s["en"];
-            else
-                return "Sorry, I don't understand your request.";
+            if (s != null)
+            {
+                if (s.ContainsKey(language))
+                    return s[language];
+                else if (s.ContainsKey("en"))
+                    return s["en"];
+            }
+            
+            return "Sorry, I don't understand your request.";
         }
     }
 }

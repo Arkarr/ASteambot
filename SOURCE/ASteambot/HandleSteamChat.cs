@@ -23,8 +23,8 @@ namespace ASteambot
         {
             if (!bot.Config.IsAdmin(partenar))
             {
-                if (!bot.Config.IsAdmin(partenar))
-                    return;
+                PrintChatMessage(partenar, msg);
+                return;
             }
 
             string command = msg.Split(' ')[0];
@@ -143,7 +143,11 @@ namespace ASteambot
                 Program.PrintErrorMessage("As a result, I'll use the 'en' language !");
             }
 
-            sentences = String.Format(bot.Translation.GetSentence(message, "en"), data);
+            if(bot.Config.IsAdmin(partenar))
+                sentences = String.Format(bot.TranslationAdmins.GetSentence(message, "en"), data);
+            else
+                sentences = String.Format(bot.TranslationPublic.GetSentence(message, "en"), data);
+
 
             foreach (string s in sentences.Split(new string[] { "\\n" }, StringSplitOptions.None))
             {

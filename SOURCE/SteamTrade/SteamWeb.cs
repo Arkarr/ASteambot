@@ -66,10 +66,10 @@ namespace SteamTrade
         /// <param name="fetchError">If true, response codes other than HTTP 200 will still be returned, rather than throwing exceptions</param>
         /// <returns>The string of the http return stream.</returns>
         /// <remarks>If you want to know how the request method works, use: <see cref="SteamWeb.Request"/></remarks>
-        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = true)
+        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = true, int timeout = 50000)
         {
             // Reading the response as stream and read it to the end. After that happened return the result as string.
-            using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError))
+            using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError, timeout))
             {
                 if (response == null)
                     return String.Empty;
@@ -99,7 +99,7 @@ namespace SteamTrade
         /// <param name="referer">Gets information about the URL of the client's previous request that linked to the current URL.</param>
         /// <param name="fetchError">Return response even if its status code is not 200</param>
         /// <returns>An instance of a HttpWebResponse object.</returns>
-        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = true)
+        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = true, int timeout = 50000)
         {
             // Append the data to the URL for GET-requests.
             bool isGetMethod = (method.ToLower() == "get");
