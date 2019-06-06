@@ -48,6 +48,8 @@ namespace ASteambot.Translation
 
                 Program.PrintErrorMessage("Send to Arkarr please!");
 
+                Program.PrintErrorMessage(e.ToString());
+
                 return "en";
             }
         }

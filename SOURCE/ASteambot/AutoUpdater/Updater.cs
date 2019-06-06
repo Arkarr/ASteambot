@@ -18,11 +18,13 @@ namespace ASteambot.AutoUpdater
     {
         private bool disableUpdater;
         private string actualVersion;
+        private int displayTick;
 
         public Updater(bool disableUpdater, string version)
         {
             this.disableUpdater = disableUpdater;
             this.actualVersion = version;
+            this.displayTick = 0;
         }
 
         public async Task Update()
@@ -52,6 +54,8 @@ namespace ASteambot.AutoUpdater
                     catch (Exception e)
                     {
                         Console.WriteLine("Couldn't download the last release. Too many request ? Wait about 15 minutes and try again.");
+                        Console.WriteLine(e);
+                        Console.Write("-----------------------------------------");
                     }
                 }
 
@@ -119,7 +123,13 @@ namespace ASteambot.AutoUpdater
             double totalBytes = double.Parse(e.TotalBytesToReceive.ToString());
             double percentage = bytesIn / totalBytes * 100;
 
-            Console.Write("Downloaded " + (e.BytesReceived) + " bytes of " + (e.TotalBytesToReceive) + " bytes");
+            displayTick++;
+
+            if (displayTick == 5)
+            {
+                Console.Write("Downloaded " + (e.BytesReceived) + " bytes of " + (e.TotalBytesToReceive) + " bytes");
+                displayTick = 0;
+            }
         }
 
         private void InstallUpdate()

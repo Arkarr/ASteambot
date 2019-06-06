@@ -12,7 +12,6 @@ using ASteambot.SteamGroups;
 using ASteambot.Networking;
 using System.Net;
 using System.Globalization;
-using CsQuery;
 using System.Reflection;
 using ASteambot.SteamMarketUtility;
 using SteamKit2;
@@ -59,7 +58,8 @@ namespace ASteambot
         public Dictionary<SteamID, int> ChatListener { get; private set; }
         public GenericInventory OtherGenericInventory { get; private set; }
         public int SteamInventoryItemCount { get; private set; }
-        public Translation.Translation Translation { get; private set; }
+        public Translation.Translation TranslationAdmins { get; private set; }
+        public Translation.Translation TranslationPublic { get; private set; }
 
         private int steamInventoryTF2Items;
         public int SteamInventoryTF2Items
@@ -195,8 +195,11 @@ namespace ASteambot
 
             socket.MessageReceived += Socket_MessageReceived;
 
-            Translation = new Translation.Translation();
-            Translation.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/configs/steamchattexts.xml");
+            TranslationAdmins = new Translation.Translation();
+            TranslationPublic = new Translation.Translation();
+
+            TranslationAdmins.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/configs/steamchattexts.xml");
+            TranslationPublic.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/configs/steamchattexts_public.xml");
         }
         
         public void SubscribeToEvents()
@@ -317,6 +320,7 @@ namespace ASteambot
             catch(Exception e)
             {
                 Program.PrintErrorMessage("Couldn't find steam auth data. Did you linked the bot steam account to steamguard with ASteambot ?");
+                Program.PrintErrorMessage(e.ToString());
             }
         }
 
@@ -422,8 +426,8 @@ namespace ASteambot
                     steamGuardAccount = authLinker.LinkedAccount;
                     try
                     {
-                        var authFile = String.Format("auth/{0}.auth", loginInfo.Username);
-                        Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "authfiles"));
+                        var authFile = String.Format("auth/{0}.auth", loginInfo.Username); 
+                        //Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "authfiles"));
                         File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(steamGuardAccount));
                         Console.WriteLine("Enter SMS code :");
                         var smsCode = Console.ReadLine();
@@ -1021,7 +1025,7 @@ namespace ASteambot
 
         private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
         {
-            if (callback.EntryType == EChatEntryType.ChatMsg && Config.IsAdmin(callback.Sender))
+            if (callback.EntryType == EChatEntryType.ChatMsg)
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
         }
 

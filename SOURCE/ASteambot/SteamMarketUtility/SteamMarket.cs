@@ -173,9 +173,22 @@ namespace ASteambot.SteamMarketUtility
         {
             try
             {
-                int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
-                string json = fetcher.Fetch("http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&start="+startIndex+"&appid=" + (int)game, "GET");
-                RootObject ro = JsonConvert.DeserializeObject<RootObject>(json);
+                RootObject ro = null;
+                do
+                {
+                    int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
+                    string target = "http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&start=" + startIndex + "&appid=" + (int)game;
+                    string json = fetcher.Fetch(target, "GET", null, true, "", true, timeout);
+                    ro = JsonConvert.DeserializeObject<RootObject>(json);
+
+                    /*if (ro == null)
+                    {
+                        Console.WriteLine("Error fetching : " + target + " !");
+                        Console.WriteLine("Trying again.");
+                    }*/
+                }
+                while (ro == null);
+
                 List<Item> items = ro.items;
                 if (ro.success && stop == false)
                 {
