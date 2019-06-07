@@ -66,8 +66,6 @@ namespace ASteambot
                     PrintChatMessage(partenar, msg);
                 break;
             }
-
-
         }
 
         private void SendMessageToGameServer(int moduleID, SteamID partenar, string message)

@@ -16,17 +16,20 @@ namespace ASteambot_TestModules
             {
                 //steamFriends.SendChatMessage(PatronID, EChatEntryType.ChatMsg, "You little dumb, i'm a bot, not person, stop sending me game invites !");
                 translationSentence = "BOT_GAME_INVITE";
+
+                steamFriends.RemoveFriend(PatronID);
+
                 return false;
             }
 
             translationSentence = "";
-            return true;
+            return false;
         }
 
         public bool HandleMessage(SteamFriends steamFriends, SteamID partenar, EChatEntryType msgtype, string message, out string translationSentence)
         {
             translationSentence = "";
-            return true;
+            return false;
         }
     }
 }

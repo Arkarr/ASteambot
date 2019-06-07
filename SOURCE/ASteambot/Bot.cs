@@ -1056,6 +1056,9 @@ namespace ASteambot
 
         private void OnFriendMsgCallback(SteamFriends.FriendMsgCallback callback)
         {
+            if (callback.EntryType != EChatEntryType.ChatMsg)
+                return;
+
             object[] args = new object[5];
             args[0] = SteamFriends;
             args[1] = callback.Sender;
