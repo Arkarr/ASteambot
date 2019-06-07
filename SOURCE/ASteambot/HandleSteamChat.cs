@@ -66,6 +66,8 @@ namespace ASteambot
                     PrintChatMessage(partenar, msg);
                 break;
             }
+
+
         }
 
         private void SendMessageToGameServer(int moduleID, SteamID partenar, string message)
@@ -120,15 +122,8 @@ namespace ASteambot
             }
         }
 
-        private void PrintChatMessage(SteamID partenar, string message, string[] data = null)
+        public void PrintChatMessage(SteamID partenar, string message, string[] data = null)
         {
-            object[] args = new object[3];
-            args[0] = bot.SteamFriends;
-            args[1] = partenar;
-            args[2] = message;
-
-            Program.ExecuteModuleFonction("HandleMessage", args);
-
             string sentences = "";
             data = data ?? new string[0];
 

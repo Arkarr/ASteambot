@@ -370,7 +370,7 @@ namespace SteamTrade
 
                 // rsa encrypt it with the public key for the universe we're on
                 byte[] cryptedSessionKey;
-                using (RSACrypto rsa = new RSACrypto(KeyDictionary.GetPublicKey(client.ConnectedUniverse)))
+                using (RSACrypto rsa = new RSACrypto(KeyDictionary.GetPublicKey(client.Universe)))
                 {
                     cryptedSessionKey = rsa.Encrypt(sessionKey);
                 }
