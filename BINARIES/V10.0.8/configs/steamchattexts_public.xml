@@ -1,0 +1,10 @@
+<!--
+//   This translation file is for user who are NOT admin
+//   If STEAMID of the user is in the parameter steam_admins= (config.cfg)
+//   Then it will use the file steamchattexts.xml !!
+-->
+<steamchattexts>
+	<handler msg="COMMAND_NOT_FOUND">
+		<translation lang="en">Sorry, I don't understand your request !</translation>
+	</handler>
+</steamchattexts>

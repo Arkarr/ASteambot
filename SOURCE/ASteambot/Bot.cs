@@ -14,8 +14,9 @@ using System.Net;
 using System.Globalization;
 using System.Reflection;
 using ASteambot.SteamMarketUtility;
-using SteamKit2;
 using Newtonsoft.Json.Linq;
+using SteamKit2;
+using ASteambot.CustomSteamMessageHandler;
 
 namespace ASteambot
 {
@@ -49,6 +50,7 @@ namespace ASteambot
         public List<SteamID> Friends { get; private set; }
         public SteamMarket ArkarrSteamMarket { get; set; }
         public SteamFriends SteamFriends { get; private set; }
+        public GenericSteamMessageHandler GSMH { get; private set; }
         public SteamTrade.SteamWeb SteamWeb { get; private set; }
         public HandleSteamChat SteamchatHandler { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
@@ -183,6 +185,9 @@ namespace ASteambot
             MyGenericInventory = new GenericInventory(SteamWeb);
             OtherGenericInventory = new GenericInventory(SteamWeb);
 
+            steamClient.AddHandler(new GenericSteamMessageHandler());
+            //steamClient.AddHandler(GSMH);
+
             if (Program.IsLinux())
                 Thread.Sleep(3000);
 
@@ -215,10 +220,13 @@ namespace ASteambot
 
             //Steam events :
             cbManager.Subscribe<SteamUser.AccountInfoCallback>(OnAccountInfo);
-            cbManager.Subscribe<SteamFriends.FriendMsgCallback>(OnSteamFriendMessage);
+            cbManager.Subscribe<SteamFriends.FriendMsgCallback>(OnFriendMsgCallback);
             cbManager.Subscribe<SteamFriends.PersonaChangeCallback>(OnSteamNameChange);
             cbManager.Subscribe<SteamFriends.FriendsListCallback>(OnSteamFriendsList);
-            //cbManager.Subscribe<SteamFriends.ProfileInfoCallback>(OnSteamProfileInfo);
+            cbManager.Subscribe<SteamFriends.ChatInviteCallback>(OnSteamChatInvite);
+
+            //Custom events:
+            cbManager.Subscribe<GenericSteamMessageHandler.OnSteamMessageReceived>(OnGenericMessageReceived);
         }
 
         //*************//
@@ -334,6 +342,7 @@ namespace ASteambot
             loginInfo.LoginFailCount = 0;
             steamUser = steamClient.GetHandler<SteamUser>();
             SteamFriends = steamClient.GetHandler<SteamFriends>();
+            GSMH = steamClient.GetHandler<GenericSteamMessageHandler>();
 
             SubscribeToEvents();
 
@@ -1023,10 +1032,59 @@ namespace ASteambot
             }
         }
 
-        private void OnSteamFriendMessage(SteamFriends.FriendMsgCallback callback)
+        private void OnSteamChatInvite(SteamFriends.ChatInviteCallback callback)
         {
-            if (callback.EntryType == EChatEntryType.ChatMsg)
+            object[] args = new object[9];
+            args[0] = SteamFriends;
+            args[1] = callback.InvitedID;
+            args[2] = callback.ChatRoomID;
+            args[3] = callback.PatronID;
+            args[4] = callback.ChatRoomType;
+            args[5] = callback.FriendChatID;
+            args[6] = callback.ChatRoomName;
+            args[7] = callback.GameID;
+            args[8] = "";
+
+            Dictionary<bool, string> results = Program.ExecuteModuleFonction("HandleInvitation", args);
+
+            foreach (KeyValuePair<bool, string> entry in results)
+            { 
+                if (entry.Value.Length > 0)
+                    SteamchatHandler.PrintChatMessage(callback.PatronID, entry.Value);
+            }
+        }
+
+        private void OnFriendMsgCallback(SteamFriends.FriendMsgCallback callback)
+        {
+            object[] args = new object[5];
+            args[0] = SteamFriends;
+            args[1] = callback.Sender;
+            args[2] = callback.EntryType;
+            args[3] = callback.Message;
+            args[4] = "";
+
+            //Ugly way to block invitation
+            if (callback.Message.Equals("Invited you to play a game!"))
+                return;
+
+            Dictionary<bool, string> results = Program.ExecuteModuleFonction("HandleMessage", args);
+
+            bool block = false;
+            foreach (KeyValuePair<bool, string> entry in results)
+            {
+                if (entry.Value.Length > 0)
+                    SteamchatHandler.PrintChatMessage(callback.Sender, entry.Value);
+
+                if (entry.Key)
+                    block = true;
+            }
+
+            if(!block)
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
+        }
+
+        private void OnGenericMessageReceived(GenericSteamMessageHandler.OnSteamMessageReceived callback)
+        {
         }
 
         private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback)

@@ -25,7 +25,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V10.0.7";
+        private static string BUILD_VERSION = "V10.0.8";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -71,27 +71,40 @@ namespace ASteambot
             foreach (string file in files)
             {
                 Assembly ass = Assembly.LoadFrom(file);
-                Modules.Module m = ModuleLoader.LoadASteambotModule(ass);
+                Modules.Module m = null;
+                try
+                {
+                   m = ModuleLoader.LoadASteambotModule(ass);
+                }
+                catch(Exception e)
+                {
+                    PrintErrorMessage("Could not load module "+ file +". Reason :");
+                    PrintErrorMessage(e.ToString());
+                }
+
                 if (m == null || ass == null) //B.L.
-                    PrintErrorMessage("Could not load " + file + " ! Invalid module.");
+                    PrintErrorMessage(">>> Contact the creator of this module ! <<<");
                 else
                     modules.Add(m);
             }
         }
 
-        public static void ExecuteModuleFonction(string i, object[] args)
+        public static Dictionary<bool, string> ExecuteModuleFonction(string i, object[] args)
         {
+            Dictionary<bool, string> results = new Dictionary<bool, string>();
             foreach (Modules.Module m in modules)
             {
                 try
                 {
-                    m.RunMethod(i, args);
+                    results.Add((bool)m.RunMethod(i, args), (string)args[args.Length-1]);
                 }
                 catch (Exception e)
                 {
                     PrintErrorMessage(e.ToString());
                 }
             }
+
+            return results;
         }
 
         static void Main(string[] args)
