@@ -486,25 +486,28 @@ namespace ASteambot.Networking
             }
             else
             {
-                if(steamID_msg[1].StartsWith("steam://connect/"))
+                if (steamID_msg[1].StartsWith("steam://connect/"))
                 {
-                    Random rnd = new Random();
+                    /*Random rnd = new Random();
                     string key = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10).Select(s => s[rnd.Next(s.Length)]).ToArray());
                     while (!Program.httpsrv.AddToRedirectTable(key, steamID_msg[1], out key))
                         key = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10).Select(s => s[rnd.Next(s.Length)]).ToArray());
 
-                    steamID_msg[1] = key;
+                    bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, key);*/
+                    bot.GSMH.SendGameInvite(bot.getSteamID(), steamID, steamID_msg[1].Replace("steam://connect/", ""));
                 }
-
-                new Thread(() =>
+                else
                 {
-                    Thread.CurrentThread.IsBackground = true;
-                    foreach (string line in steamID_msg[1].Split(new[] { "\n" }, StringSplitOptions.None))
+                    new Thread(() =>
                     {
-                        bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, line);
-                        Thread.Sleep(1300);
-                    }
-                }).Start();
+                        Thread.CurrentThread.IsBackground = true;
+                        foreach (string line in steamID_msg[1].Split(new[] { "\n" }, StringSplitOptions.None))
+                        {
+                            bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, line);
+                            Thread.Sleep(1300);
+                        }
+                    }).Start();
+                }
             }
         }
     }
