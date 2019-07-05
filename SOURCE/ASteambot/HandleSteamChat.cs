@@ -128,18 +128,23 @@ namespace ASteambot
             try
             {
                 Infos spi = bot.GetSteamProfileInfo(partenar);
+
+                if (bot.Config.IsAdmin(partenar))
+                    sentences = String.Format(bot.TranslationAdmins.GetSentence(message, CountryCode.GetCountryCode(spi)), data);
+                else
+                    sentences = String.Format(bot.TranslationPublic.GetSentence(message, CountryCode.GetCountryCode(spi)), data);
             }
             catch(Exception ex)
             {
                 Program.PrintErrorMessage("Error while loading the profile of '" + partenar + "' ... Sorry!");
                 Program.PrintErrorMessage(ex.ToString());
                 Program.PrintErrorMessage("As a result, I'll use the 'en' language !");
-            }
 
-            if(bot.Config.IsAdmin(partenar))
-                sentences = String.Format(bot.TranslationAdmins.GetSentence(message, "en"), data);
-            else
-                sentences = String.Format(bot.TranslationPublic.GetSentence(message, "en"), data);
+                if (bot.Config.IsAdmin(partenar))
+                    sentences = String.Format(bot.TranslationAdmins.GetSentence(message, "en"), data);
+                else
+                    sentences = String.Format(bot.TranslationPublic.GetSentence(message, "en"), data);
+            }
 
 
             foreach (string s in sentences.Split(new string[] { "\\n" }, StringSplitOptions.None))

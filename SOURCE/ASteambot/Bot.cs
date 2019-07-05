@@ -226,7 +226,7 @@ namespace ASteambot
             cbManager.Subscribe<SteamFriends.ChatInviteCallback>(OnSteamChatInvite);
 
             //Custom events:
-            cbManager.Subscribe<GenericSteamMessageHandler.OnSteamMessageReceived>(OnGenericMessageReceived);
+            //cbManager.Subscribe<GenericSteamMessageHandler.OnSteamMessageReceived>(OnGenericMessageReceived);
         }
 
         //*************//
@@ -599,16 +599,18 @@ namespace ASteambot
             //SteamFriends.RequestProfileInfo(steamClient.SteamID.ConvertToUInt64());
             if (maxfriendCount == 0)
             {
+                string json = "";
                 try
                 {
                     string profileLink = "http://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key="+ Config.SteamAPIKey +"&steamid=" + steamClient.SteamID.ConvertToUInt64();
-                    string json = SteamWeb.Fetch(profileLink, "GET");
+                    json = SteamWeb.Fetch(profileLink, "GET");
                     string output = JObject.Parse(json)["response"]["player_level"].ToString();
                     maxfriendCount = 250 + 5 * Int32.Parse(output);
                 }
                 catch (Exception)
                 {
-                    Program.PrintErrorMessage("Error while reading the steam level of own profile. DEBUG: " + steamClient);
+                    Program.PrintErrorMessage("Error while reading the steam level of own profile.");
+                    Program.PrintErrorMessage("JSON:\n" + json);
                     Program.PrintErrorMessage("Is steam profile configured ?");
                     maxfriendCount = 250;
                 }
@@ -979,7 +981,7 @@ namespace ASteambot
 
         public SteamID getSteamID()
         {
-            return steamUser.SteamID;
+            return steamClient.SteamID;
         }
 
         //***********//
@@ -1142,7 +1144,7 @@ namespace ASteambot
         {
             /*if (callback.JobID != JobID.Invalid)
             {*/
-                Console.WriteLine("Connected to steam network !");
+            Console.WriteLine("Connected to steam network !");
                 Console.WriteLine("Logging in...");
 
                 byte[] test = null;
@@ -1342,7 +1344,7 @@ namespace ASteambot
 
         public SteamProfile.Infos GetSteamProfileInfo(SteamID steamID)
         {
-            SteamProfile sp = steamprofiles.Find(x => x.Informations.SteamID64.Equals(steamID));
+            SteamProfile sp = steamprofiles.Find(x => x.Informations != null && x.Informations.SteamID64 != null && x.Informations.SteamID64.Equals(steamID));
             if (sp == null)
             {
                 SteamProfile steamProfile = new SteamProfile(SteamWeb, steamID);

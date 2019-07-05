@@ -14,7 +14,6 @@ namespace ASteambot_TestModules
         {
             if (ChatRoomType == EChatRoomType.Lobby)
             {
-                //steamFriends.SendChatMessage(PatronID, EChatEntryType.ChatMsg, "You little dumb, i'm a bot, not person, stop sending me game invites !");
                 translationSentence = "BOT_GAME_INVITE";
 
                 steamFriends.RemoveFriend(PatronID);
