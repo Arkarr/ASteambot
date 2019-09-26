@@ -166,6 +166,20 @@ namespace ASteambot.SteamMarketUtility
         public void ForceRefresh()
         {
             Console.WriteLine("Force market refresh...");
+
+            Cancel();
+
+            while (TF2marketScanner != null && TF2marketScanner.IsAlive)
+                Thread.Sleep(1000);
+
+            while (CSGOmarketScanner != null && CSGOmarketScanner.IsAlive)
+                Thread.Sleep(1000);
+
+            while (DOTA2marketScanner != null && DOTA2marketScanner.IsAlive)
+                Thread.Sleep(1000);
+
+            stop = false;
+
             RefreshMarket();
         }
 
@@ -187,7 +201,10 @@ namespace ASteambot.SteamMarketUtility
                         Console.WriteLine("Trying again.");
                     }*/
                 }
-                while (ro == null);
+                while (ro == null && !stop);
+
+                if (stop)
+                    return false;
 
                 List<Item> items = ro.items;
                 if (ro.success && stop == false)
