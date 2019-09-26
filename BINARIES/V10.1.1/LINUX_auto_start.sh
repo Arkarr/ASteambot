@@ -132,6 +132,7 @@ then
 	echo "*** Backing up config file ***"
 	mv "${BASEDIR}/configs/config.cfg" "${BASEDIR}/configs/config.cfg.OLD"
 	mv "${BASEDIR}/configs/steamchattexts.xml" "${BASEDIR}/configs/steamchattexts.xml.OLD"
+	mv "${BASEDIR}/configs/steamchattexts_public.xml" "${BASEDIR}/configs/steamchattexts_public.xml.OLD"
 	
 	echo "*** Downloading ASteambot ***"
 	wget -O asteambot.zip --show-progress --limit-rate=750k $(curl -s https://api.github.com/repos/arkarr/asteambot/releases/latest | grep 'browser_' | cut -d\" -f4) && unzip -o asteambot.zip && rm asteambot.zip
