@@ -1245,7 +1245,10 @@ namespace ASteambot
             TradeOffer to;
             TradeOfferManager.TryGetOffer(offer.TradeOfferId, out to);
 
-            if (to != null && ArkarrSteamMarket.IsAvailable())
+            if (to == null)
+                return;
+
+            if (ArkarrSteamMarket.IsAvailable())
             {
                 double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
                 UpdateTradeOfferInDatabase(to, cent);
@@ -1261,7 +1264,7 @@ namespace ASteambot
         {
             //Console.WriteLine("Sent offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
 
-            if (offer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation)
+            /*if (offer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation)
             {
                 AcceptMobileTradeConfirmation(offer.TradeOfferId);
             }
@@ -1274,14 +1277,14 @@ namespace ASteambot
                     double value = float.Parse(mID_value[1]);
 
                     if (value == -1)
-                        value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
+                        value = GetTradeOfferValue(offer.PartnerSteamId.ConvertToUInt64(), offer.Items.GetTheirItems());
                 }
                 else
                 {
                     offer.Cancel();
-                    SteamFriends.SendChatMessage(offer.PartnerSteamId, EChatEntryType.ChatMsg, "Sorry, I had to cancel the trade because an error happened !");
+                    SteamFriends.SendChatMessage(offer.PartnerSteamId.ConvertToUInt64(), EChatEntryType.ChatMsg, "Sorry, I had to cancel the trade because an error happened !");
                 }
-            }
+            }*/
 
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
@@ -1305,39 +1308,43 @@ namespace ASteambot
         {
             //Console.WriteLine("Received offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
 
-            if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
+            /*if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
+            {           
+                if (offer.Items.GetMyItems().Count == 0)
+                    offer.Accept();
+                else
+                    offer.Decline();
+            }
+            else */if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted)
             {
-                double value = GetTradeOfferValue(offer.PartnerSteamId, offer.Items.GetTheirItems());
+                double value = GetTradeOfferValue(offer.PartnerSteamId.ConvertToUInt64(), offer.Items.GetTheirItems());
 
                 string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + value;
 
-                if (offer.Items.GetMyItems().Count == 0)
+                if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
                 {
-                    offer.Accept();
-
-                    if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
-                    {
-                        string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
-                        SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
-                    }
-                    else
-                    {
-                        SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
-                    }
+                    string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
                 }
                 else
                 {
-                    offer.Decline();
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                }
+            }
+            else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined)
+            {
+                double value = GetTradeOfferValue(offer.PartnerSteamId.ConvertToUInt64(), offer.Items.GetTheirItems());
 
-                    if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
-                    {
-                        string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
-                        SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
-                    }
-                    else
-                    {
-                        SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
-                    }
+                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + value;
+
+                if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
+                {
+                    string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
+                }
+                else
+                {
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
                 }
             }
         }

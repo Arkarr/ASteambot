@@ -256,6 +256,10 @@ namespace SteamTrade.TradeOffer
                 {
                     Debug.WriteLine(jsex);
                 }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex);
+                }
             }
             return false;
         }

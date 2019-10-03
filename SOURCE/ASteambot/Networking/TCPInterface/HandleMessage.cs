@@ -257,30 +257,37 @@ namespace ASteambot.Networking
             }
             else
             {
-                bool allItemsFound = false;
-                while (!allItemsFound)
+                if (bot.OtherGenericInventory.items.Count == 0)
                 {
-                    allItemsFound = true;
-
-                    foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+                    items = "EMPTY";
+                }
+                else
+                {
+                    bool allItemsFound = false;
+                    while (!allItemsFound)
                     {
-                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        allItemsFound = true;
 
-                        Item i = bot.ArkarrSteamMarket.GetItemByName(description.market_hash_name);
-                        if (description.tradable)
+                        foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
                         {
-                            if (i != null)// && i.Value != 0)
-                                items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + (i.Value.ToString().Replace(',', '.')) + (img ? "=" + i.Image : "") + ",";
-                            else
-                                items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + "0" + (img ? "=" + "NOT_FOUND" : "") + ",";
+                            GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+
+                            Item i = bot.ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                            if (description.tradable)
+                            {
+                                if (i != null)// && i.Value != 0)
+                                    items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + (i.Value.ToString().Replace(',', '.')) + (img ? "=" + i.Image : "") + ",";
+                                else
+                                    items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + "0" + (img ? "=" + "NOT_FOUND" : "") + ",";
+                            }
                         }
                     }
-                }
 
-                if (items.Length != 0)
-                    items = items.Remove(items.Length - 1);
-                else
-                    items = "EMPTY";
+                    if (items.Length != 0)
+                        items = items.Remove(items.Length - 1);
+                    else
+                        items = "EMPTY";
+                }
             }
 
             return items;
@@ -290,7 +297,6 @@ namespace ASteambot.Networking
         {
             float tradeValue = -1;
             string message = gsr.Arguments;
-            //STEAM_0:1:42047781/2514414967/NULL/999900.00 //TOOOOOOOOO DOOOOOOOOOOOOOO
             string[] assetIDs = null;
             string[] myAssetIDs = null;
             string[] steamIDitems = message.Split('/');

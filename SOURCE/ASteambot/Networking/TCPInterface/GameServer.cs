@@ -45,7 +45,7 @@ namespace ASteambot
         private void DataQueue_OnAdd(object sender, EventArgData e)
         {
             byte[] bytes = e.GetData;
-            string str = System.Text.Encoding.Default.GetString(bytes);
+            string str = Encoding.Default.GetString(bytes);
 
             socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
 
@@ -131,6 +131,8 @@ namespace ASteambot
             {
                 dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
             }
+
+            return true;
             /*try
             {
                 byte[] byteData = Encoding.UTF8.GetBytes(finaldata);
@@ -162,8 +164,6 @@ namespace ASteambot
                 Alive = false;
                 return false;
             }*/
-
-            return true;
         }
 
         private void SendCallback(IAsyncResult ar)

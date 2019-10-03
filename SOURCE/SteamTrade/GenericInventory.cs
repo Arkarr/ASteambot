@@ -158,82 +158,92 @@ namespace SteamTrade
                         string response = SteamWeb.Fetch(url, "GET", data);
                         invResponse = JsonConvert.DeserializeObject(response);
 
-                        if (invResponse.success == false)
+                        if (invResponse == null)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Unable to find items in inventory because bot is scanning inventory too fast. Try again later.");
+                            Console.ForegroundColor = ConsoleColor.Red;
+                        }
+                        else if (invResponse.success == false)
                         {
                             _errors.Add("Fail to open backpack: " + invResponse.Error);
                             continue;
                         }
-
-                        //rgInventory = Items on Steam Inventory 
-                        foreach (var item in invResponse.rgInventory)
+                        else
                         {
-                            foreach (var itemId in item)
+
+                            //rgInventory = Items on Steam Inventory 
+                            foreach (var item in invResponse.rgInventory)
                             {
-                                ulong id = (ulong) itemId.id;
-                                if (!_items.ContainsKey(id))
+                                foreach (var itemId in item)
                                 {
-                                    string descriptionid = itemId.classid + "_" + itemId.instanceid;
-                                    _items.Add((ulong)itemId.id, new Item(appid, contextId, (ulong)itemId.id, descriptionid));
-                                    break;
+                                    ulong id = (ulong)itemId.id;
+                                    if (!_items.ContainsKey(id))
+                                    {
+                                        string descriptionid = itemId.classid + "_" + itemId.instanceid;
+                                        _items.Add((ulong)itemId.id, new Item(appid, contextId, (ulong)itemId.id, descriptionid));
+                                        break;
+                                    }
                                 }
+                            }
+
+                            // rgDescriptions = Item Schema (sort of)
+                            foreach (var description in invResponse.rgDescriptions)
+                            {
+                                foreach (var class_instance in description) // classid + '_' + instenceid 
+                                {
+                                    string key = "" + (class_instance.classid ?? '0') + "_" + (class_instance.instanceid ?? '0');
+                                    if (!_descriptions.ContainsKey(key))
+                                    {
+                                        if (class_instance.app_data != null)
+                                        {
+                                            tmpAppData = new Dictionary<string, string>();
+                                            foreach (var value in class_instance.app_data)
+                                            {
+                                                tmpAppData.Add("" + value.Name, "" + value.Value);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            tmpAppData = null;
+                                        }
+
+                                        _descriptions.Add(key,
+                                            new ItemDescription()
+                                            {
+                                                name = class_instance.name,
+                                                type = class_instance.type,
+                                                market_hash_name = class_instance.market_hash_name,
+                                                marketable = (bool)class_instance.marketable,
+                                                tradable = (bool)class_instance.tradable,
+                                                classid = long.Parse((string)class_instance.classid),
+                                                url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
+                                                app_data = tmpAppData,
+                                                market_fee_app_id = (class_instance.market_fee_app != null ? class_instance.market_fee_app : 0),
+                                            }
+                                        );
+                                        break;
+                                    }
+
+                                }
+                            }
+
+                            try
+                            {
+                                moreStart = invResponse.more_start;
+                            }
+                            catch (Exception e)
+                            {
+                                moreStart = null;
                             }
                         }
 
-                        // rgDescriptions = Item Schema (sort of)
-                        foreach (var description in invResponse.rgDescriptions)
-                        {
-                            foreach (var class_instance in description) // classid + '_' + instenceid 
-                            {
-                                string key = "" + (class_instance.classid ?? '0') + "_" + (class_instance.instanceid ?? '0');
-                                if (!_descriptions.ContainsKey(key))
-                                {
-                                    if(class_instance.app_data != null)
-                                    {
-                                        tmpAppData = new Dictionary<string, string>();
-                                        foreach(var value in class_instance.app_data)
-                                        {
-                                            tmpAppData.Add("" + value.Name, "" + value.Value);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        tmpAppData = null;
-                                    }
-
-                                    _descriptions.Add(key,
-                                        new ItemDescription()
-                                        {
-                                            name = class_instance.name,
-                                            type = class_instance.type,
-                                            market_hash_name = class_instance.market_hash_name,
-                                            marketable = (bool)class_instance.marketable,
-                                            tradable = (bool)class_instance.tradable,
-                                            classid = long.Parse((string)class_instance.classid),
-                                            url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
-                                            app_data = tmpAppData,
-                                            market_fee_app_id = (class_instance.market_fee_app != null ? class_instance.market_fee_app : 0),
-                                        }
-                                    );
-                                    break;
-                                }
-
-                            }
-                        }
-
-                        try
-                        {
-                            moreStart = invResponse.more_start;
-                        }
-                        catch (Exception e)
-                        {
-                            moreStart = null;
-                        }
                     } while (!String.IsNullOrEmpty(moreStart) && moreStart.ToLower() != "false");
                 }//end for (contextId)
             }//end try
             catch (Exception e)
             {
-                _errors.Add("Exception: " + e.Message);
+                _errors.Add("Exception: " + e);
                 _errors.Add("For more infos; visit this link :\n" + url);
             }
             isLoaded = true;

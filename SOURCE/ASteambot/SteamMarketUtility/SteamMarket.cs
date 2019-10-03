@@ -81,7 +81,9 @@ namespace ASteambot.SteamMarketUtility
 
         private void RefreshMarket(Games game = Games.None)
         {
-            
+
+            return;
+
             if (game == Games.None)
             {
                 Console.WriteLine("Fetching market's prices...");
@@ -160,7 +162,8 @@ namespace ASteambot.SteamMarketUtility
 
         public bool IsAvailable()
         {
-            return CSGOOK && TF2OK && DOTA2OK;
+            return false;
+            //return CSGOOK && TF2OK && DOTA2OK;
         }
 
         public void ForceRefresh()
