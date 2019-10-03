@@ -421,6 +421,17 @@ namespace ASteambot
                 }
             }
 
+            /*if(gs == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Could NOT send mesage to server; server has no valid ID. Restart ASteambot_Core on the problematic server.");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return false;
+            }
+
+            gs.Send(moduleID, netcode, data);*/
+
             return true;
         }
         
