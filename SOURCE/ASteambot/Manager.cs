@@ -397,29 +397,39 @@ namespace ASteambot
 
         public bool Send(int serverID, int moduleID, NetworkCode.ASteambotCode netcode, string data)
         {
-            GameServer gs = GetServerByID(serverID);
+            bool sendSuccess = false;
 
-            if(gs == null)
+            do
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Could NOT send mesage to server; server has no valid ID. Restart ASteambot_Core on the problematic server.");
-                Console.ForegroundColor = ConsoleColor.White;
+                GameServer gs = GetServerByID(serverID);
 
-                return false;
-            }
-
-            if(!gs.Send(moduleID, netcode, data))
-            {
-                foreach (Bot bot in OnlineBots)
+                if(gs == null)
                 {
-                    foreach (GameServer g in bot.Manager.Servers)
-                    {
-                        if (g.Alive == false || g.SocketConnected() == false)
-                            bot.SteamchatHandler.ServerRemoved(gs.ServerID);
-                    }
-                    //bot.Manager.Servers.RemoveAll(gs => gs.Alive == false);
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Could NOT send mesage to server; server has no valid ID. Restart ASteambot_Core on the problematic server.");
+                    Console.ForegroundColor = ConsoleColor.White;
+
+                    return false;
                 }
-            }
+
+                Console.WriteLine("Sending to " + gs.Name + "(" + gs.IP + ":" + gs.Port + ")");
+                sendSuccess = gs.Send(moduleID, netcode, data);
+
+                if (!sendSuccess)
+                {
+                    Console.WriteLine("Send data failed. Re-trying.");
+                    foreach (Bot bot in OnlineBots)
+                    {
+                        foreach (GameServer g in bot.Manager.Servers)
+                        {
+                            if (g.Alive == false || g.SocketConnected() == false)
+                                bot.SteamchatHandler.ServerRemoved(gs.ServerID);
+                        }
+                        //bot.Manager.Servers.RemoveAll(gs => gs.Alive == false);
+                    }
+                }
+
+            } while (sendSuccess == false);
 
             /*if(gs == null)
             {

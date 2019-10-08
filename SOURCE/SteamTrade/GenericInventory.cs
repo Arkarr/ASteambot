@@ -150,6 +150,7 @@ namespace SteamTrade
                 foreach (long contextId in contextIds)
                 {
                     string moreStart = null;
+                    bool more = false;
                     do
                     {
                         var data = String.IsNullOrEmpty(moreStart) ? null : new NameValueCollection {{"start", moreStart}};
@@ -162,7 +163,7 @@ namespace SteamTrade
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Unable to find items in inventory because bot is scanning inventory too fast. Try again later.");
-                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.ForegroundColor = ConsoleColor.White;
                         }
                         else if (invResponse.success == false)
                         {
@@ -171,7 +172,6 @@ namespace SteamTrade
                         }
                         else
                         {
-
                             //rgInventory = Items on Steam Inventory 
                             foreach (var item in invResponse.rgInventory)
                             {
@@ -236,9 +236,18 @@ namespace SteamTrade
                             {
                                 moreStart = null;
                             }
+
+                            try
+                            {
+                                more = invResponse.more;
+                            }
+                            catch (Exception e)
+                            {
+                                more = false;
+                            }
                         }
 
-                    } while (!String.IsNullOrEmpty(moreStart) && moreStart.ToLower() != "false");
+                    } while (!String.IsNullOrEmpty(moreStart) && moreStart.ToLower() != "false" && more == true);
                 }//end for (contextId)
             }//end try
             catch (Exception e)

@@ -82,7 +82,7 @@ namespace ASteambot.SteamMarketUtility
         private void RefreshMarket(Games game = Games.None)
         {
 
-            return;
+            //return;
 
             if (game == Games.None)
             {
@@ -134,9 +134,9 @@ namespace ASteambot.SteamMarketUtility
                     });
                 }
 
-                TF2marketScanner.Start();
+                /*TF2marketScanner.Start();
                 CSGOmarketScanner.Start();
-                DOTA2marketScanner.Start();
+                DOTA2marketScanner.Start();*/
             }
             else
             {
@@ -162,8 +162,8 @@ namespace ASteambot.SteamMarketUtility
 
         public bool IsAvailable()
         {
-            return false;
-            //return CSGOOK && TF2OK && DOTA2OK;
+            //return false;
+            return CSGOOK && TF2OK && DOTA2OK;
         }
 
         public void ForceRefresh()
