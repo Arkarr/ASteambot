@@ -124,7 +124,7 @@ namespace ASteambot
             if (DatabasePort == null || DatabasePort.Length == 0) return false;
             if (TCPServerPort == null || TCPServerPort.Length == 0) return false;
             if (TCPPassword == null || TCPPassword.Length == 0) return false;
-            if (ArkarrAPIKey == null || ArkarrAPIKey.Length == 0) return false;
+            ///if (ArkarrAPIKey == null || ArkarrAPIKey.Length == 0) return false;
 
             return true;
         }

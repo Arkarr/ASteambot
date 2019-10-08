@@ -756,10 +756,12 @@ namespace ASteambot
                 return;
             }
 
+            SteamProfile sp = new SteamProfile(SteamWeb, steamID);
+
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("You are about to send ALL the bot's items to");
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.Write(" {0} ({1}) ", SteamProfileInfo.Name, steamid);
+            Console.Write(" {0} ({1} - {2}) ", sp.Informations.Name, steamid, "http://steamcommunity.com/profiles/" + steamID.ConvertToUInt64());
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("via a trade offer, do you confirm ? (YES / NO)");
             Console.WriteLine();
@@ -836,29 +838,30 @@ namespace ASteambot
                 return false;
         }
 
-        private void SendTradeOfferConfirmationToGameServers(string id, int moduleID, NetworkCode.ASteambotCode code, string data)
+        private void SendTradeOfferConfirmationToGameServers(string id, int serverID, int moduleID, NetworkCode.ASteambotCode code, string data)
         {
-            foreach (GameServer gs in Manager.Servers)
+            GameServer gameServer = Manager.GetServerByID(serverID);
+            if (gameServer == null)
+            {
+                foreach (GameServer gs in Manager.Servers)
+                {
+                    if (TradeoffersGS.ContainsKey(id))
+                        Manager.Send(gs.ServerID, moduleID, code, data);
+                    else
+                        Manager.Send(gs.ServerID, -2, code, data); //should never ever go here !
+                }
+                finishedTO.Add(id);
+                TradeoffersGS.Remove(id);
+            }
+            else
             {
                 if (TradeoffersGS.ContainsKey(id))
-                {
-                    if (Manager.Send(gs.ServerID, moduleID, code, data))
-                    {
-                        TradeoffersGS.Remove(id);
-                        finishedTO.Add(id);
-                    }
-                    /*else
-                    {
-                        GameServer gameServer = Manager.GetServerByID(gs.ServerID);
-                        while (gameServer != null && !Manager.Send(gs.ServerID, moduleID, code, data))
-                            gameServer = Manager.GetServerByID(gs.ServerID);
-                    }*/
-                }
+                    Manager.Send(gameServer.ServerID, moduleID, code, data);
                 else
-                {
-                    if (!finishedTO.Contains(id))
-                        Manager.Send(gs.ServerID, - 2, code, data); //should never ever go here !
-                }
+                    Manager.Send(gameServer.ServerID, -2, code, data); //should never ever go here !
+
+                finishedTO.Add(id);
+                TradeoffersGS.Remove(id);
             }
         }
 
@@ -1289,18 +1292,18 @@ namespace ASteambot
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
                 string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
-                string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                string[] srvID_mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
                 TradeOfferValue.Remove(offer.TradeOfferId);
 
-                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(srvID_mID_value[0]), Int32.Parse(srvID_mID_value[1]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
             }
             else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
                 string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
-                string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                string[] srvID_mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
                 TradeOfferValue.Remove(offer.TradeOfferId);
 
-                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(srvID_mID_value[0]), Int32.Parse(srvID_mID_value[1]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
             }
         }
 
@@ -1315,7 +1318,8 @@ namespace ASteambot
                 else
                     offer.Decline();
             }
-            else */if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted)
+            else */
+            if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted)
             {
                 double value = GetTradeOfferValue(offer.PartnerSteamId.ConvertToUInt64(), offer.Items.GetTheirItems());
 
@@ -1324,11 +1328,13 @@ namespace ASteambot
                 if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
                 {
                     string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
-                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), Int32.Parse(mID_value[1]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
                 }
                 else
                 {
-                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                    Console.WriteLine("Arkarr has been lazy again!");
+                    //Oh shit!
+                    //SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
                 }
             }
             else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined)
@@ -1340,11 +1346,13 @@ namespace ASteambot
                 if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
                 {
                     string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
-                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
+                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), Int32.Parse(mID_value[1]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
                 }
                 else
                 {
-                    SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+                    Console.WriteLine("Arkarr has been lazy again !");
+                    //Oh shit !
+                    //SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, (int)Math.Round(value), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
                 }
             }
         }

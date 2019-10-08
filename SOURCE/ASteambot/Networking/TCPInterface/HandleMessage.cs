@@ -257,9 +257,9 @@ namespace ASteambot.Networking
             }
             else
             {
-                if (bot.OtherGenericInventory.items.Count == 0)
+                if (bot.OtherGenericInventory.items.Count == 0) //time out
                 {
-                    items = "EMPTY";
+                    items = "TIME_OUT";
                 }
                 else
                 {
@@ -397,15 +397,15 @@ namespace ASteambot.Networking
 
             if (offerId != "")
             {
-                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, offerId);
-                bot.TradeoffersGS.Add(offerId, gsr.ModuleID+"|"+tradeValue);
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64()  +"/" + offerId);
+                bot.TradeoffersGS.Add(offerId, gsr.ServerID+"|"+gsr.ModuleID+"|"+tradeValue);
                 bot.TradeOfferValue.Add(offerId, tradeValue);
 
                 bot.AcceptMobileTradeConfirmation(offerId);
             }
             else
             {
-                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, "-1");
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64() + "/" + "-1");
             }
         }
 
