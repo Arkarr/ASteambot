@@ -137,6 +137,22 @@
     <Compile Include="SteamMarketUtility\SteamMarket.cs" />
     <Compile Include="SteamMarketUtility\TradeOfferInfo.cs" />
     <Compile Include="SteamProfile.cs" />
+    <Compile Include="SteamTrade\Exceptions\InventoryFetchException.cs" />
+    <Compile Include="SteamTrade\Exceptions\TradeException.cs" />
+    <Compile Include="SteamTrade\ForeignInventory.cs" />
+    <Compile Include="SteamTrade\GenericInventory.cs" />
+    <Compile Include="SteamTrade\Inventory.cs" />
+    <Compile Include="SteamTrade\Schema.cs" />
+    <Compile Include="SteamTrade\SteamWeb.cs" />
+    <Compile Include="SteamTrade\Tf2Value.cs" />
+    <Compile Include="SteamTrade\Trade.cs" />
+    <Compile Include="SteamTrade\TradeManager.cs" />
+    <Compile Include="SteamTrade\TradeOffer\OfferSession.cs" />
+    <Compile Include="SteamTrade\TradeOffer\TradeOffer.cs" />
+    <Compile Include="SteamTrade\TradeOffer\TradeOfferManager.cs" />
+    <Compile Include="SteamTrade\TradeOffer\TradeOfferWebAPI.cs" />
+    <Compile Include="SteamTrade\TradeWebAPI\TradeSession.cs" />
+    <Compile Include="SteamTrade\TradeWebAPI\TradeStatus.cs" />
     <Compile Include="Translation\CountryCode.cs" />
     <Compile Include="Translation\Translation.cs" />
   </ItemGroup>
@@ -152,14 +168,11 @@
       <Project>{020143e0-586c-495d-b50f-b522efdd132b}</Project>
       <Name>ASteambotInterfaces</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SteamTrade\SteamTrade.csproj">
-      <Project>{6cec0333-81eb-40ee-85d1-941363626fc7}</Project>
-      <Name>SteamTrade</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="ASteambot_logo.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if $(ConfigurationName) == Release C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\as_ver.exe</PostBuildEvent>

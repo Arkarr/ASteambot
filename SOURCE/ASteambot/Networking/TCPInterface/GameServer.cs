@@ -52,6 +52,7 @@ namespace ASteambot
             socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
 
             dataQueue.Remove(bytes);
+            dataQueue.Clear();
         }
 
         public void Update(GameServer gs)
@@ -140,6 +141,8 @@ namespace ASteambot
                 Console.WriteLine("data : " + finaldata);
                 dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
             }
+
+            dataQueue.Clear();
 
             Console.WriteLine("Done, status -> Sucess ? " + !socketError);
 

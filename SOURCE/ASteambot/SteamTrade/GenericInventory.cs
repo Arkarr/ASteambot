@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
+using ASteambot;
 using Newtonsoft.Json;
 using SteamKit2;
 using SteamTrade.TradeWebAPI;
@@ -257,8 +258,6 @@ namespace SteamTrade
             }
 
             isLoaded = true;
-
-            ExecuteModuleFonction("HandleMessage", args);
         }
     }
 }

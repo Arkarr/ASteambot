@@ -68,6 +68,9 @@ namespace ASteambot.Networking
                     case NetworkCode.ASteambotCode.Simple:
                         SendChatMessage(bot, gsr);
                         break;
+                    case NetworkCode.ASteambotCode.TradeOfferInformation:
+                        SendTradeOfferInformation(bot, gsr);
+                        break;
                 }
                 /*if (!bot.Friends.Contains(steamID))
                 {
@@ -89,7 +92,7 @@ namespace ASteambot.Networking
                 Program.PrintErrorMessage("Line number : " + line);
             }
         }
-        
+
         private SteamID GetSteamIDFromString(string ssID)
         {
             if (ssID.Equals("BOT"))
@@ -217,25 +220,21 @@ namespace ASteambot.Networking
                 return;
             }
 
-            Thread invScan = new Thread(() =>
-            {
-                Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-                Thread.CurrentThread.IsBackground = true;
+            string items = gsr.Arguments + "/";
 
-                string items = gsr.Arguments + "/";
+            items += AddInventoryItems(bot, Games.TF2, steamID, withImg) + "/";
+            items += AddInventoryItems(bot, Games.CSGO, steamID, withImg) + "/";
+            items += AddInventoryItems(bot, Games.Dota2, steamID, withImg);
 
-                items += AddInventoryItems(bot, Games.TF2, steamID, withImg) + "/";
-                items += AddInventoryItems(bot, Games.CSGO, steamID, withImg) + "/";
-                items += AddInventoryItems(bot, Games.Dota2, steamID, withImg);
+            if (withImg)
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventoryIMG, items);
+            else
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventory, items);
 
-                if (withImg)
-                    bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventoryIMG, items);
-                else
-                    bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.ScanInventory, items);
-            });
+            object[] args = new object[5];
+            args[0] = items;
 
-            invScan.Start();
-            invScan.Join();
+            Program.ExecuteModuleFonction("InventoryItemsChanged", args);
         }
         
         private string AddInventoryItems(Bot bot, Games game, SteamID steamID, bool img)
@@ -402,11 +401,22 @@ namespace ASteambot.Networking
                 bot.TradeOfferValue.Add(offerId, tradeValue);
 
                 bot.AcceptMobileTradeConfirmation(offerId);
+
+                bot.UpdateTradeOfferInDatabase(to, -1);
             }
             else
             {
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64() + "/" + "-1");
             }
+        }
+
+        private void SendTradeOfferInformation(Bot bot, GameServerRequest gsr)
+        {
+            TradeOffer to;
+            if (bot.TradeOfferManager.TryGetOffer(gsr.Arguments, out to))
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeOfferInformation, to.PartnerSteamId.ConvertToUInt64() + "/" + to.OfferState + "/" + to.TradeOfferId);
+            else
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeOfferInformation, "-1");
         }
 
         private void SendFriendInvitation(Bot bot, GameServerRequest gsr)

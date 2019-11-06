@@ -1,11 +1,9 @@
 using System;
 using SteamAuth;
 using System.IO;
-using SteamTrade;
 using System.Linq;
 using System.Threading;
 using System.ComponentModel;
-using SteamTrade.TradeOffer;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using ASteambot.SteamGroups;
@@ -17,19 +15,20 @@ using ASteambot.SteamMarketUtility;
 using Newtonsoft.Json.Linq;
 using SteamKit2;
 using ASteambot.CustomSteamMessageHandler;
+using SteamTrade;
+using SteamTrade.TradeOffer;
 
 namespace ASteambot
 {
     public class Bot
     {
-        private bool stop;
         private Database DB;
         private bool renaming;
         private string myUniqueId;
         private int maxfriendCount;
         private string myUserNonce;
         private LoginInfo loginInfo;
-        private SteamUser steamUser;
+        public SteamUser steamUser;
         private TCPInterface socket;
         private List<string> finishedTO;
         private SteamClient steamClient;
@@ -284,6 +283,7 @@ namespace ASteambot
         {
             List<long> contextId = new List<long>();
             contextId.Add(2);
+
             MyGenericInventory.load((int)Games.TF2, contextId, steamClient.SteamID);
 
             SteamID partenar = new SteamID(otherSteamID);
@@ -338,7 +338,7 @@ namespace ASteambot
 
         public void Auth()
         {
-            stop = false;
+            Running = false;
             loginInfo.LoginFailCount = 0;
             steamUser = steamClient.GetHandler<SteamUser>();
             SteamFriends = steamClient.GetHandler<SteamFriends>();
@@ -370,9 +370,6 @@ namespace ASteambot
                 {
                     Console.WriteLine("Bot will stop now.");
                     Disconnect();
-
-                    stop = true;
-                    Running = false;
 
                     return string.Empty;
                 }
@@ -496,38 +493,22 @@ namespace ASteambot
             SubscribeTradeOffer(TradeOfferManager);
 
             SpawnTradeOfferPollingThread();
-
-            //smp.ItemUpdated += Smp_ItemUpdated;
-
-            /*string[] row = new string[5];
-            row[0] = "itemName";
-            row[1] = "last_updated";
-            row[2] = "value";
-            row[3] = "quantity";
-            row[4] = "gameid";
-            List<Dictionary<string, string>> items = DB.SELECT(row, "smitems");
-            if (items != null)
-            {
-                foreach (Dictionary<string, string> item in items)
-                {
-                    smp.AddItem(item["itemName"], item["last_updated"], Int32.Parse(item["quantity"]), Double.Parse(item["value"]), Int32.Parse(item["gameid"]));
-                }
-            }
-            smp.ScanMarket();*/
         }
 
         public void Disconnect()
         {
-            stop = true;
+            Running = false;
             steamUser.LogOff();
             steamClient.Disconnect();
-            CancelTradeOfferPollingThread();
 
-            botThread.CancelAsync();
+            CancelTradeOfferPollingThread();
 
             ArkarrSteamMarket.Cancel();
 
-            Console.WriteLine("stopping bot {0} ...", Name);
+            Console.Write("Stopping bot {0} ...", Name);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(" [PLEASE WAIT]");
+            Console.ForegroundColor = ConsoleColor.White;
         }
 
         //*******************//
@@ -708,6 +689,7 @@ namespace ASteambot
                     SteamInventoryItemCount++;
                 }
             }
+
             int ic = SteamInventoryItemCount - backup;
             if (ic < 0)
                 ic = 0;
@@ -825,9 +807,7 @@ namespace ASteambot
         public void Run()
         {
             Running = true;
-
-            if (!stop)
-                cbManager.RunWaitAllCallbacks(TimeSpan.FromSeconds(1));
+            cbManager.RunWaitAllCallbacks(TimeSpan.FromSeconds(1));
         }
 
         public bool LoginInfoMatch(LoginInfo loginfo)
@@ -865,7 +845,7 @@ namespace ASteambot
             }
         }
 
-        private void UpdateTradeOfferInDatabase(TradeOffer to, double value)
+        public void UpdateTradeOfferInDatabase(TradeOffer to, double value)
         {
             string[] rows = new string[4];
             string[] values = new string[4];
@@ -875,24 +855,19 @@ namespace ASteambot
             rows[2] = "tradeValue";
             rows[3] = "tradeStatus";
 
-            if (DB.SELECT(rows, "tradeoffers", "WHERE `tradeOfferID`=\"" + to.TradeOfferId + "\"").FirstOrDefault() == null)
+            if (DB.SELECT(rows, "tradeoffer", "WHERE `tradeOfferID`=\"" + to.TradeOfferId + "\"").FirstOrDefault() == null)
             {
-                values[0] = to.PartnerSteamId.ToString();
+                values[0] = to.PartnerSteamId.ConvertToUInt64().ToString();
                 values[1] = to.TradeOfferId;
                 values[2] = value.ToString();
-                values[3] = ((int)to.OfferState).ToString();
+                values[3] = (to.OfferState).ToString();
 
-                DB.INSERT("tradeoffers", rows, values);
+                DB.INSERT("tradeoffer", rows, values);
             }
             else
             {
-                if (to.OfferState != TradeOfferState.TradeOfferStateAccepted &&
-                    to.OfferState != TradeOfferState.TradeOfferStateDeclined &&
-                    to.OfferState != TradeOfferState.TradeOfferStateCanceled)
-                {
-                    string query = String.Format("UPDATE tradeoffers SET `tradeStatus`=\"{0}\", `tradeValue`=\"{1}\" WHERE `tradeOfferID`=\"{2}\";", ((int)to.OfferState), value.ToString(), to.TradeOfferId);
-                    DB.QUERY(query);
-                }
+                string query = String.Format("UPDATE tradeoffer SET `tradeStatus`=\"{0}\", `tradeValue`=\"{1}\" WHERE `tradeOfferID`=\"{2}\";", (to.OfferState), value.ToString(), to.TradeOfferId);
+                DB.QUERY(query);
             }
         }
 
@@ -1018,7 +993,7 @@ namespace ASteambot
             myUniqueId = callback.UniqueID.ToString();
             UserWebLogOn();
 
-            Console.WriteLine("Steam Bot Logged In Completely!");
+            Console.WriteLine(Name + " logged in completly !");
 
             LoggedIn = true;
 
@@ -1050,20 +1025,20 @@ namespace ASteambot
             args[7] = callback.GameID;
             args[8] = "";
 
-            Dictionary<bool, string> results = Program.ExecuteModuleFonction("HandleInvitation", args);
+            List<Dictionary<bool, string>> results = Program.ExecuteModuleFonction("HandleInvitation", args);
 
-            foreach (KeyValuePair<bool, string> entry in results)
-            { 
-                if (entry.Value.Length > 0)
-                    SteamchatHandler.PrintChatMessage(callback.PatronID, entry.Value);
+            foreach (Dictionary<bool, string> output in results)
+            {
+                foreach (KeyValuePair<bool, string> entry in output)
+                {
+                    if (entry.Value.Length > 0)
+                        SteamchatHandler.PrintChatMessage(callback.PatronID, entry.Value);
+                }
             }
         }
 
         private void OnFriendMsgCallback(SteamFriends.FriendMsgCallback callback)
         {
-            if (callback.EntryType != EChatEntryType.ChatMsg)
-                return;
-
             object[] args = new object[5];
             args[0] = SteamFriends;
             args[1] = callback.Sender;
@@ -1071,28 +1046,23 @@ namespace ASteambot
             args[3] = callback.Message;
             args[4] = "";
 
-            //Ugly way to block invitation
-            if (callback.Message.Equals("Invited you to play a game!"))
-                return;
-
-            Dictionary<bool, string> results = Program.ExecuteModuleFonction("HandleMessage", args);
+            List<Dictionary<bool, string>> results = Program.ExecuteModuleFonction("HandleMessage", args);
 
             bool block = false;
-            foreach (KeyValuePair<bool, string> entry in results)
+            foreach (Dictionary<bool, string> output in results)
             {
-                if (entry.Value.Length > 0)
-                    SteamchatHandler.PrintChatMessage(callback.Sender, entry.Value);
+                foreach (KeyValuePair<bool, string> entry in output)
+                {
+                    if (entry.Value.Length > 0)
+                        SteamchatHandler.PrintChatMessage(callback.Sender, entry.Value);
 
-                if (entry.Key)
-                    block = true;
+                    if (entry.Key)
+                        block = true;
+                }
             }
 
-            if(!block)
+            if(!block && callback.EntryType == EChatEntryType.ChatMsg)
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
-        }
-
-        private void OnGenericMessageReceived(GenericSteamMessageHandler.OnSteamMessageReceived callback)
-        {
         }
 
         private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
@@ -1100,6 +1070,7 @@ namespace ASteambot
             Console.WriteLine("Updating sentryfile...");
             int fileSize;
             byte[] sentryHash;
+
             using (var fs = File.Open("auth/"+loginInfo.SentryFileName, FileMode.OpenOrCreate, FileAccess.ReadWrite))
             {
                 fs.Seek(callback.Offset, SeekOrigin.Begin);
@@ -1110,6 +1081,8 @@ namespace ASteambot
                 using (var sha = SHA1.Create())
                     sentryHash = sha.ComputeHash(fs);
             }
+
+            Console.WriteLine("Done!");
 
             steamUser.SendMachineAuthResponse(new SteamUser.MachineAuthDetails
             {
@@ -1128,13 +1101,11 @@ namespace ASteambot
 
                 SentryFileHash = sentryHash,
             });
-
-            Console.WriteLine("Done!");
         }
 
         public void OnSteambotDisconnected(SteamClient.DisconnectedCallback callback)
         {
-            if (stop == false)
+            if (Running)
             {
                 Console.WriteLine("Disconnected from Steam, reconnecting in 3 seconds...");
                 Thread.Sleep(TimeSpan.FromSeconds(3));
@@ -1148,23 +1119,23 @@ namespace ASteambot
             /*if (callback.JobID != JobID.Invalid)
             {*/
             Console.WriteLine("Connected to steam network !");
-                Console.WriteLine("Logging in...");
+            Console.WriteLine("Logging in...");
 
-                byte[] test = null;
-                if (File.Exists(loginInfo.SentryFileName))
-                {
-                    byte[] sentryFile = File.ReadAllBytes(loginInfo.SentryFileName);
-                    test = CryptoHelper.SHAHash(sentryFile);
-                }
+            byte[] test = null;
+            if (File.Exists(loginInfo.SentryFileName))
+            {
+                byte[] sentryFile = File.ReadAllBytes(loginInfo.SentryFileName);
+                test = CryptoHelper.SHAHash(sentryFile);
+            }
 
-                steamUser.LogOn(new SteamUser.LogOnDetails
-                {
-                    Username = loginInfo.Username,
-                    Password = loginInfo.Password,
-                    AuthCode = loginInfo.AuthCode,
-                    TwoFactorCode = loginInfo.TwoFactorCode,
-                    SentryFileHash = test,
-                });
+            steamUser.LogOn(new SteamUser.LogOnDetails
+            {
+                Username = loginInfo.Username,
+                Password = loginInfo.Password,
+                AuthCode = loginInfo.AuthCode,
+                TwoFactorCode = loginInfo.TwoFactorCode,
+                SentryFileHash = test,
+            });
             /*}
             else
             {
@@ -1229,33 +1200,34 @@ namespace ASteambot
                     Console.WriteLine("Loggin failed ({0} times) ! {1}", loginInfo.LoginFailCount, callback.Result);
 
                     if (loginInfo.LoginFailCount == 3)
-                        stop = true;
+                        Running = false;
                     break;
             }
         }
 
         private void OnSteambotLoggedOff(SteamUser.LoggedOffCallback callback)
         {
-            stop = true;
             LoggedIn = false;
             Console.WriteLine("Logged off of Steam: {0}", callback.Result);
+
+            if(callback.Result == EResult.ServiceUnavailable)
+            {
+                Console.WriteLine("Attempting to reconnect...");
+                Thread.Sleep(TimeSpan.FromSeconds(30));
+                Auth();
+            }
         }
 
         private void OnTradeOfferUpdated(TradeOffer offer)
         {
-            //UpdateTradeOfferInDatabase(offer, cent);
-
             TradeOffer to;
             TradeOfferManager.TryGetOffer(offer.TradeOfferId, out to);
 
             if (to == null)
                 return;
 
-            if (ArkarrSteamMarket.IsAvailable())
-            {
-                double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
-                UpdateTradeOfferInDatabase(to, cent);
-            }
+            //double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
+            UpdateTradeOfferInDatabase(to, -1);
 
             if (offer.IsOurOffer)
                 OnOwnTradeOfferUpdated(offer);
@@ -1265,30 +1237,6 @@ namespace ASteambot
 
         private void OnOwnTradeOfferUpdated(TradeOffer offer)
         {
-            //Console.WriteLine("Sent offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
-
-            /*if (offer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation)
-            {
-                AcceptMobileTradeConfirmation(offer.TradeOfferId);
-            }
-
-            if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
-            {
-                if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
-                {
-                    string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
-                    double value = float.Parse(mID_value[1]);
-
-                    if (value == -1)
-                        value = GetTradeOfferValue(offer.PartnerSteamId.ConvertToUInt64(), offer.Items.GetTheirItems());
-                }
-                else
-                {
-                    offer.Cancel();
-                    SteamFriends.SendChatMessage(offer.PartnerSteamId.ConvertToUInt64(), EChatEntryType.ChatMsg, "Sorry, I had to cancel the trade because an error happened !");
-                }
-            }*/
-
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
                 string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
@@ -1309,16 +1257,6 @@ namespace ASteambot
 
         private void OnPartenarTradeOfferUpdated(TradeOffer offer)
         {
-            //Console.WriteLine("Received offer {0} has been updated, status : {1}", offer.TradeOfferId, offer.OfferState.ToString());
-
-            /*if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
-            {           
-                if (offer.Items.GetMyItems().Count == 0)
-                    offer.Accept();
-                else
-                    offer.Decline();
-            }
-            else */
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted)
             {
                 double value = GetTradeOfferValue(offer.PartnerSteamId.ConvertToUInt64(), offer.Items.GetTheirItems());

@@ -30,7 +30,8 @@ namespace ASteambot.Networking
             ExecuteCommand = 14,
             Disconnect = 15,
             SGAnnoucement = 16,
-            SteamID = 17
+            SteamID = 17,
+            TradeOfferInformation = 18
         }
     }
 }
