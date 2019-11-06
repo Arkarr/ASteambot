@@ -82,6 +82,8 @@ namespace ASteambot
 
             socketServer.Stop();
 
+            Console.WriteLine("Shutting down steambots...");
+
             foreach (Bot bot in bots)
                 bot.Disconnect();
         }
@@ -92,7 +94,6 @@ namespace ASteambot
             switch (args[0])
             {
                 case "quit":
-                    ShutdownBots();
                     break;
                 case "list":
                     ListBots(args);
@@ -135,6 +136,9 @@ namespace ASteambot
                     break;
                 case "reloadtranslation":
                     ReloadTranslation();
+                    break;
+                case "test":
+                    SendGameInvite();
                     break;
                 default:
                     Console.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
@@ -232,7 +236,7 @@ namespace ASteambot
                 }
             }
 
-            Console.WriteLine("Sent "+test+" to "+ count + " connected servers ! ");
+            Console.WriteLine("Sent " + test + " to "+ count + " connected servers ! ");
         }
 
         public void WithDrawn(string[] args)
@@ -265,12 +269,6 @@ namespace ASteambot
             }
 
             SelectedBot.CreateTradeOffer(args[1]);
-        }
-
-        public void ShutdownBots()
-        {
-            Console.WriteLine("Shutting down steambots...");
-            Stop();
         }
 
         public void Rename(string[] args)
@@ -340,6 +338,11 @@ namespace ASteambot
         public void ReloadTranslation()
         {
             Console.WriteLine("Does nothing now.");
+        }
+
+        public void SendGameInvite()
+        {
+            SelectedBot.SteamFriends.SendChatMessage(new SteamID("STEAM_0:1:42047781"), EChatEntryType.ChatMsg, "test");
         }
 
         public void SelectFirstBot()
@@ -412,6 +415,7 @@ namespace ASteambot
                     return false;
                 }
 
+                Thread.Sleep(100);
                 Console.WriteLine("Sending to " + gs.Name + "(" + gs.IP + ":" + gs.Port + ")");
                 sendSuccess = gs.Send(moduleID, netcode, data);
 

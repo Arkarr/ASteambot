@@ -201,13 +201,16 @@ namespace ASteambot.Networking
         {
             try
             {
-                string table1 = "CREATE TABLE IF NOT EXISTS `tradeoffers` (" +
+                QUERY("DROP TABLE tradeoffers");
+
+                string table1 = "CREATE TABLE IF NOT EXISTS `tradeoffer` (" +
                                 "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-                                "`steamID` varchar(125) NOT NULL," +
+                                "`steamID` bigint(255) NOT NULL," +
                                 "`tradeOfferID` bigint(255) NOT NULL," +
-                                "`tradeValue` varchar(125) NOT NULL," +
-                                "`tradeStatus` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+                                "`tradeValue` int(125) NOT NULL," +
+                                "`tradeStatus` varchar(50) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
                 QUERY(table1);
+
                 string table2 = "CREATE TABLE IF NOT EXISTS `smitems` (" +
                                  "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
                                  "`itemName` varchar(125) CHARACTER SET utf8 NOT NULL," +

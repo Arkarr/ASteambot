@@ -17,7 +17,7 @@ namespace ASteambot.Networking.Webinterface
         private TcpListener listener;
         private HttpProcessor processor;
         private bool isactive = true;
-        
+
         public HTTPServer(int port)
         {
             this.ip = new WebClient().DownloadString("https://api.ipify.org").Replace("\n", "");
@@ -34,16 +34,34 @@ namespace ASteambot.Networking.Webinterface
             {
                 while (this.isactive)
                 {
-                    TcpClient s = this.listener.AcceptTcpClient();
-                    Thread t = new Thread(() =>
+                    try
                     {
-                        this.processor.HandleClient(s);
-                    });
-                    t.Start();
-                    Thread.Sleep(1);
+                        TcpClient s = this.listener.AcceptTcpClient();
+                        Thread t = new Thread(() =>
+                        {
+                            this.processor.HandleClient(s);
+                        });
+                        t.Start();
+                        Thread.Sleep(1);
+                    }
+                    catch (SocketException e)
+                    {
+                        if ((e.SocketErrorCode != SocketError.Interrupted))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine(e);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
+                    }
                 }
             });
             thread.Start();
+        }
+
+        public void Stop()
+        {
+            isactive = false;
+            listener.Stop();
         }
         
         public bool AddToRedirectTable(string id, string target, out string key)

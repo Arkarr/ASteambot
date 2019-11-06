@@ -10,7 +10,8 @@ namespace ASteambotInterfaces
     public interface IASteambotChat
     {
         /// <summary>
-        /// Triggered when the bot receive a steam chat message
+        /// Triggered when the bot receive a steam chat message.
+        /// Return true will intercept the message, false will block the message from being interpreted by ASteambot.
         /// </summary>
         /// <param name="steamFriends">Send message with that.</param>
         /// <param name="partenar">The steamID of the partenar wich wrote the message</param>
