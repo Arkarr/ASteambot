@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ASteambotInterfaces
 {
-    public interface IASteambotChat
+    public interface ASteambotEntryPointChat
     {
         /// <summary>
         /// Triggered when the bot receive a steam chat message.
@@ -16,7 +16,7 @@ namespace ASteambotInterfaces
         /// <param name="steamFriends">Send message with that.</param>
         /// <param name="partenar">The steamID of the partenar wich wrote the message</param>
         /// <param name="message">The message sent by the partenar</param>
-        bool HandleMessage(SteamFriends steamFriends, SteamID partenar, EChatEntryType messageType, string message, out string translationSentence);
+        bool HandleMessage(SteamFriends steamFriends, SteamID partenar, EChatEntryType messageType, string message);
 
         /// <summary>
         /// Triggered when the bot receive a steam chat message
@@ -29,6 +29,6 @@ namespace ASteambotInterfaces
         /// <param name="FriendChatID">Gets the SteamID of the chat friend.</param>
         /// <param name="ChatRoomName">Gets the name of the chat room.</param>
         /// <param name="GameID">Gets the GameID associated with this chat room, if it's a game lobby.</param>
-        bool HandleInvitation(SteamFriends steamFriends, SteamID InvitedID, SteamID ChatRoomID, SteamID PatronID, EChatRoomType ChatRoomType, SteamID FriendChatID, string ChatRoomName, GameID GameID, out string translationSentence);
+        bool HandleInvitation(SteamFriends steamFriends, SteamID InvitedID, SteamID ChatRoomID, SteamID PatronID, EChatRoomType ChatRoomType, SteamID FriendChatID, string ChatRoomName, GameID GameID);
     }
 }

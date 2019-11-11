@@ -17,6 +17,7 @@ using SteamKit2;
 using ASteambot.CustomSteamMessageHandler;
 using SteamTrade;
 using SteamTrade.TradeOffer;
+using static SteamTrade.GenericInventory;
 
 namespace ASteambot
 {
@@ -181,8 +182,8 @@ namespace ASteambot
             ChatListener = new Dictionary<SteamID, int>();
             TradeoffersGS = new Dictionary<string, string>();
             TradeOfferValue = new Dictionary<string, double>();
-            MyGenericInventory = new GenericInventory(SteamWeb);
-            OtherGenericInventory = new GenericInventory(SteamWeb);
+            MyGenericInventory = new GenericInventory(steamClient.SteamID, SteamWeb);
+            OtherGenericInventory = new GenericInventory(null, SteamWeb);
 
             steamClient.AddHandler(new GenericSteamMessageHandler());
             //steamClient.AddHandler(GSMH);
@@ -223,6 +224,7 @@ namespace ASteambot
             cbManager.Subscribe<SteamFriends.PersonaChangeCallback>(OnSteamNameChange);
             cbManager.Subscribe<SteamFriends.FriendsListCallback>(OnSteamFriendsList);
             cbManager.Subscribe<SteamFriends.ChatInviteCallback>(OnSteamChatInvite);
+            cbManager.Subscribe<SteamFriends.PersonaStateCallback>(OnProfileInfo);
 
             //Custom events:
             //cbManager.Subscribe<GenericSteamMessageHandler.OnSteamMessageReceived>(OnGenericMessageReceived);
@@ -289,7 +291,7 @@ namespace ASteambot
             SteamID partenar = new SteamID(otherSteamID);
             TradeOffer to = TradeOfferManager.NewOffer(partenar);
 
-            GenericInventory.Item test = MyGenericInventory.items.FirstOrDefault().Value;
+            GenericInventory.Item test = (GenericInventory.Item)MyGenericInventory.items.FirstOrDefault().Value;
 
             to.Items.AddMyItem(test.appid, test.contextid, (long)test.assetid);
 
@@ -521,6 +523,7 @@ namespace ASteambot
 
             foreach (SteamFriends.FriendsListCallback.Friend friend in obj.FriendList)
             {
+
                 switch (friend.SteamID.AccountType)
                 {
                     case EAccountType.Clan:
@@ -553,8 +556,10 @@ namespace ASteambot
                         }
                         break;
                 }
-            }
 
+                SteamFriends.RequestFriendInfo(friend.SteamID, EClientPersonaStateFlag.LastSeen);
+            }
+            
             Console.WriteLine("Recorded steam friends : {0} / {1}", SteamFriends.GetFriendCount(), maxfriendCount);
 
             if (SteamFriends.GetFriendCount() == maxfriendCount)
@@ -573,6 +578,12 @@ namespace ASteambot
                 SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, "Sorry, I had to remove you because my friend list is too small ! Feel free to add me back anytime !");
                 SteamFriends.RemoveFriend(steamID);
             }
+        }
+
+        private void OnProfileInfo(SteamFriends.PersonaStateCallback obj)
+        {
+            if((DateTime.Now - obj.LastLogOn).TotalDays > 4)
+                SteamFriends.RemoveFriend(obj.FriendID);
         }
 
         private void GetMaxFriends()
@@ -660,9 +671,9 @@ namespace ASteambot
             MyGenericInventory.load((int)Games.TF2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
-                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+                GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
 
-                Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
                 if (description.tradable)
                 {
                     if (i != null)// && i.Value != 0)
@@ -678,9 +689,9 @@ namespace ASteambot
             MyGenericInventory.load((int)Games.CSGO, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
-                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+                GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
 
-                Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
                 if (description.tradable)
                 {
                     if (i != null)// && i.Value != 0)
@@ -701,9 +712,9 @@ namespace ASteambot
             MyGenericInventory.load((int)Games.Dota2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
-                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+                GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
 
-                Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
                 if (description.tradable)
                 {
                     if (i != null)// && i.Value != 0)
@@ -762,7 +773,7 @@ namespace ASteambot
             MyGenericInventory.load((int)Games.TF2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
-                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+                GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
                 if (description.tradable)
                     to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
             }
@@ -770,7 +781,7 @@ namespace ASteambot
             MyGenericInventory.load((int)Games.CSGO, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
-                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+                GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
                 if (description.tradable)
                     to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
             }
@@ -778,7 +789,7 @@ namespace ASteambot
             MyGenericInventory.load((int)Games.Dota2, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
-                GenericInventory.ItemDescription description = MyGenericInventory.getDescription(item.assetid);
+                GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
                 if (description.tradable)
                     to.Items.AddMyItem(item.appid, item.contextid, (long)item.assetid);
             }
@@ -880,7 +891,7 @@ namespace ASteambot
             contextID[0] = 2;
 
             List<long> appIDs = new List<long>();
-            GenericInventory gi = new GenericInventory(SteamWeb);
+            GenericInventory gi = new GenericInventory(partenar, SteamWeb);
 
             foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
             {
@@ -897,7 +908,7 @@ namespace ASteambot
                     if (item.AppId != appID)
                         continue;
 
-                    GenericInventory.ItemDescription ides = gi.getDescription((ulong)item.AssetId);
+                    GenericInventory.ItemDescription ides = (ItemDescription)gi.getDescription((ulong)item.AssetId);
 
                     if (ides == null)
                     {
@@ -905,7 +916,7 @@ namespace ASteambot
                     }
                     else
                     {
-                        Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name);
+                        ASteambot.SteamMarketUtility.Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name);
                         if (itemInfo != null)
                             cent += itemInfo.Value;
                     }
@@ -1025,30 +1036,38 @@ namespace ASteambot
             args[7] = callback.GameID;
             args[8] = "";
 
-            List<Dictionary<bool, string>> results = Program.ExecuteModuleFonction("HandleInvitation", args);
+            List<bool> results = Program.ExecuteModuleFonction("HandleInvitation", args);
 
-            foreach (Dictionary<bool, string> output in results)
+            /*foreach (Dictionary<bool, string> output in results)
             {
                 foreach (KeyValuePair<bool, string> entry in output)
                 {
                     if (entry.Value.Length > 0)
                         SteamchatHandler.PrintChatMessage(callback.PatronID, entry.Value);
                 }
-            }
+            }*/
         }
 
         private void OnFriendMsgCallback(SteamFriends.FriendMsgCallback callback)
         {
-            object[] args = new object[5];
+            object[] args = new object[4];
             args[0] = SteamFriends;
             args[1] = callback.Sender;
             args[2] = callback.EntryType;
             args[3] = callback.Message;
-            args[4] = "";
 
-            List<Dictionary<bool, string>> results = Program.ExecuteModuleFonction("HandleMessage", args);
+            List<bool> results = Program.ExecuteModuleFonction("HandleMessage", args);
 
             bool block = false;
+            foreach (bool output in results)
+            {
+                block = output;
+
+                if(block)
+                    break;
+            }
+
+            /*bool block = false;
             foreach (Dictionary<bool, string> output in results)
             {
                 foreach (KeyValuePair<bool, string> entry in output)
@@ -1059,9 +1078,9 @@ namespace ASteambot
                     if (entry.Key)
                         block = true;
                 }
-            }
+            }*/
 
-            if(!block && callback.EntryType == EChatEntryType.ChatMsg)
+            if (!block && callback.EntryType == EChatEntryType.ChatMsg)
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);
         }
 
@@ -1155,6 +1174,8 @@ namespace ASteambot
                     Console.WriteLine("Logged in to steam !");
                     
                     GetMaxFriends();
+
+                    MyGenericInventory = new GenericInventory(steamClient.SteamID, SteamWeb);
                     break;
 
                 case EResult.AccountLoginDeniedNeedTwoFactor:

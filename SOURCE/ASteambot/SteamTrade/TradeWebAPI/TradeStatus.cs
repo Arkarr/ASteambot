@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ASteambotInterfaces.ASteambotInterfaces;
 using Newtonsoft.Json.Linq;
 
 namespace SteamTrade.TradeWebAPI

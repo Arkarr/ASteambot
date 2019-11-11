@@ -25,7 +25,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V10.4.1";
+        private static string BUILD_VERSION = "V10.4.2";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -89,20 +89,24 @@ namespace ASteambot
             }
         }
 
-        public static List<Dictionary<bool, string>> ExecuteModuleFonction(string i, object[] args)
+        public static List<bool> ExecuteModuleFonction(string i, object[] args)
         {
-            List<Dictionary<bool, string>> results = new List<Dictionary<bool, string>>();
+            List<bool> results = new List<bool>();
             foreach (Modules.Module m in modules)
             {
-                try
+                if (m.GetMethodeByName(i) != null)
                 {
-                    Dictionary<bool, string> moduleFonctionResult = new Dictionary<bool, string>();
-                    moduleFonctionResult.Add((bool)m.RunMethod(i, args), (string)args[args.Length - 1]);
-                    results.Add(moduleFonctionResult);
-                }
-                catch (Exception e)
-                {
-                    PrintErrorMessage(e.ToString());
+                    try
+                    {
+                        results.Add((bool)m.RunMethod(i, args));
+                        /*Dictionary<bool, string> moduleFonctionResult = new Dictionary<bool, string>();
+                        moduleFonctionResult.Add((bool)m.RunMethod(i, args), (string)args[args.Length - 1]);
+                        results.Add(moduleFonctionResult);*/
+                    }
+                    catch (Exception e)
+                    {
+                        PrintErrorMessage(e.ToString());
+                    }
                 }
             }
 
