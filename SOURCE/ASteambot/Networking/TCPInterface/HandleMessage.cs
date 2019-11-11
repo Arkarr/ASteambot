@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using static ASteambot.SteamProfile;
+using static SteamTrade.GenericInventory;
 
 namespace ASteambot.Networking
 {
@@ -269,9 +270,9 @@ namespace ASteambot.Networking
 
                         foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
                         {
-                            GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                            ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
 
-                            Item i = bot.ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                            ASteambot.SteamMarketUtility.Item i = bot.ArkarrSteamMarket.GetItemByName(description.market_hash_name);
                             if (description.tradable)
                             {
                                 if (i != null)// && i.Value != 0)
@@ -321,7 +322,7 @@ namespace ASteambot.Networking
                 {
                     if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
                     {
-                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        GenericInventory.ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
                         to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                     }
                 }
@@ -331,7 +332,7 @@ namespace ASteambot.Networking
                 {
                     if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
                     {
-                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        GenericInventory.ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
                         to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                     }
                 }
@@ -341,7 +342,7 @@ namespace ASteambot.Networking
                 {
                     if (Array.IndexOf(assetIDs, item.assetid.ToString()) > -1)
                     {
-                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        GenericInventory.ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
                         to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                     }
                 }
@@ -360,7 +361,7 @@ namespace ASteambot.Networking
                 {
                     if (Array.IndexOf(myAssetIDs, item.assetid.ToString()) > -1)
                     {
-                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
                         to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                     }
                 }
@@ -371,7 +372,7 @@ namespace ASteambot.Networking
                 {
                     if (Array.IndexOf(myAssetIDs, item.assetid.ToString()) > -1)
                     {
-                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
                         to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                     }
                 }
@@ -382,7 +383,7 @@ namespace ASteambot.Networking
                 {
                     if (Array.IndexOf(myAssetIDs, item.assetid.ToString()) > -1)
                     {
-                        GenericInventory.ItemDescription description = bot.OtherGenericInventory.getDescription(item.assetid);
+                        ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
                         to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                     }
                 }

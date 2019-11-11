@@ -4,6 +4,8 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using ASteambot;
+using ASteambotInterfaces;
+using ASteambotInterfaces.ASteambotInterfaces;
 using Newtonsoft.Json;
 using SteamKit2;
 using SteamTrade.TradeWebAPI;
@@ -14,16 +16,25 @@ namespace SteamTrade
     /// <summary>
     /// Generic Steam Backpack Interface
     /// </summary>
-    public class GenericInventory
+    public class GenericInventory : IASteambotInventory
     {
         private readonly SteamWeb SteamWeb;
         
-        public GenericInventory(SteamWeb steamWeb)
+        public GenericInventory(SteamID steamID, SteamWeb steamWeb)
         {
             SteamWeb = steamWeb;
+
+            if (steamID != null)
+            {
+                object[] args = new object[2];
+                args[0] = steamID;
+                args[1] = this;
+
+                Program.ExecuteModuleFonction("Start", args);
+            }
         }
 
-        public Dictionary<ulong, Item> items
+        public Dictionary<ulong, IItem> items
         {
             get
             {
@@ -60,10 +71,10 @@ namespace SteamTrade
 
         private Task _loadTask;
         private Dictionary<string, ItemDescription> _descriptions = new Dictionary<string, ItemDescription>();
-        private Dictionary<ulong, Item> _items = new Dictionary<ulong, Item>();
+        private Dictionary<ulong, IItem> _items = new Dictionary<ulong, IItem>();
         private List<string> _errors = new List<string>();
 
-        public class Item : TradeUserAssets
+        public class Item : TradeUserAssets, IItem
         {
             public Item(int appid, long contextid, ulong assetid, string descriptionid, int amount = 1) : base(appid, contextid, assetid, amount)
             {
@@ -79,7 +90,7 @@ namespace SteamTrade
             }
         }
 
-        public class ItemDescription
+        public class ItemDescription : IItemDescription
         {
             public string name { get; set; }
             public string type { get; set; }
@@ -113,7 +124,7 @@ namespace SteamTrade
         /// Returns information (such as item name, etc) about the given item.
         /// This call can fail, usually when the user's inventory is private.
         /// </summary>
-        public ItemDescription getDescription(ulong id)
+        public IItemDescription getDescription(ulong id)
         {
             if (_loadTask == null)
                 return null;
@@ -135,7 +146,7 @@ namespace SteamTrade
             _loadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamid));
         }
 
-        public void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
+        private void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
         {
             dynamic invResponse;
             string url = "<empty>";

@@ -56,8 +56,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IASteambotChat.cs" />
-    <Compile Include="IASteambotInventory.cs" />
+    <Compile Include="ASteambotInterfaces\IItem.cs" />
+    <Compile Include="ASteambotInterfaces\IItemDescription.cs" />
+    <Compile Include="ASteambotInterfaces\IASteambotInventory.cs" />
+    <Compile Include="ASteambotEntryPointChat.cs" />
+    <Compile Include="ASteambotEntryPointInventory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

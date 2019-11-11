@@ -17,7 +17,7 @@ namespace ASteambot.Modules
                 foreach (Type type in assembly.GetTypes())
                 {
                     //Check for the type we actually want, in our case : ISteamChatHandler
-                    if (type.GetInterfaces().Contains(typeof(ASteambotInterfaces.IASteambotChat)) || type.GetInterfaces().Contains(typeof(ASteambotInterfaces.IASteambotInventory)))
+                    if (type.GetInterfaces().Contains(typeof(ASteambotInterfaces.ASteambotEntryPointChat)) || type.GetInterfaces().Contains(typeof(ASteambotInterfaces.ASteambotEntryPointInventory)))
                     {
                         //Copy our class
                         object objectClass = Activator.CreateInstance(type);
