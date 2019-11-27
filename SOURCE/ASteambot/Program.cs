@@ -1,4 +1,4 @@
-using ASteambot.AutoUpdater;
+﻿using ASteambot.AutoUpdater;
 using ASteambot.Modules;
 using ASteambot.Networking;
 using ASteambot.Networking.Webinterface;
@@ -25,7 +25,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V10.4.2";
+        private static string BUILD_VERSION = "V10.5";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -198,8 +198,8 @@ namespace ASteambot
         {
             try
             {
-                string ip = new WebClient().DownloadString("http://ipinfo.io/ip").Replace("\n", "");
-                string country = new WebClient().DownloadString("http://ipinfo.io/" + ip + "/country").Replace("\n", "").ToLower();
+                string ip = new System.Net.WebClient().DownloadString("http://ipinfo.io/ip").Replace("\n", "");
+                string country = new System.Net.WebClient().DownloadString("http://ipinfo.io/" + ip + "/country").Replace("\n", "").ToLower();
 
                 var data = new NameValueCollection();
                 data.Add("ip", ip);

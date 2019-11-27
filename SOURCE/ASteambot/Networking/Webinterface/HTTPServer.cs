@@ -20,7 +20,7 @@ namespace ASteambot.Networking.Webinterface
 
         public HTTPServer(int port)
         {
-            this.ip = new WebClient().DownloadString("https://api.ipify.org").Replace("\n", "");
+            this.ip = new System.Net.WebClient().DownloadString("https://api.ipify.org").Replace("\n", "");
             this.port = port;
             this.processor = new HttpProcessor(ip, port);
         }
