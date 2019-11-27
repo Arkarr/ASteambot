@@ -14,7 +14,6 @@ namespace ASteambot.SteamMarketUtility
 
         public string ToStatus { get; private set; }
 
-
         public TradeOfferInfo(string spl, string spn, string spp, string toID, TradeOfferState tostatus)
         {
             this.Splink = spl;

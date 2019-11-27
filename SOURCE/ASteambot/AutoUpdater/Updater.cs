@@ -42,7 +42,7 @@ namespace ASteambot.AutoUpdater
                 Console.ForegroundColor = ConsoleColor.White;
 
                 JObject json = null;
-                using (var client = new WebClient())
+                using (var client = new System.Net.WebClient())
                 {
                     client.Headers.Add("Content-Type", "application/json");
                     client.Headers.Add("User-Agent", "Super-Secret-Agent");
@@ -105,7 +105,7 @@ namespace ASteambot.AutoUpdater
 
         private async Task DownloadUpdate(string url)
         {
-            using (WebClient client = new WebClient())
+            using (System.Net.WebClient client = new System.Net.WebClient())
             {
 
                 client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(Client_DownloadProgressChanged);

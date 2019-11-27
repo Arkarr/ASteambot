@@ -1,208 +1,29 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{BC5F7140-5365-4EC2-BB84-075F8C35B460}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ASteambot</RootNamespace>
-    <AssemblyName>ASteambot</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <ShouldCreateLogs>True</ShouldCreateLogs>
-    <AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
-    <UpdateAssemblyVersion>True</UpdateAssemblyVersion>
-    <UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
-    <UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
-    <AssemblyVersionSettings>None.None.None.None</AssemblyVersionSettings>
-    <AssemblyFileVersionSettings>
-    </AssemblyFileVersionSettings>
-    <AssemblyInfoVersionSettings>
-    </AssemblyInfoVersionSettings>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationIcon>ASteambot_logo.ico</ApplicationIcon>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-  </PropertyGroup>
-  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <StartupObject>ASteambot.Program</StartupObject>
   </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="CsQuery, Version=1.3.3.249, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CsQuery.1.3.4\lib\net40\CsQuery.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Win32.Registry, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Win32.Registry.4.4.0\lib\net461\Microsoft.Win32.Registry.dll</HintPath>
-    </Reference>
-    <Reference Include="MySql.Data, Version=6.10.7.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
-      <HintPath>..\packages\MySql.Data.6.10.7\lib\net452\MySql.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.11.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="protobuf-net, Version=2.1.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
-      <HintPath>..\packages\protobuf-net.2.1.0\lib\net451\protobuf-net.dll</HintPath>
-    </Reference>
-    <Reference Include="SteamAuth, Version=3.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SteamAuth.3.0.0\lib\net45\SteamAuth.dll</HintPath>
-    </Reference>
-    <Reference Include="SteamKit2, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SteamKit2.2.1.0\lib\netstandard2.0\SteamKit2.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Configuration.Install" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Drawing.Design" />
-    <Reference Include="System.IO.Compression.FileSystem" />
-    <Reference Include="System.Management" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Security.AccessControl, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Security.AccessControl.4.4.0\lib\net461\System.Security.AccessControl.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Security.Principal.Windows, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Security.Principal.Windows.4.4.0\lib\net461\System.Security.Principal.Windows.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ServiceModel" />
-    <Reference Include="System.Transactions" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
+    <Folder Include="Properties\" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="AutoUpdater\Option.cs" />
-    <Compile Include="AutoUpdater\Updater.cs" />
-    <Compile Include="Bot.cs" />
-    <Compile Include="Config.cs" />
-    <Compile Include="CustomSteamMessageHandler\GenericSteamMessageHandler.cs" />
-    <Compile Include="Modules\Module.cs" />
-    <Compile Include="Modules\ModuleLoader.cs" />
-    <Compile Include="Networking\TCPInterface\DataQueue.cs" />
-    <Compile Include="Networking\TCPInterface\EventArgData.cs" />
-    <Compile Include="Networking\TCPInterface\GameServer.cs" />
-    <Compile Include="HandleSteamChat.cs" />
-    <Compile Include="Manager.cs" />
-    <Compile Include="LoginInfo.cs" />
-    <Compile Include="Networking\TCPInterface\TCPInterface.cs" />
-    <Compile Include="Networking\Database\Database.cs" />
-    <Compile Include="Networking\TCPInterface\EventArgGameServer.cs" />
-    <Compile Include="Networking\TCPInterface\GameServerRequest.cs" />
-    <Compile Include="Networking\TCPInterface\HandleMessage.cs" />
-    <Compile Include="Networking\TCPInterface\NetworkCode.cs" />
-    <Compile Include="Networking\TCPInterface\StateObject.cs" />
-    <Compile Include="Networking\Webinterface\HttpBuilder.cs" />
-    <Compile Include="Networking\Webinterface\HttpProcessor.cs" />
-    <Compile Include="Networking\Webinterface\HTTPServer.cs" />
-    <Compile Include="Networking\Webinterface\Models\HttpRequest.cs" />
-    <Compile Include="Networking\Webinterface\Models\HttpResponse.cs" />
-    <Compile Include="Networking\Webinterface\RouteHandlers\FileSystemRouteHandler.cs" />
-    <Compile Include="Networking\Webinterface\WebInterfaceHelper.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SteamGroups\CMsgGroupInviteAction.cs" />
-    <Compile Include="SteamGroups\CMsgInviteUserToGroup.cs" />
-    <Compile Include="SteamMarketUtility\Item.cs" />
-    <Compile Include="SteamMarketUtility\SteamMarket.cs" />
-    <Compile Include="SteamMarketUtility\TradeOfferInfo.cs" />
-    <Compile Include="SteamProfile.cs" />
-    <Compile Include="SteamTrade\Exceptions\InventoryFetchException.cs" />
-    <Compile Include="SteamTrade\Exceptions\TradeException.cs" />
-    <Compile Include="SteamTrade\ForeignInventory.cs" />
-    <Compile Include="SteamTrade\GenericInventory.cs" />
-    <Compile Include="SteamTrade\Inventory.cs" />
-    <Compile Include="SteamTrade\Schema.cs" />
-    <Compile Include="SteamTrade\SteamWeb.cs" />
-    <Compile Include="SteamTrade\Tf2Value.cs" />
-    <Compile Include="SteamTrade\Trade.cs" />
-    <Compile Include="SteamTrade\TradeManager.cs" />
-    <Compile Include="SteamTrade\TradeOffer\OfferSession.cs" />
-    <Compile Include="SteamTrade\TradeOffer\TradeOffer.cs" />
-    <Compile Include="SteamTrade\TradeOffer\TradeOfferManager.cs" />
-    <Compile Include="SteamTrade\TradeOffer\TradeOfferWebAPI.cs" />
-    <Compile Include="SteamTrade\TradeWebAPI\TradeSession.cs" />
-    <Compile Include="SteamTrade\TradeWebAPI\TradeStatus.cs" />
-    <Compile Include="Translation\CountryCode.cs" />
-    <Compile Include="Translation\Translation.cs" />
+    <PackageReference Include="CsQuery" Version="1.3.4" />
+    <PackageReference Include="MySql.Data" Version="8.0.18" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="SteamAuth" Version="3.0.0" />
+    <PackageReference Include="SteamKit2" Version="2.1.0" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="app.manifest" />
-    <None Include="packages.config" />
+    <ProjectReference Include="..\ASteambotInterfaces\ASteambotInterfaces.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ASteambotInterfaces\ASteambotInterfaces.csproj">
-      <Project>{020143e0-586c-495d-b50f-b522efdd132b}</Project>
-      <Name>ASteambotInterfaces</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="ASteambot_logo.ico" />
-  </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName) == Release C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\as_ver.exe</PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
-  <Target Name="AfterBuild">
-    <!--<ItemGroup>
-      <MoveToLibFolder Include="$(OutputPath)*.dll ; $(OutputPath)*.pdb ; $(OutputPath)*.xml" />
-    </ItemGroup>-->
-    <ItemGroup>
-      <MoveToAuthFolder Include="$(OutputPath)*.auth ; $(OutputPath)*.bin" />
-    </ItemGroup>
-    <ItemGroup>
-      <MoveToConfFolder Include="$(OutputPath)*.cfg" />
-    </ItemGroup>
-    <!--<Move SourceFiles="@(MoveToLibFolder)" DestinationFolder="$(OutputPath)libraries" OverwriteReadOnlyFiles="true" />-->
-    <Move SourceFiles="@(MoveToAuthFolder)" DestinationFolder="$(OutputPath)auth" OverwriteReadOnlyFiles="true" />
-    <Move SourceFiles="@(MoveToConfFolder)" DestinationFolder="$(OutputPath)configs" OverwriteReadOnlyFiles="true" />
-    <Delete Files="$(OutputPath)ASteambot.exe.config" />
-    <Delete Files="$(OutputPath)SteamTrade.dll.config" />
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="if $(ConfigurationName) == Release C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\as_ver.exe" />
   </Target>
+
 </Project>
