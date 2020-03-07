@@ -49,7 +49,17 @@ namespace ASteambot
             byte[] bytes = e.GetData;
             string str = Encoding.Default.GetString(bytes);
 
-            socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
+            try
+            {
+                if (!socket.Connected)
+                    socketError = true;
+                else
+                    socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
+            }
+            catch(Exception ex)
+            {
+                socketError = true;
+            }
 
             dataQueue.Remove(bytes);
             dataQueue.Clear();
@@ -65,9 +75,8 @@ namespace ASteambot
 
         public bool SocketConnected()
         {
-            string finaldata = tcppasswd + -1 + ")" + ((int)NetworkCode.ASteambotCode.Simple).ToString() + "|" + "ARE_YOU_ALIVE" + "<EOF>";
-            byte[] bytes = Encoding.UTF8.GetBytes(finaldata);
-
+            string finaldata = tcppasswd + -1 + ")" + ((int)NetworkCode.ASteambotCode.Simple).ToString() + "|" + "PING" + "<EOF>";
+           
             //socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
             int size = Encoding.ASCII.GetByteCount(finaldata);
 
@@ -79,15 +88,30 @@ namespace ASteambot
                     if (socketError)
                         break;
 
-                    dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
+                    byte[] data = Encoding.UTF8.GetBytes(chunk);
+                    socketError = !QuickSend(data);
                 }
             }
             else
             {
-                dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
+                byte[] data = Encoding.UTF8.GetBytes(finaldata);
+                socketError = !QuickSend(data);
             }
 
             return !socketError;
+        }
+
+        private bool QuickSend(byte[] data)
+        {
+            try
+            {
+                socket.BeginSend(data, 0, data.Length, 0, new AsyncCallback(SendCallback), socket);
+                return true;
+            }
+            catch(Exception ex)
+            {
+                return false;
+            }
         }
 
         public void FirstSend(int serverID)
@@ -123,7 +147,7 @@ namespace ASteambot
             string finaldata = tcppasswd + moduleID + ")" + ((int)netcode).ToString() + "|" + data + "<EOF>";
             int size = Encoding.ASCII.GetByteCount(finaldata);
 
-            if (size > NetworkCode.MAX_CHUNK_SIZE)
+            if (size > NetworkCode.MAX_CHUNK_SIZE && !socketError)
             {
                 List<string> chunks = ChunksUpto(finaldata, NetworkCode.MAX_CHUNK_SIZE).ToList();
                 foreach (string chunk in chunks)
@@ -131,14 +155,12 @@ namespace ASteambot
                     if (socketError)
                         break;
 
-                    Console.WriteLine("chunk : " + chunk);
                     dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
                     Thread.Sleep(100);
                 }
             }
             else
             {
-                Console.WriteLine("data : " + finaldata);
                 dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
             }
 

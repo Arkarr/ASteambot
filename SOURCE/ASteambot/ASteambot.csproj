@@ -4,6 +4,11 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <StartupObject>ASteambot.Program</StartupObject>
+    <ApplicationIcon>ASteambot_logo.ico</ApplicationIcon>
+    <Authors>Arkarr</Authors>
+    <Company>Arkarr</Company>
+    <Product>ASteambot</Product>
+    <Version>10.5</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,9 +26,5 @@
   <ItemGroup>
     <ProjectReference Include="..\ASteambotInterfaces\ASteambotInterfaces.csproj" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="if $(ConfigurationName) == Release C:\Users\Arkarr\Documents\GitHub\ASteambot\BINARIES\as_ver.exe" />
-  </Target>
 
 </Project>

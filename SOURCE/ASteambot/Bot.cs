@@ -577,13 +577,17 @@ namespace ASteambot
 
                 SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, "Sorry, I had to remove you because my friend list is too small ! Feel free to add me back anytime !");
                 SteamFriends.RemoveFriend(steamID);
+                Friends.Remove(steamID);
             }
         }
 
         private void OnProfileInfo(SteamFriends.PersonaStateCallback obj)
         {
-            if((DateTime.Now - obj.LastLogOn).TotalDays > 4)
+            if ((DateTime.Now - obj.LastLogOn).TotalDays > 4)
+            {
                 SteamFriends.RemoveFriend(obj.FriendID);
+                Friends.Remove(obj.FriendID);
+            }
         }
 
         private void GetMaxFriends()

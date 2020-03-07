@@ -25,7 +25,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V10.5";
+        private static string BUILD_VERSION = "V11";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -196,7 +196,7 @@ namespace ASteambot
 
         private static void SendLocation()
         {
-            try
+            /*try
             {
                 string ip = new System.Net.WebClient().DownloadString("http://ipinfo.io/ip").Replace("\n", "");
                 string country = new System.Net.WebClient().DownloadString("http://ipinfo.io/" + ip + "/country").Replace("\n", "").ToLower();
@@ -214,7 +214,8 @@ namespace ASteambot
                 Console.WriteLine(e);
                 Console.WriteLine(">>>>>>>>> You can ignore this.");
                 Console.ForegroundColor = ConsoleColor.White;
-            }
+            }*/
+            Console.WriteLine(">> ASteambot world map got destroyed. Not publishing location. <<");
         }
 
         private static string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
