@@ -583,7 +583,19 @@ namespace ASteambot
 
         private void OnProfileInfo(SteamFriends.PersonaStateCallback obj)
         {
-            if ((DateTime.Now - obj.LastLogOn).TotalDays > 4)
+            if (obj == null)
+            {
+                Program.PrintErrorMessage("Obj was null ?! -> Bot.cs:587");
+            }
+            else if (obj.LastLogOn == null)
+            {
+                Program.PrintErrorMessage("LastLogOn was null ?! -> Bot.cs:590");
+            }
+            else if (obj.FriendID == null)
+            {
+                Program.PrintErrorMessage("FriendID was null ?! -> Bot.cs:593");
+            }
+            else if ((DateTime.Now - obj.LastLogOn).TotalDays > 4)
             {
                 SteamFriends.RemoveFriend(obj.FriendID);
                 Friends.Remove(obj.FriendID);
