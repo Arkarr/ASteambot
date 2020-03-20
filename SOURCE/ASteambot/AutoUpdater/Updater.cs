@@ -190,7 +190,7 @@ namespace ASteambot.AutoUpdater
                     batFile.WriteLine("TASKKILL /IM \"{0}\" > NUL", selfFileName);
                     batFile.WriteLine("TIMEOUT /t 5 /nobreak > NUL");
 
-                    List<String> files = Directory.GetFiles("./update", "*.*", SearchOption.AllDirectories).ToList();
+                    List<String> files = Directory.GetFiles("./update/win-x64", "*.*", SearchOption.AllDirectories).ToList();
 
                     foreach (string file in files)
                     {
@@ -209,12 +209,12 @@ namespace ASteambot.AutoUpdater
                         if (mFile.Name.EndsWith("config.cfg"))
                             continue;
 
-                        string dstFolder = Directory.GetParent(mFile.FullName).ToString().Replace("\\update", "") + "\\" + mFile.Name;
+                        string dstFolder = Directory.GetParent(mFile.FullName).ToString().Replace("\\update\\win-x64", "") + "\\" + mFile.Name;
                         batFile.WriteLine("MOVE \"{0}\" \"{1}\"", mFile.FullName, dstFolder);
                     }
 
                     batFile.WriteLine("DEL \"%~f0\" & START /d \"{0}\" ASteambot.exe", directory);
-                    batFile.WriteLine("del / q {0}", directory.Substring(0, directory.Length-1)+ "\\update");
+                    batFile.WriteLine("del / q {0}", directory.Substring(0, directory.Length-1)+ "\\update\\win-x64");
                 }
                 
                 ProcessStartInfo startInfo = new ProcessStartInfo(directory + "Update.bat");
