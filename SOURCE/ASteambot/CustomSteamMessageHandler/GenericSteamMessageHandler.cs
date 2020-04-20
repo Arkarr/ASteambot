@@ -44,7 +44,10 @@ namespace ASteambot.CustomSteamMessageHandler
 
         public void HandleGameInviteMsg(IPacketMsg packetMsg)
         {
-            var chatMsg = new ClientMsgProtobuf<CMsgClientChatInvite>(packetMsg);
+            var chatMsg = new ClientMsgProtobuf<CMsgClientUDSInviteToGame>(packetMsg);
+            //
+            //steam_id_src = 76561198044361291
+            // I got the message, now to create it is for later.
             int i = 0;
         }
 
@@ -55,41 +58,16 @@ namespace ASteambot.CustomSteamMessageHandler
                 throw new ArgumentNullException(nameof(target));
             }
 
-            var chatMsg = new ClientMsgProtobuf<CMsgClientChatInvite>(EMsg.AMChatInvite);
+            var chatMsg = new ClientMsgProtobuf<CMsgClientUDSInviteToGame>(EMsg.ClientUDSInviteToGame);
 
-            /*
-             * 
-            object[] args = new object[9];
-            args[0] = SteamFriends;
-            args[1] = callback.InvitedID;
-            args[2] = callback.ChatRoomID;
-            args[3] = callback.PatronID;
-            args[4] = callback.ChatRoomType;
-            args[5] = callback.FriendChatID;
-            args[6] = callback.ChatRoomName;
-            args[7] = callback.GameID;
-            args[8] = "";
+            chatMsg.Body.connect_string = "+tf_party_request_join_user " + 76561197991854757;
+            chatMsg.Body.connect_stringSpecified = true;
+            chatMsg.Body.steam_id_dest = target;//new SteamID(76561197991854757);
+            chatMsg.Body.steam_id_destSpecified = true;
+            chatMsg.Body.steam_id_src = inviter;
+            chatMsg.Body.steam_id_srcSpecified = true;
 
-             */
-
-            chatMsg.Body.chat_name = "";
-            chatMsg.Body.chatroom_type = (int)EChatRoomType.Friend;
-            //chatMsg.Body.steam_id_dest = target.ConvertToUInt64();
-            chatMsg.Body.chatroom_typeSpecified = true;
-            chatMsg.Body.chat_name = "";
-            chatMsg.Body.chat_nameSpecified = false;
-            chatMsg.Body.game_id = 440;
-            chatMsg.Body.game_idSpecified = true;
-            chatMsg.Body.steam_id_chat = inviter;
-            chatMsg.Body.steam_id_chatSpecified = true;
-            chatMsg.Body.steam_id_friend_chat = inviter;
-            chatMsg.Body.steam_id_friend_chatSpecified = true;
-            chatMsg.Body.steam_id_invited = target;
-            chatMsg.Body.steam_id_invitedSpecified = true;
-            chatMsg.Body.steam_id_patron = inviter;
-            chatMsg.Body.steam_id_patronSpecified = true;
-
-            chatMsg.SteamID = inviter;
+            chatMsg.SteamID = target;
 
             this.Client.Send(chatMsg);
         }

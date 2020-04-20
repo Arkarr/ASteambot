@@ -282,6 +282,7 @@ namespace ASteambot
             string newname = "";
             for (int i = 1; i < args.Count(); i++)
                 newname += args[i] + " ";
+
             newname.Substring(0, newname.Length - 2);
 
             Console.WriteLine("Renaming steambot...");
@@ -342,7 +343,7 @@ namespace ASteambot
 
         public void SendGameInvite()
         {
-            SelectedBot.SteamFriends.SendChatMessage(new SteamID("STEAM_0:1:42047781"), EChatEntryType.ChatMsg, "test");
+            //SelectedBot.GSMH.SendGameInvite(SelectedBot.getSteamID(), new SteamID(76561198044361291), "test");
         }
 
         public void SelectFirstBot()

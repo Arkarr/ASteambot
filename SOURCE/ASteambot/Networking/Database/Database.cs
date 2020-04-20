@@ -201,7 +201,7 @@ namespace ASteambot.Networking
         {
             try
             {
-                QUERY("DROP TABLE tradeoffers");
+                QUERY("DROP TABLE IF EXISTS tradeoffers");
 
                 string table1 = "CREATE TABLE IF NOT EXISTS `tradeoffer` (" +
                                 "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
@@ -219,6 +219,11 @@ namespace ASteambot.Networking
                                  "`quantity` int(15) NOT NULL," +
                                  "`gameid` int(15) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
                 QUERY(table2);
+
+                string table3 = "CREATE TABLE IF NOT EXISTS `tradeusertoken` (" +
+                                 "`steamID` varchar(125) NOT NULL PRIMARY KEY," +
+                                 "`tradetoken` varchar(125) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+                QUERY(table3); 
             }
             catch(MySqlException e)
             {

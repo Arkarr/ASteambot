@@ -38,6 +38,7 @@ namespace ASteambot
         private BackgroundWorker botThread;
         private HandleMessage messageHandler;
         private List<SteamProfile> steamprofiles;
+        private Dictionary<ulong, string> tradetokens;
         private SteamGuardAccount steamGuardAccount;
 
         public string Name { get; private set; }
@@ -174,6 +175,7 @@ namespace ASteambot
             Manager = manager;
             steamClient = new SteamClient();
             finishedTO = new List<string>();
+            tradetokens = new Dictionary<ulong, string>();
             messageHandler = new HandleMessage();
             SteamWeb = new SteamTrade.SteamWeb();
             steamprofiles = new List<SteamProfile>();
@@ -223,7 +225,6 @@ namespace ASteambot
             cbManager.Subscribe<SteamFriends.FriendMsgCallback>(OnFriendMsgCallback);
             cbManager.Subscribe<SteamFriends.PersonaChangeCallback>(OnSteamNameChange);
             cbManager.Subscribe<SteamFriends.FriendsListCallback>(OnSteamFriendsList);
-            cbManager.Subscribe<SteamFriends.ChatInviteCallback>(OnSteamChatInvite);
             cbManager.Subscribe<SteamFriends.PersonaStateCallback>(OnProfileInfo);
 
             //Custom events:
@@ -417,9 +418,9 @@ namespace ASteambot
             if (loginResult == SteamAuth.LoginResult.LoginOkay)
             {
                 Console.WriteLine("Linking mobile authenticator...");
-                var authLinker = new SteamAuth.AuthenticatorLinker(login.Session);
+                var authLinker = new AuthenticatorLinker(login.Session);
                 var addAuthResult = authLinker.AddAuthenticator();
-                if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                if (addAuthResult == AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
                 {
                     while (addAuthResult == AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
                     {
@@ -531,7 +532,7 @@ namespace ASteambot
                             DeclineGroupInvite(friend.SteamID);
                         break;
 
-                    default:
+                    case EAccountType.Individual:
                         CreateFriendsListIfNecessary();
 
                         if (friend.Relationship == EFriendRelationship.None)
@@ -554,6 +555,19 @@ namespace ASteambot
                                 newFriends.Add(friend.SteamID);
                             }
                         }
+                        else if (friend.Relationship == EFriendRelationship.Blocked)
+                        {
+                            Program.PrintErrorMessage(friend.SteamID + " blocked OR manually removed bot, steam won't allow me to add him back as friend for a moment !");
+                            if (Friends.Contains(friend.SteamID))
+                            {
+                                Friends.Remove(friend.SteamID);
+                                newFriends.Remove(friend.SteamID);
+                            }
+                        }
+
+                        if (friend.Relationship != EFriendRelationship.Friend)
+                            Console.WriteLine(">> " + friend.Relationship);
+
                         break;
                 }
 
@@ -585,15 +599,15 @@ namespace ASteambot
         {
             if (obj == null)
             {
-                Program.PrintErrorMessage("Obj was null ?! -> Bot.cs:587");
+                Program.PrintErrorMessage("Obj was null ?! -> Bot:587");
             }
             else if (obj.LastLogOn == null)
             {
-                Program.PrintErrorMessage("LastLogOn was null ?! -> Bot.cs:590");
+                Program.PrintErrorMessage("LastLogOn was null ?! -> Bot:590");
             }
             else if (obj.FriendID == null)
             {
-                Program.PrintErrorMessage("FriendID was null ?! -> Bot.cs:593");
+                Program.PrintErrorMessage("FriendID was null ?! -> Bot:593");
             }
             else if ((DateTime.Now - obj.LastLogOn).TotalDays > 4)
             {
@@ -872,6 +886,62 @@ namespace ASteambot
             }
         }
 
+        public void UpdateUserTradeToken(int srvID, int mID, SteamID steamID, string token)
+        {
+            if (!steamID.IsValid)
+            {
+                Manager.Send(srvID, mID, NetworkCode.ASteambotCode.TradeToken, "invalid_steam_id");
+                return;
+            }
+
+            string[] rows = new string[2];
+            string[] values = new string[2];
+
+            rows[0] = "steamID";
+            rows[1] = "tradetoken";
+
+            ulong steamid_long = steamID.ConvertToUInt64();
+            values[0] = steamid_long.ToString();
+            values[1] = token;
+
+            if (GetToken(steamID) == null)
+            {
+                DB.INSERT("tradeusertoken", rows, values);
+            }
+            else
+            {
+                string query = String.Format("UPDATE tradeusertoken SET `tradetoken`=\"{0}\" WHERE `"+ rows[0] + "`=\"{1}\";", values[1], values[0]);
+                DB.QUERY(query);
+            }
+
+            if (tradetokens.ContainsKey(steamid_long))
+                tradetokens[steamid_long] = values[1];
+            else
+                tradetokens.Add(steamid_long, values[1]);
+
+            Manager.Send(srvID, mID, NetworkCode.ASteambotCode.TradeToken, values[0]+"/"+"ok/"+ values[1]);
+        }
+
+        public string GetToken(SteamID steamID)
+        {
+            if (tradetokens.ContainsKey(steamID.ConvertToUInt64()))
+                return tradetokens[steamID.ConvertToUInt64()];
+
+            string[] rows = new string[1];
+            rows[0] = "tradetoken";
+
+            var output = DB.SELECT(rows, "tradeusertoken", "WHERE `steamID`=\"" + steamID.ConvertToUInt64() + "\"").FirstOrDefault();
+            if (output == null)
+            {
+                return null;
+            }
+            else
+            {
+                tradetokens[steamID] = output[rows[0]];
+                return output[rows[0]];
+            }
+        }
+
         public void UpdateTradeOfferInDatabase(TradeOffer to, double value)
         {
             string[] rows = new string[4];
@@ -1039,31 +1109,6 @@ namespace ASteambot
             }
         }
 
-        private void OnSteamChatInvite(SteamFriends.ChatInviteCallback callback)
-        {
-            object[] args = new object[9];
-            args[0] = SteamFriends;
-            args[1] = callback.InvitedID;
-            args[2] = callback.ChatRoomID;
-            args[3] = callback.PatronID;
-            args[4] = callback.ChatRoomType;
-            args[5] = callback.FriendChatID;
-            args[6] = callback.ChatRoomName;
-            args[7] = callback.GameID;
-            args[8] = "";
-
-            List<bool> results = Program.ExecuteModuleFonction("HandleInvitation", args);
-
-            /*foreach (Dictionary<bool, string> output in results)
-            {
-                foreach (KeyValuePair<bool, string> entry in output)
-                {
-                    if (entry.Value.Length > 0)
-                        SteamchatHandler.PrintChatMessage(callback.PatronID, entry.Value);
-                }
-            }*/
-        }
-
         private void OnFriendMsgCallback(SteamFriends.FriendMsgCallback callback)
         {
             object[] args = new object[4];
@@ -1078,23 +1123,9 @@ namespace ASteambot
             foreach (bool output in results)
             {
                 block = output;
-
                 if(block)
                     break;
             }
-
-            /*bool block = false;
-            foreach (Dictionary<bool, string> output in results)
-            {
-                foreach (KeyValuePair<bool, string> entry in output)
-                {
-                    if (entry.Value.Length > 0)
-                        SteamchatHandler.PrintChatMessage(callback.Sender, entry.Value);
-
-                    if (entry.Key)
-                        block = true;
-                }
-            }*/
 
             if (!block && callback.EntryType == EChatEntryType.ChatMsg)
                 SteamchatHandler.HandleMessage(callback.Sender, callback.Message);

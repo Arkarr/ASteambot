@@ -394,7 +394,7 @@ namespace SteamTrade
                         secure: true
                         );
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     Token = TokenSecure = null;
                     return false;

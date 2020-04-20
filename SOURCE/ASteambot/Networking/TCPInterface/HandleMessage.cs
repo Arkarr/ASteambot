@@ -72,6 +72,9 @@ namespace ASteambot.Networking
                     case NetworkCode.ASteambotCode.TradeOfferInformation:
                         SendTradeOfferInformation(bot, gsr);
                         break;
+                    case NetworkCode.ASteambotCode.TradeToken:
+                        UpdateUserTradeToken(bot, gsr);
+                        break;
                 }
                 /*if (!bot.Friends.Contains(steamID))
                 {
@@ -215,9 +218,10 @@ namespace ASteambot.Networking
             if (!steamID.IsValid)
                 return;
 
-            if (!bot.Friends.Contains(steamID.ConvertToUInt64()))
+            string token = bot.GetToken(steamID);
+            if (!bot.Friends.Contains(steamID.ConvertToUInt64()) && token == null)
             {
-                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.NotFriends, steamID.ConvertToUInt64().ToString());
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeToken, steamID.ConvertToUInt64().ToString()+"/"+"trade_token_not_found");
                 return;
             }
 
@@ -391,14 +395,22 @@ namespace ASteambot.Networking
             
             if (steamIDitems[3] != "NULL")
                 tradeValue = float.Parse(steamIDitems[3], CultureInfo.InvariantCulture);
-            
-            string offerId;
-            to.Send(out offerId, String.Format("\"{0}\" the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm")));
+
+            string offerId = "";
+
+            string token = bot.GetToken(steamid);
+
+            if (bot.Friends.Contains(steamid.ConvertToUInt64()))
+                to.Send(out offerId, String.Format("\"{0}\" the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm")));
+            else if(token != null)
+                to.SendWithToken(out offerId, token, String.Format("\"{0}\" the {1}@{2}", gameServer.Name, DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("HH:mm")));
+            else
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeToken, steamid.ConvertToUInt64().ToString() + "/" + "trade_token_not_found");
 
             if (offerId != "")
             {
-                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64()  +"/" + offerId);
-                bot.TradeoffersGS.Add(offerId, gsr.ServerID+"|"+gsr.ModuleID+"|"+tradeValue);
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64() + "/" + offerId);
+                bot.TradeoffersGS.Add(offerId, gsr.ServerID + "|" + gsr.ModuleID + "|" + tradeValue);
                 bot.TradeOfferValue.Add(offerId, tradeValue);
 
                 bot.AcceptMobileTradeConfirmation(offerId);
@@ -407,6 +419,9 @@ namespace ASteambot.Networking
             }
             else
             {
+                if (token != null)
+                    bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeToken, steamid.ConvertToUInt64().ToString() + "/" + "trade_token_invalid");
+
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64() + "/" + "-1");
             }
         }
@@ -418,6 +433,51 @@ namespace ASteambot.Networking
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeOfferInformation, to.PartnerSteamId.ConvertToUInt64() + "/" + to.OfferState + "/" + to.TradeOfferId);
             else
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeOfferInformation, "-1");
+        }
+
+        private void UpdateUserTradeToken(Bot bot, GameServerRequest gsr)
+        {
+            string[] cmdinput = gsr.Arguments.Split("/", 2);
+
+            string gwgewr = "";
+            if (cmdinput.Length > 1)
+                gwgewr = cmdinput[1];
+
+            string token = "";
+            string argrs = gwgewr.Replace("https://", "");
+
+            string[] output = argrs.Split("?");
+            if (output.Length == 1)
+                argrs = output[0];
+            else
+                argrs = output[1];
+
+            string[] arg = argrs.Split("&");
+            if (arg.Length == 1)
+            {
+                token = arg[0];
+            }
+            else
+            {
+                foreach (string t in arg)
+                {
+                    if (t.StartsWith("token="))
+                    {
+                        token = t.Replace("token=", "");
+                        break;
+                    }
+                }
+            }
+
+            SteamID steamID = GetSteamIDFromString(cmdinput[0]);
+
+            if (cmdinput.Length == 1)
+            {
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeToken, cmdinput[0] + "/malformed_message/" + token);
+                return;
+            }
+
+            bot.UpdateUserTradeToken(gsr.ServerID, gsr.ModuleID, steamID, token);
         }
 
         private void SendFriendInvitation(Bot bot, GameServerRequest gsr)
@@ -505,12 +565,6 @@ namespace ASteambot.Networking
             {
                 if (steamID_msg[1].StartsWith("steam://connect/"))
                 {
-                    /*Random rnd = new Random();
-                    string key = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10).Select(s => s[rnd.Next(s.Length)]).ToArray());
-                    while (!Program.httpsrv.AddToRedirectTable(key, steamID_msg[1], out key))
-                        key = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10).Select(s => s[rnd.Next(s.Length)]).ToArray());
-
-                    bot.SteamFriends.SendChatMessage(steamID, EChatEntryType.ChatMsg, key);*/
                     bot.GSMH.SendGameInvite(bot.getSteamID(), steamID, steamID_msg[1].Replace("steam://connect/", ""));
                 }
                 else
