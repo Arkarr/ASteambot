@@ -218,12 +218,12 @@ namespace ASteambot.Networking
             if (!steamID.IsValid)
                 return;
 
-            string token = bot.GetToken(steamID);
+            /*string token = bot.GetToken(steamID);
             if (!bot.Friends.Contains(steamID.ConvertToUInt64()) && token == null)
             {
                 bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeToken, steamID.ConvertToUInt64().ToString()+"/"+"trade_token_not_found");
                 return;
-            }
+            }*/
 
             string items = gsr.Arguments + "/";
 
