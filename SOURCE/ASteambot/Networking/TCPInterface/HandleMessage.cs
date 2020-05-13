@@ -361,33 +361,33 @@ namespace ASteambot.Networking
 
                 bot.MyGenericInventory.load((int)Games.CSGO, contextId, steamid);
 
-                foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+                foreach (GenericInventory.Item item in bot.MyGenericInventory.items.Values)
                 {
                     if (Array.IndexOf(myAssetIDs, item.assetid.ToString()) > -1)
                     {
-                        ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
+                        ItemDescription description = (ItemDescription)bot.MyGenericInventory.getDescription(item.assetid);
                         to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                     }
                 }
 
                 bot.MyGenericInventory.load((int)Games.TF2, contextId, steamid);
 
-                foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+                foreach (GenericInventory.Item item in bot.MyGenericInventory.items.Values)
                 {
                     if (Array.IndexOf(myAssetIDs, item.assetid.ToString()) > -1)
                     {
-                        ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
+                        ItemDescription description = (ItemDescription)bot.MyGenericInventory.getDescription(item.assetid);
                         to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                     }
                 }
 
                 bot.MyGenericInventory.load((int)Games.Dota2, contextId, steamid);
 
-                foreach (GenericInventory.Item item in bot.OtherGenericInventory.items.Values)
+                foreach (GenericInventory.Item item in bot.MyGenericInventory.items.Values)
                 {
                     if (Array.IndexOf(myAssetIDs, item.assetid.ToString()) > -1)
                     {
-                        ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
+                        ItemDescription description = (ItemDescription)bot.MyGenericInventory.getDescription(item.assetid);
                         to.Items.AddTheirItem(item.appid, item.contextid, (long)item.assetid);
                     }
                 }
