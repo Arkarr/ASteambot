@@ -88,15 +88,6 @@ namespace ASteambot.SteamMarketUtility
             {
                 Console.WriteLine("Fetching market's prices...");
 
-                /*if (!stop)
-                    TF2OK = ScanMarket(Games.TF2);
-
-                if (!stop)
-                    CSGOOK = ScanMarket(Games.CSGO);
-
-                if (!stop)
-                    DOTA2OK = ScanMarket(Games.Dota2);*/
-
                 if (TF2marketScanner == null || !TF2marketScanner.IsAlive)
                 {
                     TF2marketScanner = new Thread(() =>
@@ -134,9 +125,9 @@ namespace ASteambot.SteamMarketUtility
                     });
                 }
 
-                /*TF2marketScanner.Start();
+                TF2marketScanner.Start();
                 CSGOmarketScanner.Start();
-                DOTA2marketScanner.Start();*/
+                DOTA2marketScanner.Start();
             }
             else
             {
@@ -198,11 +189,11 @@ namespace ASteambot.SteamMarketUtility
                     string json = fetcher.Fetch(target, "GET", null, true, "", true, timeout);
                     ro = JsonConvert.DeserializeObject<RootObject>(json);
 
-                    /*if (ro == null)
+                    if (ro == null)
                     {
                         Console.WriteLine("Error fetching : " + target + " !");
                         Console.WriteLine("Trying again.");
-                    }*/
+                    }
                 }
                 while (ro == null && !stop);
 
@@ -246,7 +237,7 @@ namespace ASteambot.SteamMarketUtility
                         itemToAdd.Clear();
                     }
 
-                    if (ro.nbritems > startIndex + 500)
+                    if (ro.items.Count >= 500)
                         return ScanMarket(game, startIndex + 500);
 
                     return true;
