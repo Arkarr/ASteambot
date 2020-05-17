@@ -955,18 +955,18 @@ namespace ASteambot
             rows[2] = "tradeValue";
             rows[3] = "tradeStatus";
 
-            if(DB.SELECT(rows, "tradeoffer", "WHERE `tradeOfferID`=\"" + to.TradeOfferId + "\"").FirstOrDefault() == null)
+            if(DB.SELECT(rows, "tradeofferv2", "WHERE `tradeOfferID`=\"" + to.TradeOfferId + "\"").FirstOrDefault() == null)
             {
                 values[0] = to.PartnerSteamId.ConvertToUInt64().ToString();
                 values[1] = to.TradeOfferId;
                 values[2] = value.ToString().Replace(",", ".");
                 values[3] = (to.OfferState).ToString();
 
-                DB.INSERT("tradeoffer", rows, values);
+                DB.INSERT("tradeofferv2", rows, values);
             }
             else
             {
-                string query = String.Format("UPDATE tradeoffer SET `tradeStatus`=\"{0}\" WHERE `tradeOfferID`=\"{1}\";", (to.OfferState), to.TradeOfferId);
+                string query = String.Format("UPDATE tradeofferv2 SET `tradeStatus`=\"{0}\" WHERE `tradeOfferID`=\"{1}\";", (to.OfferState), to.TradeOfferId);
                 DB.QUERY(query);
             }
         }

@@ -201,9 +201,10 @@ namespace ASteambot.Networking
         {
             try
             {
+                QUERY("DROP TABLE IF EXISTS tradeoffer");
                 QUERY("DROP TABLE IF EXISTS tradeoffers");
 
-                string table1 = "CREATE TABLE IF NOT EXISTS `tradeoffer` (" +
+                string table1 = "CREATE TABLE IF NOT EXISTS `tradeofferv2` (" +
                                 "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
                                 "`steamID` bigint(255) NOT NULL," +
                                 "`tradeOfferID` bigint(255) NOT NULL," +
