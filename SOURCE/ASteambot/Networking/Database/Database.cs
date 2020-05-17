@@ -207,7 +207,7 @@ namespace ASteambot.Networking
                                 "`ID` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY," +
                                 "`steamID` bigint(255) NOT NULL," +
                                 "`tradeOfferID` bigint(255) NOT NULL," +
-                                "`tradeValue` int(125) NOT NULL," +
+                                "`tradeValue` float(50) NOT NULL," +
                                 "`tradeStatus` varchar(50) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8";
                 QUERY(table1);
 

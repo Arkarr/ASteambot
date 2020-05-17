@@ -173,14 +173,15 @@ namespace ASteambot
 
         private void TestAPI(string[] args)
         {
-            if(args.Count() < 2)
+            if(args.Count() < 3)
             {
-                Console.WriteLine("Usage : testapi [ITEM NAME]");
+                Console.WriteLine("Usage : testapi [GAME ID] [ITEM NAME]");
                 return;
             }
 
             string itemName = "";
-            for (int i = 1; i < args.Length; i++)
+            int appid = Int32.Parse(args[1]);
+            for (int i = 2; i < args.Length; i++)
             {
                 if (args.Length - 1 != i)
                     itemName += args[i] + " ";
@@ -189,7 +190,7 @@ namespace ASteambot
             }
             
             itemName = HttpUtility.HtmlEncode(itemName);
-            Item item = SelectedBot.ArkarrSteamMarket.GetItemByName(itemName);
+            Item item = SelectedBot.ArkarrSteamMarket.GetItemByName(itemName, appid);
 
             if (item != null)
             {

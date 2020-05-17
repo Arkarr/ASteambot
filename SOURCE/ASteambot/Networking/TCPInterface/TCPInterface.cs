@@ -86,9 +86,9 @@ namespace ASteambot.Networking
                 }
 
                 Console.WriteLine("Use this ip/port if ASteambot **IS NOT** running on the same machine as the server :");
-                Console.WriteLine("IP : " + new System.Net.WebClient().DownloadString("https://api.ipify.org").Replace("\n", "") + " PORT : " + Port);
-                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("IP : " + new WebClient().DownloadString("https://api.ipify.org").Replace("\n", "") + " PORT : " + Port);
 
+                Console.ForegroundColor = ConsoleColor.White;
 
                 Console.WriteLine("Example (in ASteambot_Core.cfg) : ");
                 Console.WriteLine("   sm_asteambot_server_ip \"XXX.XXX.XX.XX\" ");

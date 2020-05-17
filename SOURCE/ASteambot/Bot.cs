@@ -703,7 +703,7 @@ namespace ASteambot
             {
                 GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
 
-                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name, item.appid);
                 if (description.tradable)
                 {
                     if (i != null)// && i.Value != 0)
@@ -721,7 +721,7 @@ namespace ASteambot
             {
                 GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
 
-                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name, item.appid);
                 if (description.tradable)
                 {
                     if (i != null)// && i.Value != 0)
@@ -744,7 +744,7 @@ namespace ASteambot
             {
                 GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
 
-                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name, item.appid);
                 if (description.tradable)
                 {
                     if (i != null)// && i.Value != 0)
@@ -944,6 +944,9 @@ namespace ASteambot
 
         public void UpdateTradeOfferInDatabase(TradeOffer to, double value)
         {
+            if (to.TradeOfferId == null)
+                return;
+
             string[] rows = new string[4];
             string[] values = new string[4];
 
@@ -952,18 +955,18 @@ namespace ASteambot
             rows[2] = "tradeValue";
             rows[3] = "tradeStatus";
 
-            if (DB.SELECT(rows, "tradeoffer", "WHERE `tradeOfferID`=\"" + to.TradeOfferId + "\"").FirstOrDefault() == null)
+            if(DB.SELECT(rows, "tradeoffer", "WHERE `tradeOfferID`=\"" + to.TradeOfferId + "\"").FirstOrDefault() == null)
             {
                 values[0] = to.PartnerSteamId.ConvertToUInt64().ToString();
                 values[1] = to.TradeOfferId;
-                values[2] = value.ToString();
+                values[2] = value.ToString().Replace(",", ".");
                 values[3] = (to.OfferState).ToString();
 
                 DB.INSERT("tradeoffer", rows, values);
             }
             else
             {
-                string query = String.Format("UPDATE tradeoffer SET `tradeStatus`=\"{0}\", `tradeValue`=\"{1}\" WHERE `tradeOfferID`=\"{2}\";", (to.OfferState), value.ToString(), to.TradeOfferId);
+                string query = String.Format("UPDATE tradeoffer SET `tradeStatus`=\"{0}\" WHERE `tradeOfferID`=\"{1}\";", (to.OfferState), to.TradeOfferId);
                 DB.QUERY(query);
             }
         }
@@ -994,7 +997,7 @@ namespace ASteambot
                     if (item.AppId != appID)
                         continue;
 
-                    GenericInventory.ItemDescription ides = (ItemDescription)gi.getDescription((ulong)item.AssetId);
+                    ItemDescription ides = (ItemDescription)gi.getDescription((ulong)item.AssetId);
 
                     if (ides == null)
                     {
@@ -1002,7 +1005,7 @@ namespace ASteambot
                     }
                     else
                     {
-                        ASteambot.SteamMarketUtility.Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name);
+                        SteamMarketUtility.Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name, appID);
                         if (itemInfo != null)
                             cent += itemInfo.Value;
                     }
@@ -1294,8 +1297,8 @@ namespace ASteambot
             if (to == null)
                 return;
 
-            //double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
-            UpdateTradeOfferInDatabase(to, -1);
+            double tradeValue = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
+            UpdateTradeOfferInDatabase(to, tradeValue);
 
             if (offer.IsOurOffer)
                 OnOwnTradeOfferUpdated(offer);

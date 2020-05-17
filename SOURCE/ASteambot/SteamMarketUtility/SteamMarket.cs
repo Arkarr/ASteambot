@@ -6,6 +6,7 @@ using SteamTrade;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -81,9 +82,6 @@ namespace ASteambot.SteamMarketUtility
 
         private void RefreshMarket(Games game = Games.None)
         {
-
-            //return;
-
             if (game == Games.None)
             {
                 Console.WriteLine("Fetching market's prices...");
@@ -177,6 +175,82 @@ namespace ASteambot.SteamMarketUtility
             RefreshMarket();
         }
 
+        private bool ScanItem(Games game, string itemName, int startIndex = 0)
+        {
+            try
+            {
+                RootObject ro = null;
+                do
+                {
+                    int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
+                    string target = "http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game +  "&market_hash_name=" + itemName + "&version=2";
+                    string json = fetcher.Fetch(target, "GET", null, true, "", true, timeout);
+                    ro = JsonConvert.DeserializeObject<RootObject>(json);
+
+                    if (ro == null)
+                    {
+                        Console.WriteLine("Error fetching : " + target + " !");
+                        Console.WriteLine("Trying again.");
+                    }
+                }
+                while (ro == null && !stop);
+
+                if (stop)
+                    return false;
+
+                if (ro.success && stop == false && ro.items.Count > 0)
+                {
+                    Item item = ro.items.First();
+
+                    Item i = null;
+                    if (game == Games.TF2)
+                        i = steamMarketItemsTF2.FirstOrDefault(x => x.Name == item.Name);
+                    else if (game == Games.CSGO)
+                        i = steamMarketItemsCSGO.FirstOrDefault(x => x.Name == item.Name);
+                    else if (game == Games.Dota2)
+                        i = steamMarketItemsDOTA2.FirstOrDefault(x => x.Name == item.Name);
+
+                    if (i != null && i.Value != item.Value)
+                    {
+                        i.Value = item.Value;
+                        i.LastUpdated = item.LastUpdated;
+                    }
+                    else if (i == null)
+                    {
+                        if (game == Games.TF2)
+                            steamMarketItemsTF2.Add(item);
+                        else if (game == Games.CSGO)
+                            steamMarketItemsCSGO.Add(item);
+                        else if (game == Games.Dota2)
+                            steamMarketItemsDOTA2.Add(item);
+                    }
+
+                    return true;
+                }
+                else if(ro.items.Count == 0)
+                {
+                    Console.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
+                    Console.WriteLine("No item with that name (" + itemName + ") in API");
+
+                    return false;
+                }
+                else
+                {
+                    Console.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
+                    Console.WriteLine(ro.message);
+
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error while fetching " + game.ToString() + "'s market : ");
+                Console.WriteLine(e.Message);
+
+                return false;
+            }
+        }
+
         private bool ScanMarket(Games game, int startIndex = 0)
         {
             try
@@ -185,7 +259,7 @@ namespace ASteambot.SteamMarketUtility
                 do
                 {
                     int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
-                    string target = "http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&start=" + startIndex + "&appid=" + (int)game;
+                    string target = "http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game + "&version=2";
                     string json = fetcher.Fetch(target, "GET", null, true, "", true, timeout);
                     ro = JsonConvert.DeserializeObject<RootObject>(json);
 
@@ -237,9 +311,6 @@ namespace ASteambot.SteamMarketUtility
                         itemToAdd.Clear();
                     }
 
-                    if (ro.items.Count >= 500)
-                        return ScanMarket(game, startIndex + 500);
-
                     return true;
                 }
                 else
@@ -271,17 +342,25 @@ namespace ASteambot.SteamMarketUtility
             public int nbritems { get; set; }
         }
         
-        public Item GetItemByName(string itemName)
+        public Item GetItemByName(string itemName, int appid)
         {
-            Item i = steamMarketItemsCSGO.Find(x => x.Name == itemName);
+            Games game = (Games)appid;
 
-            if (i == null)
-                i = steamMarketItemsTF2.Find(x => x.Name == itemName);
-
-            if (i == null)
-                i = steamMarketItemsDOTA2.Find(x => x.Name == itemName);
-
-            return i;
+            Item i = null;
+            switch (game)
+            {
+                case Games.CSGO:
+                    i = steamMarketItemsCSGO.Find(x => x.Name == itemName);
+                    return i;
+                case Games.TF2:
+                    i = steamMarketItemsTF2.Find(x => x.Name == itemName);
+                    return i;
+                case Games.Dota2:
+                    i = steamMarketItemsDOTA2.Find(x => x.Name == itemName);
+                    return i;
+            }
+           
+            return null;
         }
     }
 }

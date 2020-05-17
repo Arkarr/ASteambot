@@ -276,13 +276,17 @@ namespace ASteambot.Networking
                         {
                             ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
 
-                            ASteambot.SteamMarketUtility.Item i = bot.ArkarrSteamMarket.GetItemByName(description.market_hash_name);
+                            SteamMarketUtility.Item i = bot.ArkarrSteamMarket.GetItemByName(description.market_hash_name, item.appid);
                             if (description.tradable)
                             {
                                 if (i != null)// && i.Value != 0)
+                                {
                                     items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + (i.Value.ToString().Replace(',', '.')) + (img ? "=" + i.Image : "") + ",";
+                                }
                                 else
+                                {
                                     items += item.assetid + "=" + description.market_hash_name.Replace("|", " - ") + "=" + "0" + (img ? "=" + "NOT_FOUND" : "") + ",";
+                                }
                             }
                         }
                     }
@@ -415,7 +419,7 @@ namespace ASteambot.Networking
 
                 bot.AcceptMobileTradeConfirmation(offerId);
 
-                bot.UpdateTradeOfferInDatabase(to, -1);
+                bot.UpdateTradeOfferInDatabase(to, tradeValue);
             }
             else
             {

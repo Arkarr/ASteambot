@@ -14,7 +14,7 @@ namespace ASteambot.SteamMarketUtility
         [JsonProperty("market_hash_name")]
         public string Name { get; set; }
         [JsonProperty("last_updated")]
-        public string LastUpdated { get; set; }
+        public long LastUpdated { get; set; }
         [JsonProperty("quantity")]
         public int Quantity { get; set; }
         [JsonProperty("normal_price")]
@@ -24,7 +24,7 @@ namespace ASteambot.SteamMarketUtility
         [JsonProperty("img")]
         public string Image { get; set; }
 
-        public Item(string Name, string LastUpdate, int quantity, double value, int appID, string img)
+        public Item(string Name, long LastUpdate, int quantity, double value, int appID, string img)
         {
             this.Name = Name;
             this.LastUpdated = LastUpdate;
