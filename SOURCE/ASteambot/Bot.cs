@@ -1301,9 +1301,18 @@ namespace ASteambot
             UpdateTradeOfferInDatabase(to, tradeValue);
 
             if (offer.IsOurOffer)
+            {
                 OnOwnTradeOfferUpdated(offer);
+            }
             else
+            {
+                if (offer.OfferState == TradeOfferState.TradeOfferStateActive && Config.IsAdmin(offer.PartnerSteamId))
+                    offer.Accept();
+                else if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
+                    offer.Decline();
+
                 OnPartenarTradeOfferUpdated(offer);
+            }
         }
 
         private void OnOwnTradeOfferUpdated(TradeOffer offer)
