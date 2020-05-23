@@ -154,7 +154,7 @@ namespace ASteambot
         {
             foreach(SteamID id in SteamAdmins)
             {
-                if (id.Equals(target))
+                if (id.ConvertToUInt64() == target.ConvertToUInt64())
                     return true;
             }
 
