@@ -173,13 +173,13 @@ namespace SteamTrade
 
                         if (invResponse == null)
                         {
-                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.ForegroundColor = ConsoleColor.Yellow;
                             Console.WriteLine("Unable to find items in inventory because bot is scanning inventory too fast. Try again later.");
                             Console.ForegroundColor = ConsoleColor.White;
                         }
                         else if (invResponse.success == false)
                         {
-                            _errors.Add("Fail to open backpack: " + invResponse.Error);
+                            _errors.Add("Failed to open backpack: " + invResponse.Error);
                             continue;
                         }
                         else

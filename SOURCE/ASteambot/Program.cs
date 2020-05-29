@@ -25,7 +25,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V11.8";
+        private static string BUILD_VERSION = "V11.9";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;
@@ -36,11 +36,15 @@ namespace ASteambot
         private static void GlobalUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
             Exception ex = (Exception)e.ExceptionObject;
+            GlobalUnhandledExceptionHandler(ex);
+        }
 
+        public static void GlobalUnhandledExceptionHandler(Exception ex)
+        {
             using (var file = File.Exists("./SEND_TO_ARKARR.log") ? File.Open("./SEND_TO_ARKARR.log", FileMode.Append) : File.Open("./SEND_TO_ARKARR.log", FileMode.CreateNew))
             using (var stream = new StreamWriter(file))
-                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_NAME + ") LINUX : " + (IsLinux() ? "YES" : "NO") + "\n*************************\n" + ex.HResult + " - " +  ex.Source + "\n" + ex.TargetSite + "\n" + ex.InnerException + "\n" + ex.HelpLink + "\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
-            
+                stream.WriteLine("*************************\n" + DateTime.Now.ToString() + " (Version " + BUILD_NAME + ") LINUX : " + (IsLinux() ? "YES" : "NO") + "\n*************************\n" + ex.HResult + " - " + ex.Source + "\n" + ex.TargetSite + "\n" + ex.InnerException + "\n" + ex.HelpLink + "\n" + ex.Message + "\n" + ex.StackTrace + "\n\n");
+
             PrintErrorMessage("Log file (" + "SEND_TO_ARKARR.log" + ") generated ! Send it to Arkarr !!");
         }
 

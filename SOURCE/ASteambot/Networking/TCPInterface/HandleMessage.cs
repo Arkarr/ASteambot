@@ -94,6 +94,9 @@ namespace ASteambot.Networking
                 Program.PrintErrorMessage("SRV ID : " + gsr.ServerID + " MDL ID: " + gsr.ModuleID);
                 Program.PrintErrorMessage(gsr.Arguments);
                 Program.PrintErrorMessage("Line number : " + line);
+                Program.PrintErrorMessage("SEND LOGS TO ARKARR (see generated log file) !");
+
+                Program.GlobalUnhandledExceptionHandler(e);
             }
         }
 
