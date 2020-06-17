@@ -69,7 +69,7 @@ namespace ASteambot.Networking
                 listener.Bind(localEndPoint);
                 listener.Listen(100);
                 
-                var host = Dns.GetHostEntry(Dns.GetHostName());
+                var host = Dns.GetHostEntry("localhost");
 
                 for (int cwidth = Console.WindowWidth; cwidth-2 > 0; cwidth--)
                     Console.Write("*");
