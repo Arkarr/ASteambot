@@ -23,6 +23,8 @@ namespace ASteambot
 {
     public class Bot
     {
+        private readonly DateTime NullDate = new DateTime(1970, 1, 1);
+
         private Database DB;
         private bool renaming;
         private string myUniqueId;
@@ -593,6 +595,9 @@ namespace ASteambot
                 SteamFriends.RemoveFriend(steamID);
                 Friends.Remove(steamID);
             }
+
+            foreach (SteamID neoFriend in newFriends)
+                SteamFriends.AddFriend(neoFriend);
         }
 
         private void OnProfileInfo(SteamFriends.PersonaStateCallback obj)
@@ -609,7 +614,7 @@ namespace ASteambot
             {
                 Program.PrintErrorMessage("FriendID was null ?! -> Bot:593");
             }
-            else if ((DateTime.Now - obj.LastLogOn).TotalDays > 4)
+            else if (obj.LastLogOn != NullDate && (DateTime.Now - obj.LastLogOn).TotalDays > 4)
             {
                 SteamFriends.RemoveFriend(obj.FriendID);
                 Friends.Remove(obj.FriendID);
