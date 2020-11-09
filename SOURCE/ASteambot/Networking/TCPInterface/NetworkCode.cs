@@ -31,7 +31,8 @@ namespace ASteambot.Networking
             Disconnect = 15,
             SGAnnoucement = 16,
             SteamID = 17,
-            TradeOfferInformation = 18
+            TradeOfferInformation = 18,
+            SendChatGroupMsg = 19
         }
     }
 }

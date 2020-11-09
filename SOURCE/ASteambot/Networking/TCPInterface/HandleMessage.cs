@@ -1,5 +1,6 @@
 using ASteambot.SteamMarketUtility;
 using SteamKit2;
+using SteamKit2.Internal;
 using SteamTrade;
 using SteamTrade.TradeOffer;
 using System;
@@ -75,6 +76,9 @@ namespace ASteambot.Networking
                     case NetworkCode.ASteambotCode.TradeToken:
                         UpdateUserTradeToken(bot, gsr);
                         break;
+                    case NetworkCode.ASteambotCode.SendChatGroupMsg:
+                        SendChatGroupMsg(bot, gsr);
+                        break;
                 }
                 /*if (!bot.Friends.Contains(steamID))
                 {
@@ -97,6 +101,40 @@ namespace ASteambot.Networking
                 Program.PrintErrorMessage("SEND LOGS TO ARKARR (see generated log file) !");
 
                 Program.GlobalUnhandledExceptionHandler(e);
+            }
+        }
+
+        private void SendChatGroupMsg(Bot bot, GameServerRequest gsr)
+        {
+            string[] infos = gsr.Arguments.Split('/');
+            string chatroomName = infos[0];
+            string subchatroomName = infos[1];
+            string msg = infos[2];
+
+            SendChatGroupMsg(bot, chatroomName, subchatroomName, msg).ConfigureAwait(false);
+        }
+
+        private async Task SendChatGroupMsg(Bot bot, string chatroomName, string subchat, string msg)
+        {
+            List<CChatRoomSummaryPair>? chatrooms = await bot.GSMH.GetMyChatGroups().ConfigureAwait(false);
+
+            foreach (CChatRoomSummaryPair chatroom in chatrooms)
+            {
+                if (chatroom.group_summary.chat_group_name.Equals(chatroomName))
+                {
+                    foreach (CChatRoomState chatroom_sub in chatroom.group_summary.chat_rooms)
+                    {
+                        if (chatroom_sub.chat_name.Equals(subchat))
+                        {
+                            ulong chatGroupID = chatroom.group_summary.chat_group_id;
+
+                            await bot.GSMH.JoinChatRoomGroup(chatGroupID);
+                            await bot.GSMH.SendMessage(chatGroupID, chatroom_sub.chat_id, msg);
+
+                            return;
+                        }
+                    }
+                }
             }
         }
 
@@ -570,11 +608,11 @@ namespace ASteambot.Networking
             }
             else
             {
-                if (steamID_msg[1].StartsWith("steam://connect/"))
+                /*if (steamID_msg[1].StartsWith("steam://connect/"))
                 {
                     bot.GSMH.SendGameInvite(bot.getSteamID(), steamID, steamID_msg[1].Replace("steam://connect/", ""));
                 }
-                else
+                else*/
                 {
                     new Thread(() =>
                     {

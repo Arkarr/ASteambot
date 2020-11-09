@@ -18,6 +18,7 @@ using ASteambot.CustomSteamMessageHandler;
 using SteamTrade;
 using SteamTrade.TradeOffer;
 using static SteamTrade.GenericInventory;
+using System.Threading.Tasks;
 
 namespace ASteambot
 {
@@ -54,7 +55,7 @@ namespace ASteambot
         public SteamMarket ArkarrSteamMarket { get; set; }
         public SteamFriends SteamFriends { get; private set; }
         public GenericSteamMessageHandler GSMH { get; private set; }
-        public SteamTrade.SteamWeb SteamWeb { get; private set; }
+        public SteamWebCustom SteamWeb { get; private set; }
         public HandleSteamChat SteamchatHandler { get; private set; }
         public GenericInventory MyGenericInventory { get; private set; }
         public TradeOfferManager TradeOfferManager { get; private set; }
@@ -179,7 +180,7 @@ namespace ASteambot
             finishedTO = new List<string>();
             tradetokens = new Dictionary<ulong, string>();
             messageHandler = new HandleMessage();
-            SteamWeb = new SteamTrade.SteamWeb();
+            SteamWeb = new SteamWebCustom();
             steamprofiles = new List<SteamProfile>();
             cbManager = new CallbackManager(steamClient);
             SteamchatHandler = new HandleSteamChat(this);
@@ -189,14 +190,18 @@ namespace ASteambot
             MyGenericInventory = new GenericInventory(steamClient.SteamID, SteamWeb);
             OtherGenericInventory = new GenericInventory(null, SteamWeb);
 
-            steamClient.AddHandler(new GenericSteamMessageHandler());
-            //steamClient.AddHandler(GSMH);
+            SteamUnifiedMessages? steamUnifiedMessages = steamClient.GetHandler<SteamUnifiedMessages>();
+            GSMH = new GenericSteamMessageHandler(steamUnifiedMessages);
+
+            steamClient.AddHandler(GSMH);
 
             if (Program.IsLinux())
                 Thread.Sleep(3000);
 
             DB = new Database(Config.DatabaseServer, Config.DatabaseUser, Config.DatabasePassword, Config.DatabaseName, Config.DatabasePort);
-            DB.InitialiseDatabase();
+
+            if(DB.IsConnected)
+                DB.InitialiseDatabase();
 
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
             botThread.DoWork += BW_HandleSteamTradeOffer;
@@ -347,7 +352,6 @@ namespace ASteambot
             loginInfo.LoginFailCount = 0;
             steamUser = steamClient.GetHandler<SteamUser>();
             SteamFriends = steamClient.GetHandler<SteamFriends>();
-            GSMH = steamClient.GetHandler<GenericSteamMessageHandler>();
 
             SubscribeToEvents();
 
@@ -368,7 +372,7 @@ namespace ASteambot
             }
             else
             {
-                Program.PrintErrorMessage("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot or exported the auth files from your phone !");
+                Program.PrintErrorMessage("Failed to generate 2FA code. Make sure you have linked the authenticator via ASteambot or exported the auth files from your phone !");
                 Program.PrintErrorMessage("Or you can try to input a code now, leave empty to quit : ");
                 string code = Console.ReadLine();
                 if (code.Equals(String.Empty))
@@ -475,18 +479,25 @@ namespace ASteambot
             }
         }
 
-        private void UserWebLogOn()
+        private bool UserWebLogOn()
         {
-            do
-            {
-                WebLoggedIn = SteamWeb.Authenticate(myUniqueId, steamClient, myUserNonce);
+            //do
+            //{
+                //WebLoggedIn = SteamWeb.Authenticate(myUniqueId, steamClient, myUserNonce);
+                /*Task<bool> task = SteamWeb.DoLoginCustomRSA(loginInfo.Username, loginInfo.Password);
+                task.Wait();
+                WebLoggedIn = task.GetAwaiter().GetResult();*/
+                WebLoggedIn = SteamWeb.DoLoginCustomRSA(loginInfo.Username, loginInfo.Password, steamGuardAccount);
 
                 if (!WebLoggedIn)
                 {
-                    Console.WriteLine("Authentication failed, retrying in 2s...");
-                    Thread.Sleep(2000);
+                    Console.WriteLine("Authentication failed. Can't continue. Retry again later.");
+                    /*Thread.Sleep(2000);
+                    WebLoggedIn = SteamWeb.DoLoginCustomRSA(loginInfo.Username, loginInfo.Password, steamGuardAccount);*/
+                    return false;
                 }
-            } while (!WebLoggedIn);
+
+            //} while (!WebLoggedIn);
 
             Console.WriteLine("User Authenticated!");
 
@@ -498,6 +509,8 @@ namespace ASteambot
             SubscribeTradeOffer(TradeOfferManager);
 
             SpawnTradeOfferPollingThread();
+
+            return true;
         }
 
         public void Disconnect()
@@ -631,10 +644,18 @@ namespace ASteambot
                 {
                     string profileLink = "http://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key="+ Config.SteamAPIKey +"&steamid=" + steamClient.SteamID.ConvertToUInt64();
                     json = SteamWeb.Fetch(profileLink, "GET");
-                    string output = JObject.Parse(json)["response"]["player_level"].ToString();
-                    maxfriendCount = 250 + 5 * Int32.Parse(output);
+                    JObject parsedJson = JObject.Parse(json);
+                    if (parsedJson.Count > 0)
+                    {
+                        string output = parsedJson["response"]["player_level"].ToString();
+                        maxfriendCount = 250 + 5 * Int32.Parse(output);
+                    }
+                    else
+                    {
+                        maxfriendCount = 250;
+                    }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     Program.PrintErrorMessage("Error while reading the steam level of own profile.");
                     Program.PrintErrorMessage("JSON:\n" + json);
@@ -1085,7 +1106,7 @@ namespace ASteambot
             if (callback.Result == EResult.OK)
             {
                 myUserNonce = callback.Nonce;
-                UserWebLogOn();
+                LoggedIn = UserWebLogOn();
             }
             else
             {
@@ -1095,15 +1116,17 @@ namespace ASteambot
 
         private void LoginKey(SteamUser.LoginKeyCallback callback)
         {
-            myUniqueId = callback.UniqueID.ToString();
-            UserWebLogOn();
+            //myUniqueId = callback.UniqueID.ToString();
 
-            Console.WriteLine(Name + " logged in completly !");
+            LoggedIn = UserWebLogOn();
 
-            LoggedIn = true;
+            if (LoggedIn)
+            {
+                Console.WriteLine(Name + " logged in completly !");
 
-            if (!botThread.IsBusy)
-                botThread.RunWorkerAsync();
+                if (!botThread.IsBusy)
+                    botThread.RunWorkerAsync();
+            }
         }
 
         private void OnSteamNameChange(SteamFriends.PersonaChangeCallback callback)

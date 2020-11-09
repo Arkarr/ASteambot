@@ -8,10 +8,10 @@ namespace SteamTrade.TradeOffer
 {
     public class TradeOfferWebAPI
     {
-        private readonly SteamWeb steamWeb;
+        private readonly SteamWebCustom steamWeb;
         private readonly string apiKey;
 
-        public TradeOfferWebAPI(string apiKey, SteamWeb steamWeb)
+        public TradeOfferWebAPI(string apiKey, SteamWebCustom steamWeb)
         {
             this.steamWeb = steamWeb;
             this.apiKey = apiKey;

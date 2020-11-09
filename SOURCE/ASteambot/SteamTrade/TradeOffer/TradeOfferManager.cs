@@ -16,7 +16,7 @@ namespace SteamTrade.TradeOffer
 
         public DateTime LastTimeCheckedOffers { get; private set; }
 
-        public TradeOfferManager(string apiKey, SteamWeb steamWeb)
+        public TradeOfferManager(string apiKey, SteamWebCustom steamWeb)
         {
             if (apiKey == null)
                 throw new ArgumentNullException("apiKey");

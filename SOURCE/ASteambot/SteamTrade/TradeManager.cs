@@ -13,7 +13,7 @@ namespace SteamTrade
         private const int MaxTradeTimeDefault = 180;
         private const int TradePollingIntervalDefault = 800;
         private readonly string ApiKey;
-        private readonly SteamWeb SteamWeb;
+        private readonly SteamWebCustom SteamWeb;
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
         private DateTime lastTimeoutMessage;
@@ -29,7 +29,7 @@ namespace SteamTrade
         /// <param name="steamWeb">
         /// The SteamWeb instances for this bot
         /// </param>
-        public TradeManager (string apiKey, SteamWeb steamWeb)
+        public TradeManager (string apiKey, SteamWebCustom steamWeb)
         {
             if (apiKey == null)
                 throw new ArgumentNullException ("apiKey");

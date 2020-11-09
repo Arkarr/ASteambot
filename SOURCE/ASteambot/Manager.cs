@@ -11,6 +11,7 @@ using System.Web;
 using System.Globalization;
 using ASteambot.SteamMarketUtility;
 using System.IO;
+using SteamKit2.Internal;
 
 namespace ASteambot
 {
@@ -137,9 +138,9 @@ namespace ASteambot
                 case "reloadtranslation":
                     ReloadTranslation();
                     break;
-                case "test":
+                /*case "test":
                     SendGameInvite();
-                    break;
+                    break;*/
                 default:
                     Console.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
                 break;
@@ -340,11 +341,6 @@ namespace ASteambot
         public void ReloadTranslation()
         {
             Console.WriteLine("Does nothing now.");
-        }
-
-        public void SendGameInvite()
-        {
-            //SelectedBot.GSMH.SendGameInvite(SelectedBot.getSteamID(), new SteamID(76561198044361291), "test");
         }
 
         public void SelectFirstBot()

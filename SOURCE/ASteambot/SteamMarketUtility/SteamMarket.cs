@@ -37,7 +37,7 @@ namespace ASteambot.SteamMarketUtility
         private bool TF2OK;
         private bool CSGOOK;
         private bool DOTA2OK;
-        private SteamWeb fetcher;
+        private SteamWebCustom fetcher;
         private Thread TF2marketScanner;
         private Thread CSGOmarketScanner;
         private Thread DOTA2marketScanner;
@@ -46,7 +46,7 @@ namespace ASteambot.SteamMarketUtility
         private List<Item> steamMarketItemsCSGO;
         private List<Item> steamMarketItemsDOTA2;
 
-        public SteamMarket(string apikey, bool disabled, SteamWeb fetcher)
+        public SteamMarket(string apikey, bool disabled, SteamWebCustom fetcher)
         {
             stop = false;
             APIkey = apikey;
@@ -94,7 +94,7 @@ namespace ASteambot.SteamMarketUtility
                         TF2OK = ScanMarket(Games.TF2);
                         DateTime now = DateTime.Now;
                         TimeSpan difference = now.Subtract(dt);
-                        Console.WriteLine("market scan for tf2 in : " + difference.Hours.ToString("00") + "h:" + difference.Minutes.ToString("00") + "m:" + difference.Seconds.ToString("00") + "s");
+                        Console.WriteLine("market scan for tf2 in : " + difference.Minutes.ToString("00") + "m:" + difference.Seconds.ToString("00") + "s");
                     });
                 }
 
@@ -106,7 +106,7 @@ namespace ASteambot.SteamMarketUtility
                         CSGOOK = ScanMarket(Games.CSGO);
                         DateTime now = DateTime.Now;
                         TimeSpan difference = now.Subtract(dt);
-                        Console.WriteLine("market scan for CS:GO in : " + difference.Hours.ToString("00") + "h:" + difference.Minutes.ToString("00") + "m:" + difference.Seconds.ToString("00") + "s");
+                        Console.WriteLine("market scan for CS:GO in : " + difference.Minutes.ToString("00") + "m:" + difference.Seconds.ToString("00") + "s");
                     });
                 }
 
@@ -119,7 +119,7 @@ namespace ASteambot.SteamMarketUtility
                         DOTA2OK = ScanMarket(Games.Dota2);
                         DateTime now = DateTime.Now;
                         TimeSpan difference = now.Subtract(dt);
-                        Console.WriteLine("market scan for DOTA 2 in : " + difference.Hours.ToString("00") + "h:" + difference.Minutes.ToString("00") + "m:" + difference.Seconds.ToString("00") + "s");
+                        Console.WriteLine("market scan for DOTA 2 in : " + difference.Minutes.ToString("00") + "m:" + difference.Seconds.ToString("00") + "s");
                     });
                 }
 
@@ -184,7 +184,7 @@ namespace ASteambot.SteamMarketUtility
                 {
                     int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
                     string target = "http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game +  "&market_hash_name=" + itemName + "&version=2";
-                    string json = fetcher.Fetch(target, "GET", null, true, "", true, timeout);
+                    string json = fetcher.Fetch(target, "GET", null, true, "", true);
                     ro = JsonConvert.DeserializeObject<RootObject>(json);
 
                     if (ro == null)
@@ -260,7 +260,7 @@ namespace ASteambot.SteamMarketUtility
                 {
                     int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
                     string target = "http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game + "&version=2";
-                    string json = fetcher.Fetch(target, "GET", null, true, "", true, timeout);
+                    string json = fetcher.Fetch(target, "GET", null, true, "", true);
                     ro = JsonConvert.DeserializeObject<RootObject>(json);
 
                     if (ro == null)

@@ -18,9 +18,11 @@ namespace SteamTrade
     /// </summary>
     public class GenericInventory : IASteambotInventory
     {
-        private readonly SteamWeb SteamWeb;
-        
-        public GenericInventory(SteamID steamID, SteamWeb steamWeb)
+        private readonly SteamWebCustom SteamWeb;
+        SteamWebCustom test = new SteamWebCustom();
+
+
+        public GenericInventory(SteamID steamID, SteamWebCustom steamWeb)
         {
             SteamWeb = steamWeb;
 

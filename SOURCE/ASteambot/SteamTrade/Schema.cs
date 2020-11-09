@@ -64,7 +64,7 @@ namespace SteamTrade
                 if(schemaResult.result != null)
                     tmpUrl = url + "&start=" + schemaResult.result.Next;
 
-                string result = new SteamWeb().Fetch(tmpUrl, "GET");
+                string result = new SteamWebCustom().Fetch(tmpUrl, "GET");
 
                 if (schemaResult.result == null || schemaResult.result.Items == null)
                 {
@@ -90,7 +90,7 @@ namespace SteamTrade
             if (schemaLang != null)
                 itemOriginUrl += "&format=json&language=" + schemaLang;
 
-            string resp = new SteamWeb().Fetch(itemOriginUrl, "GET");
+            string resp = new SteamWebCustom().Fetch(itemOriginUrl, "GET");
 
             var itemOriginResult = JsonConvert.DeserializeObject<SchemaResult>(resp);
 

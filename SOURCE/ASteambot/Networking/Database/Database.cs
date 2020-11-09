@@ -38,7 +38,10 @@ namespace ASteambot.Networking
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Connection failed ! (" + ex + ")");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Connection to database failed ! (" + ex.Message + ")");
+                Console.WriteLine("Some ASteambot features (such as trade memory) won't work properly. It's highly recommended you fix the problem.");
+                Console.ForegroundColor = ConsoleColor.White;
                 IsConnected = false;
             }
         }

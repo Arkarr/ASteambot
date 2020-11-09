@@ -1,4 +1,5 @@
 ﻿using SteamKit2;
+using SteamTrade;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,11 +13,11 @@ namespace ASteambot
         
         public Infos Informations;
         
-        private SteamTrade.SteamWeb steamWeb;
+        private SteamWebCustom steamWeb;
         private SteamID steamID;
         private Infos backup;
 
-        public SteamProfile(SteamTrade.SteamWeb steamWeb, SteamID steamID)
+        public SteamProfile(SteamWebCustom steamWeb, SteamID steamID)
         {
             this.steamWeb = steamWeb;
             this.steamID = steamID;
@@ -99,7 +100,7 @@ namespace ASteambot
             public MostPlayedGames MostPlayedGames { get; set; }
         }
 
-        private Infos LoadSteamProfile(SteamTrade.SteamWeb steamWeb, SteamID steamID)
+        private Infos LoadSteamProfile(SteamWebCustom steamWeb, SteamID steamID)
         {
             if (LastTimeRefreshed == null || (DateTime.Now - LastTimeRefreshed).TotalMinutes > 5)
             {

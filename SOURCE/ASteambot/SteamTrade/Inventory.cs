@@ -15,7 +15,7 @@ namespace SteamTrade
         /// <param name='steamId'>Steam identifier.</param>
         /// <param name='apiKey'>The needed Steam API key.</param>
         /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
-        public static Inventory FetchInventory(ulong steamId, string apiKey, SteamWeb steamWeb)
+        public static Inventory FetchInventory(ulong steamId, string apiKey, SteamWebCustom steamWeb)
         {
             int attempts = 1;
             InventoryResponse result = null;
@@ -35,7 +35,7 @@ namespace SteamTrade
         /// <returns>The inventory for the given user. </returns>
         /// <param name='steamid'>The Steam identifier. </param>
         /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
-        public static dynamic GetInventory(SteamID steamid, SteamWeb steamWeb)
+        public static dynamic GetInventory(SteamID steamid, SteamWebCustom steamWeb)
         {
             string url = String.Format (
                 "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
