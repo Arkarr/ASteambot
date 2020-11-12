@@ -483,11 +483,11 @@ namespace ASteambot
         {
             //do
             //{
-                //WebLoggedIn = SteamWeb.Authenticate(myUniqueId, steamClient, myUserNonce);
+                WebLoggedIn = SteamWeb.Authenticate(myUniqueId, steamClient, myUserNonce);
                 /*Task<bool> task = SteamWeb.DoLoginCustomRSA(loginInfo.Username, loginInfo.Password);
                 task.Wait();
                 WebLoggedIn = task.GetAwaiter().GetResult();*/
-                WebLoggedIn = SteamWeb.DoLoginCustomRSA(loginInfo.Username, loginInfo.Password, steamGuardAccount);
+                //WebLoggedIn = SteamWeb.DoLoginCustomRSA(loginInfo.Username, loginInfo.Password, steamGuardAccount);
 
                 if (!WebLoggedIn)
                 {
@@ -1116,7 +1116,7 @@ namespace ASteambot
 
         private void LoginKey(SteamUser.LoginKeyCallback callback)
         {
-            //myUniqueId = callback.UniqueID.ToString();
+            myUniqueId = callback.UniqueID.ToString();
 
             LoggedIn = UserWebLogOn();
 

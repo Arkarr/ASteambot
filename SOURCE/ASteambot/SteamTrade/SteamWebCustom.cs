@@ -397,8 +397,12 @@ namespace SteamTrade
                 data.Add("captchagid", captcha ? capGid : "");
                 data.Add("captcha_text", captcha ? capText : "");
                 // Captcha end.
+
                 // Added Header for two factor code.
-                data.Add("twofactorcode", steamguardaccount.GenerateSteamGuardCode());
+                if(steamguardaccount != null)
+                    data.Add("twofactorcode", steamguardaccount.GenerateSteamGuardCode());
+                else
+                    data.Add("twofactorcode", "");
 
                 // Added Header for remember login. It can also set to true.
                 data.Add("remember_login", "false");

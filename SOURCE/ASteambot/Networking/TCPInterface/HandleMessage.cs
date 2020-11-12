@@ -106,7 +106,7 @@ namespace ASteambot.Networking
 
         private void SendChatGroupMsg(Bot bot, GameServerRequest gsr)
         {
-            string[] infos = gsr.Arguments.Split('/');
+            string[] infos = gsr.Arguments.Split('/', 3);
             string chatroomName = infos[0];
             string subchatroomName = infos[1];
             string msg = infos[2];
