@@ -59,7 +59,7 @@ namespace SteamTrade
         /// <summary>
         /// This method is using the Request method to return the full http stream from a web request as string.
         /// </summary>
-        /// <param name="url">URL of the http request.</param>
+        /// <param name="url">URL of the HTTP request.</param>
         /// <param name="method">Gets the HTTP data transfer method (such as GET, POST, or HEAD) used by the client.</param>
         /// <param name="data">A NameValueCollection including Headers added to the request.</param>
         /// <param name="ajax">A bool to define if the http request is an ajax request.</param>
@@ -141,7 +141,25 @@ namespace SteamTrade
             // If the request is a GET request return now the response. If not go on. Because then we need to apply data to the request.
             if (isGetMethod || string.IsNullOrEmpty(dataString))
             {
-                return request.GetResponse() as HttpWebResponse;
+                // Get the response and return it.
+                try
+                {
+                    HttpWebResponse rvalue = request.GetResponse() as HttpWebResponse;
+                    return rvalue;
+                }
+                catch (WebException ex)
+                {
+                    //this is thrown if response code is not 200
+                    if (fetchError)
+                    {
+                        var resp = ex.Response as HttpWebResponse;
+                        if (resp != null)
+                        {
+                            return resp;
+                        }
+                    }
+                    throw;
+                }
             }
 
             // Write the data to the body for POST and other methods.
@@ -156,7 +174,8 @@ namespace SteamTrade
             // Get the response and return it.
             try
             {
-                return request.GetResponse() as HttpWebResponse;
+                HttpWebResponse rvalue = request.GetResponse() as HttpWebResponse;
+                return rvalue;
             }
             catch (WebException ex)
             {

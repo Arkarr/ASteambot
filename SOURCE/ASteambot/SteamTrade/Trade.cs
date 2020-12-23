@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SteamKit2;
 using SteamTrade.Exceptions;
 using SteamTrade.TradeWebAPI;
@@ -15,8 +17,6 @@ namespace SteamTrade
     /// </summary>
     public partial class Trade
     {
-        #region Static Public data
-
         public static Schema CurrentSchema = null;
 
         public enum TradeStatusType
@@ -30,31 +30,6 @@ namespace SteamTrade
             PendingConfirmation = 6
         }
 
-        public string GetTradeStatusErrorString(TradeStatusType tradeStatusType)
-        {
-            switch(tradeStatusType)
-            {
-                case TradeStatusType.OnGoing:
-                    return "is still going on";
-                case TradeStatusType.CompletedSuccessfully:
-                    return "completed successfully";
-                case TradeStatusType.Empty:
-                    return "completed empty - no items were exchanged";
-                case TradeStatusType.TradeCancelled:
-                    return "was cancelled " + (tradeCancelledByBot ? "by bot" : "by other user");
-                case TradeStatusType.SessionExpired:
-                    return String.Format("expired because {0} timed out", (otherUserTimingOut ? "other user" : "bot"));
-                case TradeStatusType.TradeFailed:
-                    return "failed unexpectedly";
-                case TradeStatusType.PendingConfirmation:
-                    return "completed - pending confirmation";
-                default:
-                    return "STATUS IS UNKNOWN - THIS SHOULD NEVER HAPPEN!";
-            }
-        }
-
-        #endregion
-
         private const int WEB_REQUEST_MAX_RETRIES = 3;
         private const int WEB_REQUEST_TIME_BETWEEN_RETRIES_MS = 600;
 
@@ -65,7 +40,7 @@ namespace SteamTrade
         private readonly SteamID mySteamId;
 
         private readonly Dictionary<int, TradeUserAssets> myOfferedItemsLocalCopy;
-        private readonly TradeSession session;
+        private readonly TradeSession_V2 session;
         private readonly Task<Inventory> myInventoryTask;
         private readonly Task<Inventory> otherInventoryTask;
         private List<TradeUserAssets> myOfferedItems;
@@ -74,16 +49,19 @@ namespace SteamTrade
         private bool tradeCancelledByBot;
         private int numUnknownStatusUpdates;
         private long tradeOfferID; //Used for email confirmation
+        private int logPos;
 
-        internal Trade(SteamID me, SteamID other, SteamWebCustom steamWeb, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
+        internal Trade(string sessionID, string token, string tokenSecure, SteamID me, SteamID other, SteamWebCustom steamWeb, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
             TradeStarted = false;
             OtherIsReady = false;
             MeIsReady = false;
             mySteamId = me;
             OtherSID = other;
+            logPos = 0;
 
-            session = new TradeSession(other, steamWeb);
+            //session = new TradeSession_V3(sessionID, token, tokenSecure, other.ConvertToUInt64(), steamWeb);
+            session = new TradeSession_V2(sessionID, token, tokenSecure, other);
 
             this.eventList = new List<TradeEvent>();
 
@@ -489,7 +467,7 @@ namespace SteamTrade
         /// </summary>
         public bool SendMessage(string msg)
         {
-            return RetryWebRequest(() => session.SendMessageWebCmd(msg));
+            return RetryWebRequest(() => session.SendMessageWebCmd(msg, logPos));
         }
 
         /// <summary>
@@ -576,11 +554,16 @@ namespace SteamTrade
                 // is fully initialized we assume that it is when we start polling.
                 if(OnAfterInit != null)
                     OnAfterInit();
+
+                Thread.Sleep(5 * 1000);
             }
 
-            TradeStatus status = RetryWebRequest(session.GetStatus);
+            TradeStatus status = session.GetStatus(logPos);
 
-            if(status == null)
+            Console.WriteLine("Trade status success : " + status.success);
+            Console.WriteLine("Trade status status : " + status.trade_status);
+
+            if (status == null)
                 return false;
 
             TradeStatusType tradeStatusType = (TradeStatusType) status.trade_status;
@@ -696,9 +679,7 @@ namespace SteamTrade
             }
 
             if(status.logpos != 0)
-            {
-                session.LogPos = status.logpos;
-            }
+                logPos = status.logpos;
 
             return otherUserDidSomething;
         }

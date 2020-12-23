@@ -1,5 +1,8 @@
+using ASteambot.CustomSteamMessageHandler;
 using ASteambot.SteamMarketUtility;
+using ASteambot.SteamTrade;
 using SteamKit2;
+using SteamKit2.GC;
 using SteamKit2.Internal;
 using SteamTrade;
 using SteamTrade.TradeOffer;
@@ -78,6 +81,9 @@ namespace ASteambot.Networking
                         break;
                     case NetworkCode.ASteambotCode.SendChatGroupMsg:
                         SendChatGroupMsg(bot, gsr);
+                        break;
+                    case NetworkCode.ASteambotCode.CreateQuickTrade:
+                        CreateQuickTradeOffer(bot, gsr);
                         break;
                 }
                 /*if (!bot.Friends.Contains(steamID))
@@ -251,9 +257,6 @@ namespace ASteambot.Networking
 
         private void ScanInventory(Bot bot, GameServerRequest gsr, bool withImg)
         {
-            if (bot.ArkarrSteamMarket == null)
-                bot.ArkarrSteamMarket = new SteamMarket(bot.Config.ArkarrAPIKey, bot.Config.DisableMarketScan, bot.SteamWeb);
-            
             SteamID steamID = GetSteamIDFromString(gsr.Arguments);
 
             if (!steamID.IsValid)
@@ -317,7 +320,7 @@ namespace ASteambot.Networking
                         {
                             ItemDescription description = (ItemDescription)bot.OtherGenericInventory.getDescription(item.assetid);
 
-                            SteamMarketUtility.Item i = bot.ArkarrSteamMarket.GetItemByName(description.market_hash_name, item.appid);
+                            SteamMarketUtility.Item i = SteamMarket.GetItemByName(description.market_hash_name, item.appid);
                             if (description.tradable)
                             {
                                 if (i != null)// && i.Value != 0)
@@ -342,14 +345,23 @@ namespace ASteambot.Networking
             return items;
         }
 
+        private void CreateQuickTradeOffer(Bot bot, GameServerRequest gsr)
+        {
+            string[] steamIDGameComment = gsr.Arguments.Split('/');
+            SteamID steamid = GetSteamIDFromString(steamIDGameComment[0]);
+            uint gameID = uint.Parse(steamIDGameComment[1]);
+
+            bot.CreateQuickTrade(steamid, gameID, gsr.ServerID, gsr.ModuleID, steamIDGameComment[2]);
+        }
+
         private void CreateTradeOffer(Bot bot, GameServerRequest gsr)
         {
             float tradeValue = -1;
             string message = gsr.Arguments;
             string[] assetIDs = null;
             string[] myAssetIDs = null;
-            string[] steamIDitems = message.Split('/');
-            SteamID steamid = GetSteamIDFromString(steamIDitems[0]);
+            string[] steamIDitemsComment = message.Split('/');
+            SteamID steamid = GetSteamIDFromString(steamIDitemsComment[0]);
 
             if (!steamid.IsValid)
                 return;
@@ -358,9 +370,9 @@ namespace ASteambot.Networking
 
             GameServer gameServer = bot.Manager.GetServerByID(gsr.ServerID);
 
-            if (steamIDitems[1].Length > 1 && steamIDitems[1] != "NULL")
+            if (steamIDitemsComment[1].Length > 1 && steamIDitemsComment[1] != "NULL")
             {
-                assetIDs = steamIDitems[1].Split(',');
+                assetIDs = steamIDitemsComment[1].Split(',');
 
                 List<long> contextId = new List<long>();
                 contextId.Add(2);
@@ -397,9 +409,9 @@ namespace ASteambot.Networking
                 }
             }
 
-            if(steamIDitems[2].Length > 1 && steamIDitems[2] != "NULL")
+            if(steamIDitemsComment[2].Length > 1 && steamIDitemsComment[2] != "NULL")
             {
-                myAssetIDs = steamIDitems[2].Split(',');
+                myAssetIDs = steamIDitemsComment[2].Split(',');
 
                 List<long> contextId = new List<long>();
                 contextId.Add(2);
@@ -438,8 +450,8 @@ namespace ASteambot.Networking
                 }
             }
             
-            if (steamIDitems[3] != "NULL")
-                tradeValue = float.Parse(steamIDitems[3], CultureInfo.InvariantCulture);
+            if (steamIDitemsComment[3].ToLower() != "null")
+                tradeValue = float.Parse(steamIDitemsComment[3], CultureInfo.InvariantCulture);
 
             string offerId = "";
 
@@ -454,8 +466,14 @@ namespace ASteambot.Networking
 
             if (offerId != "")
             {
-                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64() + "/" + offerId);
-                bot.TradeoffersGS.Add(offerId, gsr.ServerID + "|" + gsr.ModuleID + "|" + tradeValue);
+                string args;
+                if (steamIDitemsComment.Length <= 4)
+                    args = "null";
+                else
+                    args = steamIDitemsComment[4];
+
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64() + "/" + offerId + "/" + tradeValue + "/" + args);
+                bot.TradeoffersGS.Add(offerId, gsr.ServerID + "|" + gsr.ModuleID + "|" + tradeValue + "|" + args);
                 bot.TradeOfferValue.Add(offerId, tradeValue);
 
                 bot.AcceptMobileTradeConfirmation(offerId);
@@ -467,7 +485,7 @@ namespace ASteambot.Networking
                 if (token != null)
                     bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.TradeToken, steamid.ConvertToUInt64().ToString() + "/" + "trade_token_invalid");
 
-                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64() + "/" + "-1");
+                bot.Manager.Send(gsr.ServerID, gsr.ModuleID, NetworkCode.ASteambotCode.CreateTradeOffer, steamid.ConvertToUInt64() + "/" + "-1" + "/" + "0" + "/" + "error_during_creation_of_trade_offer");
             }
         }
 

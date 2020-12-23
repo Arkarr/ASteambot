@@ -19,8 +19,6 @@ namespace SteamTrade
     public class GenericInventory : IASteambotInventory
     {
         private readonly SteamWebCustom SteamWeb;
-        SteamWebCustom test = new SteamWebCustom();
-
 
         public GenericInventory(SteamID steamID, SteamWebCustom steamWeb)
         {

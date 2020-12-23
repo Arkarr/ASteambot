@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using ASteambot;
 using SteamKit2;
 using SteamTrade.Exceptions;
 
@@ -9,7 +10,7 @@ namespace SteamTrade
 {
     public class TradeManager
     {
-        private const int MaxGapTimeDefault = 15;
+        private const int MaxGapTimeDefault = 60;
         private const int MaxTradeTimeDefault = 180;
         private const int TradePollingIntervalDefault = 800;
         private readonly string ApiKey;
@@ -173,12 +174,15 @@ namespace SteamTrade
         /// <remarks>
         /// If the needed inventories are <c>null</c> then they will be fetched.
         /// </remarks>
-        public Trade CreateTrade (SteamID  me, SteamID other)
+        public Trade CreateTrade (string sessionID, string token, string tokenSecure, SteamID  me, SteamID other)
         {
             if (otherInventoryTask == null || myInventoryTask == null)
                 InitializeTrade (me, other);
 
-            var t = new Trade (me, other, SteamWeb, myInventoryTask, otherInventoryTask);
+            otherInventoryTask.Wait();
+            myInventoryTask.Wait();
+
+            Trade t = new Trade (sessionID, token, tokenSecure, me, other, SteamWeb, myInventoryTask, otherInventoryTask);
 
             t.OnClose += delegate
             {
@@ -195,7 +199,7 @@ namespace SteamTrade
         /// Also, nulls out the inventory objects so they have to be fetched
         /// again if a new trade is started.
         /// </remarks>            
-        public void StopTrade ()
+        public void StopTrade()
         {
             // TODO: something to check that trade was the Trade returned from CreateTrade
             otherInventoryTask = null;
@@ -254,9 +258,6 @@ namespace SteamTrade
             {
                 IsTradeThreadRunning = true;
 
-                //DebugPrint ("Trade thread starting.");
-                
-                // main thread loop for polling
                 try
                 {
                     while(IsTradeThreadRunning)
@@ -277,18 +278,14 @@ namespace SteamTrade
                 }
                 catch(Exception ex)
                 {
-                    // TODO: find a new way to do this w/o the trade events
-                    //if (OnError != null)
-                    //    OnError("Error Polling Trade: " + e);
-
-                    // ok then we should stop polling...
                     IsTradeThreadRunning = false;
-                    DebugPrint("[TRADEMANAGER] general error caught: " + ex);
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("[TRADEMANAGER] general error caught: " + ex);
+                    Console.ForegroundColor = ConsoleColor.White;
                     trade.FireOnErrorEvent("Unknown error occurred: " + ex.ToString());
                 }
                 finally
                 {
-                    DebugPrint("Trade thread shutting down.");
                     try //Yikes, that's a lot of nested 'try's.  Is there some way to clean this up?
                     {
                         if(trade.IsTradeAwaitingConfirmation)
@@ -308,7 +305,9 @@ namespace SteamTrade
                         }
                         catch (Exception e)
                         {
-                            DebugError("Error occurred during trade.OnClose()! " + e);
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Error occurred during trade.OnClose()! " + e);
+                            Console.ForegroundColor = ConsoleColor.White;
                             throw;
                         }
                     }
@@ -329,8 +328,6 @@ namespace SteamTrade
             DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaxActionGapSec);
             int untilActionTimeout = (int)Math.Round ((actionTimeout - now).TotalSeconds);
 
-            DebugPrint (String.Format ("{0} {1}", actionTimeout, untilActionTimeout));
-
             DateTime tradeTimeout = tradeStartTime.AddSeconds (MaxTradeTimeSec);
             int untilTradeTimeout = (int)Math.Round ((tradeTimeout - now).TotalSeconds);
 
@@ -338,8 +335,6 @@ namespace SteamTrade
 
             if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
             {
-                DebugPrint ("timed out...");
-
                 if (OnTimeout != null)
                 {
                     OnTimeout (this, null);
@@ -359,20 +354,6 @@ namespace SteamTrade
                 lastTimeoutMessage = now;
             }
             return false;
-        }
-        
-        private static void DebugPrint (string output)
-        {
-            // I don't really want to add the Logger as a dependecy to TradeManager so I 
-            // print using the console directly. To enable this for debugging put this:
-            // #define DEBUG_TRADE_MANAGER
-            // at the first line of this file.
-            System.Console.WriteLine (output);
-        }
-
-        private static void DebugError(string output)
-        {
-            System.Console.WriteLine(output);
         }
     }
 }

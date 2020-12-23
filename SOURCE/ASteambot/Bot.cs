@@ -15,10 +15,13 @@ using ASteambot.SteamMarketUtility;
 using Newtonsoft.Json.Linq;
 using SteamKit2;
 using ASteambot.CustomSteamMessageHandler;
-using SteamTrade;
 using SteamTrade.TradeOffer;
+using SteamTrade;
 using static SteamTrade.GenericInventory;
+using System.Text;
 using System.Threading.Tasks;
+using ASteambot.SteamTrade;
+using SteamKit2.GC;
 
 namespace ASteambot
 {
@@ -35,7 +38,6 @@ namespace ASteambot
         public SteamUser steamUser;
         private TCPInterface socket;
         private List<string> finishedTO;
-        private SteamClient steamClient;
         private Thread tradeOfferThread;
         private CallbackManager cbManager;
         private BackgroundWorker botThread;
@@ -44,6 +46,8 @@ namespace ASteambot
         private Dictionary<ulong, string> tradetokens;
         private SteamGuardAccount steamGuardAccount;
 
+        public SteamGameCoordinator SteamGameCoordinator { get; private set; }
+        public SteamClient SteamClient { get; private set; }
         public string Name { get; private set; }
         public SteamProfile.Infos SteamProfileInfo { get; private set; }
         public bool Running { get; private set; }
@@ -52,7 +56,6 @@ namespace ASteambot
         public bool WebLoggedIn { get; private set; }
         public Manager Manager { get; private set; }
         public List<SteamID> Friends { get; private set; }
-        public SteamMarket ArkarrSteamMarket { get; set; }
         public SteamFriends SteamFriends { get; private set; }
         public GenericSteamMessageHandler GSMH { get; private set; }
         public SteamWebCustom SteamWeb { get; private set; }
@@ -66,6 +69,7 @@ namespace ASteambot
         public int SteamInventoryItemCount { get; private set; }
         public Translation.Translation TranslationAdmins { get; private set; }
         public Translation.Translation TranslationPublic { get; private set; }
+        public TradeManager TradeManager { get; private set; }
 
         private int steamInventoryTF2Items;
         public int SteamInventoryTF2Items
@@ -170,35 +174,37 @@ namespace ASteambot
             }
         }
 
-        public Bot(Manager manager, LoginInfo loginInfo, Config Config, TCPInterface socket)
+        public Bot(Manager manager, LoginInfo loginInfo, Config config, TCPInterface socket)
         {
             this.socket = socket;
-            this.Config = Config;
+            this.Config = config;
             this.loginInfo = loginInfo;
             Manager = manager;
-            steamClient = new SteamClient();
+            SteamClient = new SteamClient();
+            SteamGameCoordinator = SteamClient.GetHandler<SteamGameCoordinator>();
             finishedTO = new List<string>();
             tradetokens = new Dictionary<ulong, string>();
             messageHandler = new HandleMessage();
             SteamWeb = new SteamWebCustom();
             steamprofiles = new List<SteamProfile>();
-            cbManager = new CallbackManager(steamClient);
+            cbManager = new CallbackManager(SteamClient);
             SteamchatHandler = new HandleSteamChat(this);
             ChatListener = new Dictionary<SteamID, int>();
             TradeoffersGS = new Dictionary<string, string>();
             TradeOfferValue = new Dictionary<string, double>();
-            MyGenericInventory = new GenericInventory(steamClient.SteamID, SteamWeb);
+            MyGenericInventory = new GenericInventory(SteamClient.SteamID, SteamWeb);
             OtherGenericInventory = new GenericInventory(null, SteamWeb);
+            TradeManager = new TradeManager(config.SteamAPIKey, SteamWeb);
 
-            SteamUnifiedMessages? steamUnifiedMessages = steamClient.GetHandler<SteamUnifiedMessages>();
-            GSMH = new GenericSteamMessageHandler(steamUnifiedMessages);
+            SteamUnifiedMessages? steamUnifiedMessages = SteamClient.GetHandler<SteamUnifiedMessages>();
+            GSMH = new GenericSteamMessageHandler(steamUnifiedMessages, this);
 
-            steamClient.AddHandler(GSMH);
+            SteamClient.AddHandler(GSMH);
 
             if (Program.IsLinux())
                 Thread.Sleep(3000);
 
-            DB = new Database(Config.DatabaseServer, Config.DatabaseUser, Config.DatabasePassword, Config.DatabaseName, Config.DatabasePort);
+            DB = new Database(config.DatabaseServer, config.DatabaseUser, config.DatabasePassword, config.DatabaseName, config.DatabasePort);
 
             if(DB.IsConnected)
                 DB.InitialiseDatabase();
@@ -294,7 +300,7 @@ namespace ASteambot
             List<long> contextId = new List<long>();
             contextId.Add(2);
 
-            MyGenericInventory.load((int)Games.TF2, contextId, steamClient.SteamID);
+            MyGenericInventory.load((int)Games.TF2, contextId, SteamClient.SteamID);
 
             SteamID partenar = new SteamID(otherSteamID);
             TradeOffer to = TradeOfferManager.NewOffer(partenar);
@@ -309,6 +315,11 @@ namespace ASteambot
             Console.WriteLine("Offer ID : " + offerId);
 
             AcceptMobileTradeConfirmation(offerId);
+        }
+
+        public string GetUniqueID()
+        {
+            return myUniqueId;
         }
 
         public void AcceptMobileTradeConfirmation(string offerId)
@@ -350,12 +361,12 @@ namespace ASteambot
         {
             Running = false;
             loginInfo.LoginFailCount = 0;
-            steamUser = steamClient.GetHandler<SteamUser>();
-            SteamFriends = steamClient.GetHandler<SteamFriends>();
+            steamUser = SteamClient.GetHandler<SteamUser>();
+            SteamFriends = SteamClient.GetHandler<SteamFriends>();
 
             SubscribeToEvents();
 
-            steamClient.Connect();
+            SteamClient.Connect();
         }
 
         private string GetMobileAuthCode()
@@ -387,6 +398,50 @@ namespace ASteambot
                     return code;
                 }
             }
+        }
+
+        public void CreateQuickTrade(SteamID steamid, uint gameID, int serverID, int moduleID, string args)
+        {
+            PlayGames(gameID).ConfigureAwait(false);
+
+            Trade CurrentTrade = TradeManager.CreateTrade(GetUniqueID(), SteamWeb.Token, SteamWeb.TokenSecure, steamUser.SteamID, steamid);
+            TradeHandler th = new TradeHandler(CurrentTrade, this, steamid, SteamWeb, serverID, moduleID, "", (int)gameID);
+            SubscribeTrade(CurrentTrade, th);
+            TradeManager.StartTradeThread(CurrentTrade);
+
+            var tradeReq = new ClientGCMsg<MsgGCTrading_InitiateTradeRequest>();
+            tradeReq.SourceJobID = SteamClient.GetNextJobID();
+            tradeReq.Body.OtherClient = steamid;
+
+            SteamGameCoordinator.Send(tradeReq, gameID);
+        }
+
+        private void SubscribeTrade(Trade trade, TradeHandler handler)
+        {
+            trade.OnAwaitingConfirmation += handler.OnTradeAwaitingConfirmation;
+            trade.OnClose += handler.OnTradeClose;
+            trade.OnError += handler.OnTradeError;
+            trade.OnStatusError += handler.OnStatusError;
+            trade.OnAfterInit += handler.OnTradeInit;
+            trade.OnUserAddItem += handler.OnTradeAddItem;
+            trade.OnUserRemoveItem += handler.OnTradeRemoveItem;
+            trade.OnMessage += handler.OnTradeMessageHandler;
+            trade.OnUserSetReady += handler.OnTradeReadyHandler;
+            trade.OnUserAccept += handler.OnTradeAcceptHandler;
+        }
+
+        public void UnsubscribeTrade(TradeHandler handler, Trade trade)
+        {
+            trade.OnAwaitingConfirmation -= handler.OnTradeAwaitingConfirmation;
+            trade.OnClose -= handler.OnTradeClose;
+            trade.OnError -= handler.OnTradeError;
+            trade.OnStatusError -= handler.OnStatusError;
+            trade.OnAfterInit -= handler.OnTradeInit;
+            trade.OnUserAddItem -= handler.OnTradeAddItem;
+            trade.OnUserRemoveItem -= handler.OnTradeRemoveItem;
+            trade.OnMessage -= handler.OnTradeMessageHandler;
+            trade.OnUserSetReady -= handler.OnTradeReadyHandler;
+            trade.OnUserAccept -= handler.OnTradeAcceptHandler;
         }
 
         public void DeactivateAuthenticator()
@@ -421,7 +476,7 @@ namespace ASteambot
                     loginResult = login.DoLogin();
                 }
             }
-            if (loginResult == SteamAuth.LoginResult.LoginOkay)
+            if (loginResult == LoginResult.LoginOkay)
             {
                 Console.WriteLine("Linking mobile authenticator...");
                 var authLinker = new AuthenticatorLinker(login.Session);
@@ -436,7 +491,7 @@ namespace ASteambot
                         addAuthResult = authLinker.AddAuthenticator();
                     }
                 }
-                if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.AwaitingFinalization)
+                if (addAuthResult == AuthenticatorLinker.LinkResult.AwaitingFinalization)
                 {
                     steamGuardAccount = authLinker.LinkedAccount;
                     try
@@ -483,7 +538,8 @@ namespace ASteambot
         {
             //do
             //{
-                WebLoggedIn = SteamWeb.Authenticate(myUniqueId, steamClient, myUserNonce);
+                //WebLoggedIn = SteamWeb.DoLogin(Config.SteamUsername, Config.SteamPassword);
+                WebLoggedIn = SteamWeb.Authenticate(myUniqueId, SteamClient, myUserNonce);
                 /*Task<bool> task = SteamWeb.DoLoginCustomRSA(loginInfo.Username, loginInfo.Password);
                 task.Wait();
                 WebLoggedIn = task.GetAwaiter().GetResult();*/
@@ -501,9 +557,7 @@ namespace ASteambot
 
             Console.WriteLine("User Authenticated!");
 
-            SteamProfileInfo = GetSteamProfileInfo(steamClient.SteamID);
-
-            ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan, SteamWeb);
+            SteamProfileInfo = GetSteamProfileInfo(SteamClient.SteamID);
 
             TradeOfferManager = new TradeOfferManager(loginInfo.API, SteamWeb);
             SubscribeTradeOffer(TradeOfferManager);
@@ -517,15 +571,13 @@ namespace ASteambot
         {
             Running = false;
             steamUser.LogOff();
-            steamClient.Disconnect();
+            SteamClient.Disconnect();
 
             CancelTradeOfferPollingThread();
 
-            ArkarrSteamMarket.Cancel();
-
             Console.Write("Stopping bot {0} ...", Name);
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(" [PLEASE WAIT]");
+            Console.WriteLine("[PLEASE WAIT]");
             Console.ForegroundColor = ConsoleColor.White;
         }
 
@@ -642,17 +694,14 @@ namespace ASteambot
                 string json = "";
                 try
                 {
-                    string profileLink = "http://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key="+ Config.SteamAPIKey +"&steamid=" + steamClient.SteamID.ConvertToUInt64();
+                    string profileLink = "http://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key="+ Config.SteamAPIKey +"&steamid=" + SteamClient.SteamID.ConvertToUInt64();
                     json = SteamWeb.Fetch(profileLink, "GET");
                     JObject parsedJson = JObject.Parse(json);
-                    if (parsedJson.Count > 0)
+
+                    if (parsedJson.Count > 0 && parsedJson.HasValues)
                     {
-                        string output = parsedJson["response"]["player_level"].ToString();
-                        maxfriendCount = 250 + 5 * Int32.Parse(output);
-                    }
-                    else
-                    {
-                        maxfriendCount = 250;
+                        JToken value = parsedJson["response"]["player_level"];
+                        maxfriendCount = (value != null) ? (Int32.Parse(value.ToString())*5) + 250 : 250;
                     }
                 }
                 catch (Exception ex)
@@ -686,7 +735,7 @@ namespace ASteambot
             AcceptInvite.Body.GroupID = group.ConvertToUInt64();
             AcceptInvite.Body.AcceptInvite = true;
 
-            steamClient.Send(AcceptInvite);
+            SteamClient.Send(AcceptInvite);
         }
 
         private void DeclineGroupInvite(SteamID group)
@@ -696,7 +745,7 @@ namespace ASteambot
             DeclineInvite.Body.GroupID = group.ConvertToUInt64();
             DeclineInvite.Body.AcceptInvite = false;
 
-            steamClient.Send(DeclineInvite);
+            SteamClient.Send(DeclineInvite);
         }
 
         public void InviteUserToGroup(SteamID user, SteamID groupId)
@@ -707,7 +756,7 @@ namespace ASteambot
             InviteUser.Body.Invitee = user.ConvertToUInt64();
             InviteUser.Body.UnknownInfo = true;
 
-            this.steamClient.Send(InviteUser);
+            this.SteamClient.Send(InviteUser);
         }
 
         //*******************//
@@ -729,7 +778,7 @@ namespace ASteambot
             {
                 GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
 
-                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name, item.appid);
+                ASteambot.SteamMarketUtility.Item i = SteamMarket.GetItemByName(description.market_hash_name, item.appid);
                 if (description.tradable)
                 {
                     if (i != null)// && i.Value != 0)
@@ -745,9 +794,9 @@ namespace ASteambot
             MyGenericInventory.load((int)Games.CSGO, contextID, steamUser.SteamID);
             foreach (GenericInventory.Item item in MyGenericInventory.items.Values)
             {
-                GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
+                ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
 
-                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name, item.appid);
+                ASteambot.SteamMarketUtility.Item i = SteamMarket.GetItemByName(description.market_hash_name, item.appid);
                 if (description.tradable)
                 {
                     if (i != null)// && i.Value != 0)
@@ -770,7 +819,7 @@ namespace ASteambot
             {
                 GenericInventory.ItemDescription description = (ItemDescription)MyGenericInventory.getDescription(item.assetid);
 
-                ASteambot.SteamMarketUtility.Item i = ArkarrSteamMarket.GetItemByName(description.market_hash_name, item.appid);
+                ASteambot.SteamMarketUtility.Item i = SteamMarket.GetItemByName(description.market_hash_name, item.appid);
                 if (description.tradable)
                 {
                     if (i != null)// && i.Value != 0)
@@ -1031,7 +1080,7 @@ namespace ASteambot
                     }
                     else
                     {
-                        SteamMarketUtility.Item itemInfo = ArkarrSteamMarket.GetItemByName(ides.market_hash_name, appID);
+                        SteamMarketUtility.Item itemInfo = SteamMarket.GetItemByName(ides.market_hash_name, appID);
                         if (itemInfo != null)
                             cent += itemInfo.Value;
                     }
@@ -1085,7 +1134,7 @@ namespace ASteambot
 
         public SteamID getSteamID()
         {
-            return steamClient.SteamID;
+            return SteamClient.SteamID;
         }
 
         //***********//
@@ -1116,6 +1165,9 @@ namespace ASteambot
 
         private void LoginKey(SteamUser.LoginKeyCallback callback)
         {
+            //byte[] data = Encoding.ASCII.GetBytes(callback.UniqueID.ToString());
+            //myUniqueId = Convert.ToBase64String(data);
+
             myUniqueId = callback.UniqueID.ToString();
 
             LoggedIn = UserWebLogOn();
@@ -1207,7 +1259,7 @@ namespace ASteambot
                 Console.WriteLine("Disconnected from Steam, reconnecting in 3 seconds...");
                 Thread.Sleep(TimeSpan.FromSeconds(3));
 
-                steamClient.Connect();
+                SteamClient.Connect();
             }
         }
 
@@ -1253,7 +1305,7 @@ namespace ASteambot
                     
                     GetMaxFriends();
 
-                    MyGenericInventory = new GenericInventory(steamClient.SteamID, SteamWeb);
+                    MyGenericInventory = new GenericInventory(SteamClient.SteamID, SteamWeb);
                     break;
 
                 case EResult.AccountLoginDeniedNeedTwoFactor:
@@ -1347,16 +1399,16 @@ namespace ASteambot
         {
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
-                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
                 string[] srvID_mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId] + "/" + srvID_mID_value[3];
                 TradeOfferValue.Remove(offer.TradeOfferId);
 
                 SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(srvID_mID_value[0]), Int32.Parse(srvID_mID_value[1]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
             }
             else if (offer.OfferState == TradeOfferState.TradeOfferStateDeclined && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
-                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId];
                 string[] srvID_mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId] + "/" + srvID_mID_value[3];
                 TradeOfferValue.Remove(offer.TradeOfferId);
 
                 SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(srvID_mID_value[0]), Int32.Parse(srvID_mID_value[1]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
@@ -1369,11 +1421,11 @@ namespace ASteambot
             {
                 double value = GetTradeOfferValue(offer.PartnerSteamId.ConvertToUInt64(), offer.Items.GetTheirItems());
 
-                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + value;
 
                 if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
                 {
                     string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                    string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + value + "/" + mID_value[3];
                     SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), Int32.Parse(mID_value[1]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
                 }
                 else
@@ -1387,11 +1439,11 @@ namespace ASteambot
             {
                 double value = GetTradeOfferValue(offer.PartnerSteamId.ConvertToUInt64(), offer.Items.GetTheirItems());
 
-                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + value;
 
                 if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
                 {
                     string[] mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                    string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + value + "/" + mID_value[3];
                     SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(mID_value[0]), Int32.Parse(mID_value[1]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
                 }
                 else
@@ -1420,60 +1472,11 @@ namespace ASteambot
             }
         }
 
-        //*******************//
-        //   TO BE REMOVED   //
-        //*******************//
-
-        /*private void SaveItemInDB(SteamTrade.SteamMarket.Item item)
+        public async Task PlayGames(uint gameID)
         {
-            string[] rows = new string[5];
-            rows[0] = "itemName";
-            rows[1] = "value";
-            rows[2] = "quantity";
-            rows[3] = "last_updated";
-            rows[4] = "gameid";
-
-            string[] values = new string[5];
-            values[0] = item.Name;
-            values[1] = item.Value.ToString();
-            values[2] = item.Quantity.ToString();
-            values[3] = item.LastUpdated;
-            values[4] = item.AppID.ToString();
-
-            if (DB.SELECT(rows, "smitems", "WHERE itemName=\"" + item.Name + "\"" + ";").Count > 0)
-                DB.QUERY("UPDATE smitems SET value='" + item.Value + "',quantity='" + item.Quantity + "',last_updated = '" + item.LastUpdated + "' WHERE itemName=\"" + item.Name + "\"" + ";");
-            else
-                DB.INSERT("smitems", rows, values);
-        }*/
-
-        /*private void Smp_ItemUpdated(object sender, EventArgItemScanned e)
-       {
-           Item i = e.GetItem;
-
-           if (Program.DEBUG)
-           {
-               Console.ForegroundColor = ConsoleColor.Cyan;
-               Console.WriteLine("Item " + i.Name + " updated (Price : " + i.Value + ") !");
-               Console.ForegroundColor = ConsoleColor.White;
-           }
-
-           /*string[] rows = new string[1];
-           rows[0] = "tradeOfferID";
-
-           List<Dictionary<string, string>> list = DB.SELECT(rows, "tradeoffers", "WHERE `tradeStatus`=\"" + (int)TradeOfferState.TradeOfferStateActive + "\"");
-           foreach (Dictionary<string, string> tradeInfo in list)
-           {
-               TradeOffer to;
-               tradeOfferManager.TryGetOffer(tradeInfo["tradeOfferID"], out to);
-
-               if (to != null && to.OfferState == TradeOfferState.TradeOfferStateActive)
-               {
-                   double cent = GetTradeOfferValue(to.PartnerSteamId, to.Items.GetTheirItems());
-                   UpdateTradeOfferInDatabase(to, cent);
-               }
-           }
-
-           SaveItemInDB(i);
-       }*/
+            IList<uint> games = new List<uint>();
+            games.Add(gameID);
+            await GSMH.PlayGames(games);
+        }
     }
 }

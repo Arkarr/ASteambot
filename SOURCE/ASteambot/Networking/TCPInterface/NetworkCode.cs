@@ -32,7 +32,8 @@ namespace ASteambot.Networking
             SGAnnoucement = 16,
             SteamID = 17,
             TradeOfferInformation = 18,
-            SendChatGroupMsg = 19
+            SendChatGroupMsg = 19,
+            CreateQuickTrade = 20
         }
     }
 }

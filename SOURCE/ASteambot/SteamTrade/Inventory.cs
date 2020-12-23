@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Newtonsoft.Json;
 using SteamKit2;
 
@@ -17,16 +18,47 @@ namespace SteamTrade
         /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
         public static Inventory FetchInventory(ulong steamId, string apiKey, SteamWebCustom steamWeb)
         {
+            /*int attempts = 1;
+            InventoryResponse result = null;
+            while (result == null || result.result == null || result.result.items == null)
+            {
+                var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
+                string response = steamWeb.Fetch(url, "GET", null, false, "", true);
+                result = JsonConvert.DeserializeObject<InventoryResponse>(response);
+                attempts++;
+
+                if(attempts >= 4)
+                {
+                    attempts = 0;
+                    Thread.Sleep(3000);
+                }
+            }
+            return new Inventory(result.result);*/
             int attempts = 1;
             InventoryResponse result = null;
             while ((result == null || result.result.items == null) && attempts <= 3)
             {
-                var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
-                string response = steamWeb.Fetch(url, "GET", null, false);
-                result = JsonConvert.DeserializeObject<InventoryResponse>(response);
+                bool isEmpty = true;
+                while (isEmpty)
+                {
+                    var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
+                    string response = steamWeb.Fetch(url, "GET", null, true, "", true);
+
+                    isEmpty = false;
+                    if (response.Length <= 4)
+                    {
+                        Thread.Sleep(10 * 1000);
+                        isEmpty = true;
+                    }
+                    else
+                    {
+                        result = JsonConvert.DeserializeObject<InventoryResponse>(response);
+                    }
+                }
                 attempts++;
             }
             return new Inventory(result.result);
+
         }
 
         /// <summary>

@@ -37,23 +37,21 @@ namespace ASteambot.SteamMarketUtility
         private bool TF2OK;
         private bool CSGOOK;
         private bool DOTA2OK;
-        private SteamWebCustom fetcher;
         private Thread TF2marketScanner;
         private Thread CSGOmarketScanner;
         private Thread DOTA2marketScanner;
         private Thread marketScanner;
-        private List<Item> steamMarketItemsTF2;
-        private List<Item> steamMarketItemsCSGO;
-        private List<Item> steamMarketItemsDOTA2;
+        private static List<Item> steamMarketItemsTF2;
+        private static List<Item> steamMarketItemsCSGO;
+        private static List<Item> steamMarketItemsDOTA2;
 
-        public SteamMarket(string apikey, bool disabled, SteamWebCustom fetcher)
+        public SteamMarket(string apikey, bool disabled)
         {
             stop = false;
             APIkey = apikey;
             TF2OK = false;
             CSGOOK = false;
             DOTA2OK = false;
-            this.fetcher = fetcher;
             steamMarketItemsTF2 = new List<Item>();
             steamMarketItemsCSGO = new List<Item>();
             steamMarketItemsDOTA2 = new List<Item>();
@@ -184,7 +182,17 @@ namespace ASteambot.SteamMarketUtility
                 {
                     int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
                     string target = "http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game +  "&market_hash_name=" + itemName + "&version=2";
-                    string json = fetcher.Fetch(target, "GET", null, true, "", true);
+
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(target);
+                    request.Method = "GET";
+                    WebResponse response = request.GetResponse();
+                    StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8);
+                    string result = sr.ReadToEnd();
+                    sr.Close();
+                    response.Close();
+
+                    string json = result;
+
                     ro = JsonConvert.DeserializeObject<RootObject>(json);
 
                     if (ro == null)
@@ -260,7 +268,17 @@ namespace ASteambot.SteamMarketUtility
                 {
                     int timeout = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
                     string target = "http://arkarrsourceservers.ddns.net:27019/steammarketitems?apikey=" + APIkey + "&appid=" + (int)game + "&version=2";
-                    string json = fetcher.Fetch(target, "GET", null, true, "", true);
+
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(target);
+                    request.Method = "GET";
+                    WebResponse response = request.GetResponse();
+                    StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.UTF8);
+                    string result = sr.ReadToEnd();
+                    sr.Close();
+                    response.Close();
+
+                    string json = result;
+
                     ro = JsonConvert.DeserializeObject<RootObject>(json);
 
                     if (ro == null)
@@ -342,7 +360,7 @@ namespace ASteambot.SteamMarketUtility
             public int nbritems { get; set; }
         }
         
-        public Item GetItemByName(string itemName, int appid)
+        public static Item GetItemByName(string itemName, int appid)
         {
             Games game = (Games)appid;
 
@@ -351,16 +369,19 @@ namespace ASteambot.SteamMarketUtility
             {
                 case Games.CSGO:
                     i = steamMarketItemsCSGO.Find(x => x.Name == itemName);
-                    return i;
+                    break;
                 case Games.TF2:
                     i = steamMarketItemsTF2.Find(x => x.Name == itemName);
-                    return i;
+                    break;
                 case Games.Dota2:
                     i = steamMarketItemsDOTA2.Find(x => x.Name == itemName);
-                    return i;
+                    break;
             }
-           
-            return null;
+
+            if (i == null)
+                i = new Item(itemName, 0, 0, 0, appid, null);
+
+            return i;
         }
     }
 }

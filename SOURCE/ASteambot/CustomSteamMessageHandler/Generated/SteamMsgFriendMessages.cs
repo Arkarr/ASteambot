@@ -6,6 +6,8 @@
 // https://github.com/SteamRE/SteamKit/blob/be82c6c7b558fd9fe7fd1bfc9d19e36c1ef3389a/SteamKit2/SteamKit2/Base/Generated/SteamMsgFriendMessages.cs
 #region Designer generated code
 #pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+
+
 using SteamKit2.Unified.Internal;
 
 namespace SteamKit2.Internal

@@ -21,14 +21,18 @@ namespace ASteambot.CustomSteamMessageHandler
 		private readonly SteamUnifiedMessages.UnifiedService<IFriendMessages> UnifiedFriendMessagesService;
 		private readonly SteamUnifiedMessages.UnifiedService<IPlayer> UnifiedPlayerService;
 
+		private readonly Bot bot;
+
 		internal DateTime LastPacketReceived { get; private set; }
 
-		internal GenericSteamMessageHandler(SteamUnifiedMessages steamUnifiedMessages)
+		internal GenericSteamMessageHandler(SteamUnifiedMessages steamUnifiedMessages, Bot bot)
 		{
 			if ((steamUnifiedMessages == null))
 			{
 				throw new ArgumentNullException(nameof(steamUnifiedMessages));
 			}
+
+			this.bot = bot;
 
 			UnifiedChatRoomService = steamUnifiedMessages.CreateService<IChatRoom>();
 			UnifiedClanChatRoomsService = steamUnifiedMessages.CreateService<IClanChatRooms>();
@@ -88,6 +92,17 @@ namespace ASteambot.CustomSteamMessageHandler
 					Client.PostCallback(new VanityURLChangedCallback(packetMsg.TargetJobID, vanityURLChangedNotification.Body));
 
 					break;
+
+				case EMsg.EconTrading_InitiateTradeResult:
+					ClientMsgProtobuf<CMsgTrading_InitiateTradeResponse> initateTradeResponse = new ClientMsgProtobuf<CMsgTrading_InitiateTradeResponse>(packetMsg);
+					Client.PostCallback(new InitateTradeResponseCallback(packetMsg.TargetJobID, initateTradeResponse.Body));
+					break;
+
+				case EMsg.ClientUDSInviteToGame:
+					HandleGameInviteMsg(packetMsg);
+					break;
+
+				default: return;
 			}
 		}
 
@@ -681,7 +696,7 @@ namespace ASteambot.CustomSteamMessageHandler
 
 		internal void SetCurrentMode(uint chatMode)
 		{
-			if (chatMode == 0)
+			/*if (chatMode == 0)
 			{
 				throw new ArgumentNullException(nameof(chatMode));
 			}
@@ -692,7 +707,7 @@ namespace ASteambot.CustomSteamMessageHandler
 			}
 
 			ClientMsgProtobuf<CMsgClientUIMode> request = new ClientMsgProtobuf<CMsgClientUIMode>(EMsg.ClientCurrentUIMode) { Body = { chat_mode = chatMode } };
-			Client.Send(request);
+			Client.Send(request);*/
 		}
 
 		public sealed class PurchaseResponseCallback : CallbackMsg
@@ -960,6 +975,50 @@ namespace ASteambot.CustomSteamMessageHandler
 			Private,
 			FriendsOnly,
 			Public
+		}
+
+		public void HandleGameInviteMsg(IPacketMsg packetMsg)
+		{
+			var chatMsg = new ClientMsgProtobuf<CMsgClientUDSInviteToGame>(packetMsg);
+			//
+			//steam_id_src = 76561198044361291
+			// I got the message, now to create it is for later.
+			int i = 0;
+		}
+
+		public void SendGameInvite(SteamID inviter, SteamID target)
+		{
+			if (target == null)
+			{
+				throw new ArgumentNullException(nameof(target));
+			}
+
+			bot.PlayGames(440).ConfigureAwait(false);
+
+			var chatMsg = new ClientMsgProtobuf<CMsgClientUDSInviteToGame>(EMsg.ClientUDSInviteToGame);
+
+			chatMsg.Body.connect_string = "+tf_party_request_join_user " + 76561197991854757;
+			chatMsg.Body.connect_stringSpecified = true;
+			chatMsg.Body.steam_id_dest = target;//new SteamID(76561197991854757);
+			chatMsg.Body.steam_id_destSpecified = true;
+			chatMsg.Body.steam_id_src = inviter;
+			chatMsg.Body.steam_id_srcSpecified = true;
+
+			chatMsg.SteamID = target;
+
+			this.Client.Send(chatMsg);
+		}
+	}
+
+	internal class InitateTradeResponseCallback : CallbackMsg
+	{
+		private ulong targetJobID;
+		private CMsgTrading_InitiateTradeResponse body;
+
+		public InitateTradeResponseCallback(ulong targetJobID, CMsgTrading_InitiateTradeResponse body)
+		{
+			this.targetJobID = targetJobID;
+			this.body = body;
 		}
 	}
 }

@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SteamKit2;
 using ASteambot.Networking;
 using System.Threading;
-
 using System.Web;
 using System.Globalization;
 using ASteambot.SteamMarketUtility;
 using System.IO;
-using SteamKit2.Internal;
+using SteamKit2;
+using SteamTrade;
+using ASteambot.SteamTrade;
+using ASteambot.CustomSteamMessageHandler;
+using SteamKit2.GC;
+using System.Threading.Tasks;
 
 namespace ASteambot
 {
@@ -27,6 +28,9 @@ namespace ASteambot
         private List<Bot> bots;
         private TCPInterface socketServer;
         private Thread threadSocket;
+        private Trade CurrentTrade;
+        private TradeHandler th;
+        private SteamMarket ArkarrSteamMarket;
 
         public Manager(Config Config)
         {
@@ -34,8 +38,9 @@ namespace ASteambot
             bots = new List<Bot>();
             OnlineBots = new List<Bot>();
             Servers = new List<GameServer>();
+            ArkarrSteamMarket = new SteamMarket(Config.ArkarrAPIKey, Config.DisableMarketScan);
         }
-        
+
         public void DisconnectServer(int serverID)
         {
             Servers.RemoveAll(gs => gs.ServerID == serverID);
@@ -84,6 +89,8 @@ namespace ASteambot
             socketServer.Stop();
 
             Console.WriteLine("Shutting down steambots...");
+
+            ArkarrSteamMarket.Cancel();
 
             foreach (Bot bot in bots)
                 bot.Disconnect();
@@ -138,9 +145,11 @@ namespace ASteambot
                 case "reloadtranslation":
                     ReloadTranslation();
                     break;
-                /*case "test":
-                    SendGameInvite();
-                    break;*/
+                case "test2":
+                    SteamID steamID = new SteamID(76561198044361291);
+                    SelectedBot.GSMH.SendGameInvite(SelectedBot.steamUser.SteamID, steamID);
+
+                    break;
                 default:
                     Console.WriteLine("Command \""+ command + "\" not found ! Use 'help' !");
                 break;
@@ -169,7 +178,7 @@ namespace ASteambot
 
         private void RefreshPrices()
         {
-            SelectedBot.ArkarrSteamMarket.ForceRefresh();
+            ArkarrSteamMarket.ForceRefresh();
         }
 
         private void TestAPI(string[] args)
@@ -191,7 +200,7 @@ namespace ASteambot
             }
             
             itemName = HttpUtility.HtmlEncode(itemName);
-            Item item = SelectedBot.ArkarrSteamMarket.GetItemByName(itemName, appid);
+            Item item = SteamMarket.GetItemByName(itemName, appid);
 
             if (item != null)
             {

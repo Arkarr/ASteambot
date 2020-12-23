@@ -1,0 +1,302 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
+using System.Net;
+using System.Net.Cache;
+using System.Text;
+using System.Web;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using SteamKit2;
+
+namespace SteamTrade.TradeWebAPI
+{
+    public class SessionExpiredException : Exception { }
+
+    /// <summary>
+    /// This class provides the interface into the Web API for trading on the
+    /// Steam network.
+    /// </summary>
+    public class Asset
+    {
+        public uint AppID { get; set; }
+        public ulong AssetID { get; set; }
+        public ulong ContextID { get; set; }
+
+        public ulong ClassID { get; set; }
+
+        public SteamID Owner { get; set; }
+    }
+
+    public class TradeSession_V3 : WebClient
+    {
+        const string STEAM_API_FORMAT = "{0}://steamcommunity.com/{1}/{2}/{3}";
+        const string TRADE_API_ROOT = "trade";
+
+
+        public string ApiParameter { get; private set; }
+        public string ApiRoot { get; private set; }
+        public int Version { get; set; }
+
+        private string location;
+        private bool useHttps;
+        private string sessionID;
+        private string token;
+        private string tokenSecure;
+
+        public TradeSession_V3(string sessionID, string token, string tokenSecure, string apiParameter, string apiRoot = TRADE_API_ROOT, bool useHttps = true)
+        {
+            ApiParameter = apiParameter;
+            ApiRoot = apiRoot;
+
+            Version = 0;
+            this.useHttps = useHttps;
+            this.sessionID = sessionID;
+            this.token = token;
+            this.tokenSecure = tokenSecure;
+        }
+
+        public TradeStatus GetStatus(int logPos)
+        {
+            string strStatus = DoCommand("tradestatus", new Dictionary<string, object>
+            {
+                { "logpos", logPos },
+            });
+
+            TradeStatus status = JsonConvert.DeserializeObject<TradeStatus>(strStatus);
+
+            // Sometimes the cookies expire during the trade session.
+            // We should really check for this by checking the SteamLogin cookie for the value 'deleted', but as a quick hack, let's check status.success instead
+            if (status.success == false && Version == 0)
+            {
+                throw new Exception();// new SessionExpiredException();
+            }
+
+            return status;
+        }
+
+        public dynamic GetForeignInventory(SteamID steamid, long contextid, long appid)
+        {
+            string returnVal = DoCommand("foreigninventory", new Dictionary<string, object>
+            {
+                { "appid", appid },
+                { "contextid", contextid },
+                { "steamid", ApiParameter },
+            }, false);
+            
+            return returnVal;
+        }
+
+        /*public dynamic GetMyInventory(SteamID sid, uint appid, int contextid)
+        {
+            ulong steamid = sid.ConvertToUInt64();
+            string host = $"https://steamcommunity.com/profiles/{steamid}/inventory/json/{appid}/{contextid}/?trading=1";
+
+            // ignore the first request, as it'll 302 redirect
+            base.DownloadString(host);
+
+            // we do custom handling of this redirection,
+            // since WebClientEx doesn't preserve cookies when redirected
+
+            try
+            {
+                return JObject.Parse(base.DownloadString(location ?? host));
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Unable to request personal inventory: {0}", ex.Message);
+                Console.ForegroundColor = ConsoleColor.White;
+                return null;
+            }
+
+        }*/
+
+        public bool SendMessageWebCmd(string message, int logPos)
+        {
+            dynamic result = JObject.Parse(DoCommand("chat", new Dictionary<string, object>
+            {
+                { "message", HttpUtility.UrlEncode( message ) },
+                { "logpos", logPos },
+            }));
+
+            return result.success;
+        }
+
+        public bool CancelTradeWebCmd()
+        {
+            dynamic result = JObject.Parse(DoCommand("cancel", null));
+
+            return result.success;
+        }
+
+        public bool SetReadyWebCmd(bool isReady = true)
+        {
+            dynamic result = JObject.Parse(DoCommand("toggleready", new Dictionary<string, object>
+            {
+                { "ready", isReady.ToString().ToLower() },
+            }));
+
+            return result.success;
+        }
+
+        public bool AcceptTradeWebCmd()
+        {
+            dynamic result = JObject.Parse(DoCommand("confirm", null));
+         
+            return result.success;
+        }
+
+        public bool AddItemWebCmd(ulong assetID, int slot, int appID, long contextID)
+        {
+            dynamic result = JObject.Parse(DoCommand("additem", new Dictionary<string, object>
+            {
+                { "appid", appID },
+                { "contextid", contextID },
+                { "itemid", assetID },
+                { "slot", slot },
+            }));
+
+            return result.success;
+        }
+
+        public bool RemoveItemWebCmd(ulong assetID, int slot, int appID, long contextID)
+        {
+            dynamic result = JObject.Parse(DoCommand("removeitem", new Dictionary<string, object>
+            {
+                { "appid", appID },
+                { "contextid", contextID },
+                { "itemid", assetID },
+            }));
+
+            return result.success;
+        }
+
+        public bool AcceptTradeOffer(string partnerId)
+        {
+            //HACK: Easiest reasonable way I could figure out to call the tradeoffer/accept API
+            if (ApiRoot != "tradeoffer")
+            {
+                throw new InvalidOperationException("Can only call AcceptTradeOffer on trade offers!");
+            }
+
+            dynamic result = JObject.Parse(DoCommand("accept", new Dictionary<string, object>
+            {
+                { "serverid", 1 },
+                { "tradeofferid", ApiParameter },
+                { "partner", partnerId }
+            }));
+
+            return result.success;
+        }
+
+        string DoCommand(string command, Dictionary<string, object> args, bool isPost = true)
+        {
+            string addr = MakeAddress(command);
+            string commandArgs = MakeParams(args);
+
+            string finalResult = "";
+
+            try
+            {
+                string result = null;
+
+                if (isPost)
+                {
+                    result = base.UploadString(addr, commandArgs);
+                }
+                else
+                {
+                    // if we're doing a GET, the arguments go into the address
+                    addr += "?" + commandArgs;
+
+                    result = base.DownloadString(addr);
+                }
+
+                finalResult = result;
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Unable to perform trade api command '{0}': {1}", command, ex.ToString());
+                Console.ForegroundColor = ConsoleColor.White;
+
+                Exception currentEx = ex;
+                do
+                {
+                    foreach (DictionaryEntry data in currentEx.Data)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("    Key: {0,-20}  Value: {1}", "'" + data.Key.ToString() + "'", data.Value);
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+                    currentEx = currentEx.InnerException;
+                } while (currentEx != null);
+
+                return null;
+            }
+
+            dynamic obj = JObject.Parse(finalResult);
+            if (obj.version != null)
+            {
+                // update our local version
+                Version = obj.version;
+            }
+
+            return finalResult;
+        }
+
+        string MakeAddress(string command)
+        {
+            string protocol = (useHttps ? "https" : "http");
+            return string.Format(STEAM_API_FORMAT, protocol, ApiRoot, ApiParameter, command);
+        }
+
+        string MakeParams(Dictionary<string, object> args = null)
+        {
+            if (args == null)
+            {
+                args = new Dictionary<string, object>();
+            }
+
+            // the session id and version is present in every command
+            args.Add("sessionid", HttpUtility.UrlEncode(this.sessionID));
+            args.Add("version", Version.ToString());
+
+            return string.Join("&", args.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+        }
+
+        protected override WebRequest GetWebRequest(Uri address)
+        {
+            var webReq = base.GetWebRequest(address) as HttpWebRequest;
+
+            webReq.CookieContainer = new CookieContainer();
+            webReq.CookieContainer.Add(address, new Cookie("steamLogin", this.token));
+            webReq.CookieContainer.Add(address, new Cookie("steamLoginSecure", this.tokenSecure));
+            webReq.CookieContainer.Add(address, new Cookie("sessionid", HttpUtility.UrlEncode(this.sessionID)));
+
+            webReq.AllowAutoRedirect = true;
+            webReq.Referer = MakeAddress(null);
+
+            webReq.Accept = "application/json, text/javascript;q=0.9, */*;q=0.5";
+            webReq.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+            webReq.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
+            webReq.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.Revalidate);
+            webReq.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+
+            return webReq;
+        }
+
+        protected override WebResponse GetWebResponse(WebRequest request)
+        {
+            var webResp = base.GetWebResponse(request) as HttpWebResponse;
+
+            location = webResp.Headers["Location"];
+
+            return webResp;
+        }
+    }
+}
+
