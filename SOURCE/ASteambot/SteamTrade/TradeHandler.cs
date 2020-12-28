@@ -31,7 +31,7 @@ namespace ASteambot.SteamTrade
 
         private double value;
 
-        public TradeHandler(Trade trade, Bot bot, SteamID partenarSteamID, SteamWebCustom steamWeb, int serverID, int moduleID, string args, int gameID = -1, List<ulong> itemsToGive = null)
+        public TradeHandler(Trade trade, Bot bot, SteamID partenarSteamID, SteamWebCustom steamWeb, int serverID, int moduleID, string args, int gameID, List<ulong> itemsToGive = null)
         {
             this.trade = trade;
             this.bot = bot;
@@ -41,8 +41,8 @@ namespace ASteambot.SteamTrade
             this.moduleID = moduleID;
             this.args = args;
             this.itemsToGive = itemsToGive;
-            mySteamInventory = new GenericInventory(bot.getSteamID(), steamWeb);
-            OtherSteamInventory = new GenericInventory(partenarSteamID, steamWeb);
+            mySteamInventory = new GenericInventory(steamWeb);
+            OtherSteamInventory = new GenericInventory(steamWeb);
         }
 
         public void OnTradeError(string error)
@@ -63,11 +63,11 @@ namespace ASteambot.SteamTrade
             trade.SendMessage("This is your trade ID:");
             trade.SendMessage(args);
 
+            List<long> contextId = new List<long>();
+            contextId.Add(2);
+
             if (gameID != -1)
             {
-                List<long> contextId = new List<long>();
-                contextId.Add(2);
-
                 mySteamInventory.load(gameID, contextId, bot.getSteamID());
                 OtherSteamInventory.load(gameID, contextId, partenarSteamID);
             }
@@ -76,25 +76,23 @@ namespace ASteambot.SteamTrade
 
             foreach (ulong itemID in itemsToGive)
             {
-                if (trade.AddItem(itemID))
+                if (trade.AddItem(itemID, gameID, 2))
                     Console.WriteLine("Success !");
             }
         }
 
-        public void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
+        public void OnTradeAddItem(GenericInventory.ItemDescription itemDescription, GenericInventory.Item inventoryItem)
         {
-            IItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
-            Item itemInfo = SteamMarket.GetItemByName(tmpDescription.market_hash_name, gameID);
+            Item itemInfo = SteamMarket.GetItemByName(itemDescription.market_hash_name, gameID);
 
             this.value += itemInfo.Value;
 
             trade.SendMessage(string.Format("The value of this item is : {0}$", itemInfo.Value));
         }
 
-        public void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
+        public void OnTradeRemoveItem(GenericInventory.ItemDescription itemDescription, GenericInventory.Item inventoryItem)
         {
-            IItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
-            Item itemInfo = SteamMarket.GetItemByName(tmpDescription.market_hash_name, gameID);
+            Item itemInfo = SteamMarket.GetItemByName(itemDescription.market_hash_name, gameID);
 
             this.value -= itemInfo.Value;
 

@@ -41,8 +41,7 @@ namespace SteamTrade
                 bool isEmpty = true;
                 while (isEmpty)
                 {
-                    //var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
-                    var url = "https://steamcommunity.com/profiles/" + steamId + "/inventory/json/440/2/";
+                    var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
                     string response = steamWeb.Fetch(url, "GET", null, true, "", true);
 
                     isEmpty = false;

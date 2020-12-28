@@ -17,22 +17,22 @@ namespace SteamTrade
     /// <summary>
     /// Generic Steam Backpack Interface
     /// </summary>
-    public class GenericInventory : IASteambotInventory
+    public class GenericInventory
     {
-        private readonly SteamWebCustom SteamWeb;
+        private readonly SteamWebCustom steamWeb;
 
-        public GenericInventory(SteamID steamID, SteamWebCustom steamWeb)
+        public GenericInventory(SteamWebCustom steamWeb)
         {
-            SteamWeb = steamWeb;
+            this.steamWeb = steamWeb;
 
-            if (steamID != null)
+            /*if (steamID != null)
             {
                 object[] args = new object[2];
                 args[0] = steamID;
                 args[1] = this;
 
                 Program.ExecuteModuleFonction("Start", args);
-            }
+            }*/
         }
 
         public Dictionary<ulong, IItem> items
@@ -91,6 +91,21 @@ namespace SteamTrade
             }
         }
 
+        public Item GetItem(ulong id)
+        {
+            // Check for Private Inventory
+            if (!this.isLoaded)
+                throw new Exceptions.TradeException("Unable to access Inventory: Inventory is Private or is not loaded yet!");
+
+            foreach(Item item in items.Values)
+            {
+                if (item.assetid == id)
+                    return item;
+            }
+
+            return null;
+        }
+
         public class ItemDescription : IItemDescription
         {
             public string name { get; set; }
@@ -125,7 +140,7 @@ namespace SteamTrade
         /// Returns information (such as item name, etc) about the given item.
         /// This call can fail, usually when the user's inventory is private.
         /// </summary>
-        public IItemDescription getDescription(ulong id)
+        public ItemDescription getDescription(ulong id)
         {
             if (_loadTask == null)
                 return null;
@@ -141,10 +156,17 @@ namespace SteamTrade
             }
         }
 
-        public void load(int appid, IEnumerable<long> contextIds, SteamID steamid)
+        public void load(int appid, long contextId, SteamID steamID)
+        {
+            List<long> contextIds = new List<long>();
+            contextIds.Add(contextId);
+            load(appid, contextIds, steamID);
+        }
+
+        public void load(int appid, IEnumerable<long> contextIds, SteamID steamID)
         {
             List<long> contextIdsCopy = contextIds.ToList();
-            _loadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamid));
+            _loadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamID));
         }
 
         private void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
@@ -170,7 +192,7 @@ namespace SteamTrade
                         var data = String.IsNullOrEmpty(moreStart) ? null : new NameValueCollection {{"start", moreStart}};
                         url = String.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId);
                         
-                        string response = SteamWeb.Fetch(url, "GET", data);
+                        string response = steamWeb.Fetch(url, "GET", data);
                         invResponse = JsonConvert.DeserializeObject(response);
 
                         if (invResponse == null)

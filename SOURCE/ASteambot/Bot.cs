@@ -193,8 +193,8 @@ namespace ASteambot
             ChatListener = new Dictionary<SteamID, int>();
             TradeoffersGS = new Dictionary<string, string>();
             TradeOfferValue = new Dictionary<string, double>();
-            MyGenericInventory = new GenericInventory(SteamClient.SteamID, SteamWeb);
-            OtherGenericInventory = new GenericInventory(null, SteamWeb);
+            MyGenericInventory = new GenericInventory(SteamWeb);
+            OtherGenericInventory = new GenericInventory(SteamWeb);
             TradeManager = new TradeManager(config.SteamAPIKey, SteamWeb);
 
             SteamUnifiedMessages? steamUnifiedMessages = SteamClient.GetHandler<SteamUnifiedMessages>();
@@ -301,7 +301,7 @@ namespace ASteambot
             List<long> contextId = new List<long>();
             contextId.Add(2);
 
-            MyGenericInventory.load((int)Games.TF2, contextId, SteamClient.SteamID);
+            MyGenericInventory.load((int)Games.TF2, contextId, steamUser.SteamID);
 
             SteamID partenar = new SteamID(otherSteamID);
             TradeOffer to = TradeOfferManager.NewOffer(partenar);
@@ -411,7 +411,7 @@ namespace ASteambot
             {
                 PlayGames(gameID).ConfigureAwait(false);
 
-                Trade CurrentTrade = TradeManager.CreateTrade(GetUniqueID(), SteamWeb.Token, SteamWeb.TokenSecure, steamUser.SteamID, steamid);
+                Trade CurrentTrade = TradeManager.CreateTrade((int)gameID, steamUser.SteamID, steamid, GetUniqueID(), SteamWeb.Token, SteamWeb.TokenSecure);
                 TradeHandler th = new TradeHandler(CurrentTrade, this, steamid, SteamWeb, serverID, moduleID, args, (int)gameID, itemsToGive);
                 SubscribeTrade(CurrentTrade, th);
                 TradeManager.StartTradeThread(CurrentTrade);
@@ -1078,7 +1078,7 @@ namespace ASteambot
             contextID[0] = 2;
 
             List<long> appIDs = new List<long>();
-            GenericInventory gi = new GenericInventory(partenar, SteamWeb);
+            GenericInventory gi = new GenericInventory(SteamWeb);
 
             foreach (TradeOffer.TradeStatusUser.TradeAsset item in list)
             {
@@ -1328,7 +1328,7 @@ namespace ASteambot
                     
                     GetMaxFriends();
 
-                    MyGenericInventory = new GenericInventory(SteamClient.SteamID, SteamWeb);
+                    MyGenericInventory = new GenericInventory(SteamWeb);
                     break;
 
                 case EResult.AccountLoginDeniedNeedTwoFactor:

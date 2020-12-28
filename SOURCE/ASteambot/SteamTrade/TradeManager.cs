@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using ASteambot;
+using ASteambot.SteamMarketUtility;
 using SteamKit2;
 using SteamTrade.Exceptions;
 
@@ -10,6 +12,9 @@ namespace SteamTrade
 {
     public class TradeManager
     {
+        public GenericInventory myInventory { get; private set; }
+        public GenericInventory otherInventory { get; private set; }
+
         private const int MaxGapTimeDefault = 60;
         private const int MaxTradeTimeDefault = 180;
         private const int TradePollingIntervalDefault = 800;
@@ -18,8 +23,6 @@ namespace SteamTrade
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
         private DateTime lastTimeoutMessage;
-        private Task<Inventory> myInventoryTask;
-        private Task<Inventory> otherInventoryTask;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
@@ -32,15 +35,19 @@ namespace SteamTrade
         /// </param>
         public TradeManager (string apiKey, SteamWebCustom steamWeb)
         {
-            if (apiKey == null)
-                throw new ArgumentNullException ("apiKey");
-
             if (steamWeb == null)
-                throw new ArgumentNullException ("steamWeb");
+                throw new ArgumentNullException("steamWeb");
+
+            if (apiKey == null)
+                throw new ArgumentNullException("apiKey");
+
+            ApiKey = apiKey;
+
+            myInventory = new GenericInventory(steamWeb);
+            otherInventory = new GenericInventory(steamWeb);
 
             SetTradeTimeLimits (MaxTradeTimeDefault, MaxGapTimeDefault, TradePollingIntervalDefault);
 
-            ApiKey = apiKey;
             SteamWeb = steamWeb;
         }
 
@@ -77,42 +84,6 @@ namespace SteamTrade
         {
             get;
             private set;
-        }
-
-        /// <summary>
-        /// Gets the inventory of the bot.
-        /// </summary>
-        /// <value>
-        /// The bot's inventory fetched via Steam Web API.
-        /// </value>
-        public Inventory MyInventory
-        {
-            get
-            {
-                if(myInventoryTask == null)
-                    return null;
-
-                myInventoryTask.Wait();
-                return myInventoryTask.Result;
-        }
-        }
-
-        /// <summary>
-        /// Gets the inventory of the other trade partner.
-        /// </summary>
-        /// <value>
-        /// The other trade partner's inventory fetched via Steam Web API.
-        /// </value>
-        public Inventory OtherInventory
-        {
-            get
-            {
-                if(otherInventoryTask == null)
-                    return null;
-
-                otherInventoryTask.Wait();
-                return otherInventoryTask.Result;
-        }
         }
 
         /// <summary>
@@ -174,15 +145,12 @@ namespace SteamTrade
         /// <remarks>
         /// If the needed inventories are <c>null</c> then they will be fetched.
         /// </remarks>
-        public Trade CreateTrade (string sessionID, string token, string tokenSecure, SteamID  me, SteamID other)
+        public Trade CreateTrade (int game, SteamID me, SteamID other, string sessionID, string token, string tokenSecure)
         {
-            if (otherInventoryTask == null || myInventoryTask == null)
-                InitializeTrade (me, other);
+            if (!otherInventory.isLoaded || !myInventory.isLoaded)
+                InitializeTrade(game, me, other);
 
-            otherInventoryTask.Wait();
-            myInventoryTask.Wait();
-
-            Trade t = new Trade (sessionID, token, tokenSecure, me, other, SteamWeb, myInventoryTask, otherInventoryTask);
+            Trade t = new Trade (sessionID, token, tokenSecure, me, other, SteamWeb, myInventory, otherInventory);
 
             t.OnClose += delegate
             {
@@ -201,10 +169,6 @@ namespace SteamTrade
         /// </remarks>            
         public void StopTrade()
         {
-            // TODO: something to check that trade was the Trade returned from CreateTrade
-            otherInventoryTask = null;
-            myInventoryTask = null;
-
             IsTradeThreadRunning = false;
         }
 
@@ -221,19 +185,16 @@ namespace SteamTrade
         /// This should be done anytime a new user is traded with or the inventories are out of date. It should
         /// be done sometime before calling <see cref="CreateTrade"/>.
         /// </remarks>
-        public void InitializeTrade (SteamID me, SteamID other)
+        public void InitializeTrade (int game, SteamID me, SteamID other)
         {
             // fetch other player's inventory from the Steam API.
-            otherInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(other.ConvertToUInt64(), ApiKey, SteamWeb));
-
-            //if (OtherInventory == null)
-            //{
-            //    throw new InventoryFetchException (other);
-            //}
+            otherInventory = new GenericInventory(SteamWeb);
+            otherInventory.load(game, 2, other.ConvertToUInt64());
             
             // fetch our inventory from the Steam API.
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(me.ConvertToUInt64(), ApiKey, SteamWeb));
-            
+            myInventory = new GenericInventory(SteamWeb);
+            myInventory.load(game, 2, me.ConvertToUInt64());
+
             // check that the schema was already successfully fetched
             if (Trade.CurrentSchema == null)
                 Trade.CurrentSchema = Schema.FetchSchema (ApiKey);
