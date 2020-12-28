@@ -36,19 +36,21 @@ namespace SteamTrade
             return new Inventory(result.result);*/
             int attempts = 1;
             InventoryResponse result = null;
-            while ((result == null || result.result.items == null) && attempts <= 3)
+            while ((result == null || result.result == null || result.result.items == null) && attempts <= 3)
             {
                 bool isEmpty = true;
                 while (isEmpty)
                 {
-                    var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
+                    //var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
+                    var url = "https://steamcommunity.com/profiles/" + steamId + "/inventory/json/440/2/";
                     string response = steamWeb.Fetch(url, "GET", null, true, "", true);
 
                     isEmpty = false;
-                    if (response.Length <= 4)
+                    if (response.Length <= 4 && attempts <= 3)
                     {
                         Thread.Sleep(10 * 1000);
                         isEmpty = true;
+                        attempts++;
                     }
                     else
                     {

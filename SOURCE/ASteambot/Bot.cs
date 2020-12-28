@@ -30,6 +30,7 @@ namespace ASteambot
         private readonly DateTime NullDate = new DateTime(1970, 1, 1);
 
         private Database DB;
+        private bool InTrade;
         private bool renaming;
         private string myUniqueId;
         private int maxfriendCount;
@@ -400,24 +401,35 @@ namespace ASteambot
             }
         }
 
-        public void CreateQuickTrade(SteamID steamid, uint gameID, int serverID, int moduleID, string args)
+        public void CreateQuickTrade(SteamID steamid, uint gameID, int serverID, int moduleID, string args, List<ulong> itemsToGive)
         {
-            PlayGames(gameID).ConfigureAwait(false);
+            if (InTrade)
+            {
+                Manager.Send(serverID, moduleID, NetworkCode.ASteambotCode.CreateQuickTrade, steamid.ConvertToUInt64().ToString()+"/BUSY");
+            }
+            else
+            {
+                PlayGames(gameID).ConfigureAwait(false);
 
-            Trade CurrentTrade = TradeManager.CreateTrade(GetUniqueID(), SteamWeb.Token, SteamWeb.TokenSecure, steamUser.SteamID, steamid);
-            TradeHandler th = new TradeHandler(CurrentTrade, this, steamid, SteamWeb, serverID, moduleID, "", (int)gameID);
-            SubscribeTrade(CurrentTrade, th);
-            TradeManager.StartTradeThread(CurrentTrade);
+                Trade CurrentTrade = TradeManager.CreateTrade(GetUniqueID(), SteamWeb.Token, SteamWeb.TokenSecure, steamUser.SteamID, steamid);
+                TradeHandler th = new TradeHandler(CurrentTrade, this, steamid, SteamWeb, serverID, moduleID, args, (int)gameID, itemsToGive);
+                SubscribeTrade(CurrentTrade, th);
+                TradeManager.StartTradeThread(CurrentTrade);
 
-            var tradeReq = new ClientGCMsg<MsgGCTrading_InitiateTradeRequest>();
-            tradeReq.SourceJobID = SteamClient.GetNextJobID();
-            tradeReq.Body.OtherClient = steamid;
+                var tradeReq = new ClientGCMsg<MsgGCTrading_InitiateTradeRequest>();
+                tradeReq.SourceJobID = SteamClient.GetNextJobID();
+                tradeReq.Body.OtherClient = steamid;
 
-            SteamGameCoordinator.Send(tradeReq, gameID);
+                SteamGameCoordinator.Send(tradeReq, gameID);
+
+                Manager.Send(serverID, moduleID, NetworkCode.ASteambotCode.CreateQuickTrade, steamid.ConvertToUInt64().ToString() + "/OK");
+            }
         }
 
         private void SubscribeTrade(Trade trade, TradeHandler handler)
         {
+            InTrade = true;
+
             trade.OnAwaitingConfirmation += handler.OnTradeAwaitingConfirmation;
             trade.OnClose += handler.OnTradeClose;
             trade.OnError += handler.OnTradeError;
@@ -432,6 +444,8 @@ namespace ASteambot
 
         public void UnsubscribeTrade(TradeHandler handler, Trade trade)
         {
+            InTrade = false;
+
             trade.OnAwaitingConfirmation -= handler.OnTradeAwaitingConfirmation;
             trade.OnClose -= handler.OnTradeClose;
             trade.OnError -= handler.OnTradeError;
@@ -613,6 +627,12 @@ namespace ASteambot
                                 Friends.Add(friend.SteamID);
                                 newFriends.Add(friend.SteamID);
                             }
+                            else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Couldn't add friend because already in friend list ?!!");
+                                Console.ForegroundColor = ConsoleColor.White;
+                            }
                         }
                         else if (friend.Relationship == EFriendRelationship.RequestInitiator)
                         {
@@ -662,7 +682,10 @@ namespace ASteambot
             }
 
             foreach (SteamID neoFriend in newFriends)
+            {
                 SteamFriends.AddFriend(neoFriend);
+                //Manager.Send();
+            }
         }
 
         private void OnProfileInfo(SteamFriends.PersonaStateCallback obj)

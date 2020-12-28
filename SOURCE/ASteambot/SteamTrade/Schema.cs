@@ -41,7 +41,7 @@ namespace SteamTrade
             // just let one thread/proc do the initial check/possible update.
             bool wasCreated;
             var mre = new EventWaitHandle(false,
-                EventResetMode.ManualReset, SchemaMutexName, out wasCreated);
+                EventResetMode.ManualReset, null, out wasCreated);
 
             // the thread that create the wait handle will be the one to 
             // write the cache file. The others will wait patiently.

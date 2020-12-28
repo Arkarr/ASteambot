@@ -351,7 +351,15 @@ namespace ASteambot.Networking
             SteamID steamid = GetSteamIDFromString(steamIDGameComment[0]);
             uint gameID = uint.Parse(steamIDGameComment[1]);
 
-            bot.CreateQuickTrade(steamid, gameID, gsr.ServerID, gsr.ModuleID, steamIDGameComment[2]);
+            List<ulong> itemIDs = new List<ulong>();
+
+            foreach (string iID in steamIDGameComment[3].Split(",").DefaultIfEmpty().ToList())
+            {
+                if(iID.Length > 0)
+                    itemIDs.Add(ulong.Parse(iID));
+            }
+
+            bot.CreateQuickTrade(steamid, gameID, gsr.ServerID, gsr.ModuleID, steamIDGameComment[2], itemIDs);
         }
 
         private void CreateTradeOffer(Bot bot, GameServerRequest gsr)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ASteambot;
 using ASteambotInterfaces;
@@ -163,6 +164,7 @@ namespace SteamTrade
                 {
                     string moreStart = null;
                     bool more = false;
+                    bool timeout = false;
                     do
                     {
                         var data = String.IsNullOrEmpty(moreStart) ? null : new NameValueCollection {{"start", moreStart}};
@@ -179,6 +181,12 @@ namespace SteamTrade
                         }
                         else if (invResponse.success == false)
                         {
+                            if(invResponse.Error == null && !timeout)
+                            {
+                                timeout = true;
+                                Thread.Sleep(1000 * 10);
+                                break;
+                            }
                             _errors.Add("Failed to open backpack: " + invResponse.Error);
                             continue;
                         }
@@ -259,7 +267,7 @@ namespace SteamTrade
                             }
                         }
 
-                    } while (!String.IsNullOrEmpty(moreStart) && moreStart.ToLower() != "false" && more == true);
+                    } while ((!String.IsNullOrEmpty(moreStart) && moreStart.ToLower() != "false" && more == true) || timeout);
                 }//end for (contextId)
             }//end try
             catch (Exception e)

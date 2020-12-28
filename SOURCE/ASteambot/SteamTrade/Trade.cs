@@ -560,9 +560,6 @@ namespace SteamTrade
 
             TradeStatus status = session.GetStatus(logPos);
 
-            Console.WriteLine("Trade status success : " + status.success);
-            Console.WriteLine("Trade status status : " + status.trade_status);
-
             if (status == null)
                 return false;
 

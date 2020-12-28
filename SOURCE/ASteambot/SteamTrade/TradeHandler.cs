@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 
 namespace ASteambot.SteamTrade
 {
@@ -26,10 +27,11 @@ namespace ASteambot.SteamTrade
         private readonly int serverID;
         private readonly int moduleID;
         private readonly string args;
+        private readonly List<ulong> itemsToGive;
 
         private double value;
 
-        public TradeHandler(Trade trade, Bot bot, SteamID partenarSteamID, SteamWebCustom steamWeb, int serverID, int moduleID, string args, int gameID = -1)
+        public TradeHandler(Trade trade, Bot bot, SteamID partenarSteamID, SteamWebCustom steamWeb, int serverID, int moduleID, string args, int gameID = -1, List<ulong> itemsToGive = null)
         {
             this.trade = trade;
             this.bot = bot;
@@ -38,6 +40,7 @@ namespace ASteambot.SteamTrade
             this.serverID = serverID;
             this.moduleID = moduleID;
             this.args = args;
+            this.itemsToGive = itemsToGive;
             mySteamInventory = new GenericInventory(bot.getSteamID(), steamWeb);
             OtherSteamInventory = new GenericInventory(partenarSteamID, steamWeb);
         }
@@ -54,11 +57,11 @@ namespace ASteambot.SteamTrade
 
         public void OnTradeInit()
         {
-            //HACK
-            trade.SendMessage("BUFFER");
-            //Don't remove me
+            Thread.Sleep(2000);
 
             trade.SendMessage("Please wait...");
+            trade.SendMessage("This is your trade ID:");
+            trade.SendMessage(args);
 
             if (gameID != -1)
             {
@@ -69,7 +72,13 @@ namespace ASteambot.SteamTrade
                 OtherSteamInventory.load(gameID, contextId, partenarSteamID);
             }
 
-            trade.SendMessage("Done !");
+            Thread.Sleep(2000);
+
+            foreach (ulong itemID in itemsToGive)
+            {
+                if (trade.AddItem(itemID))
+                    Console.WriteLine("Success !");
+            }
         }
 
         public void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
@@ -94,16 +103,16 @@ namespace ASteambot.SteamTrade
 
         public void OnTradeAwaitingConfirmation(long tradeOfferID)
         {
-            trade.SendMessage("Please complete the confirmation to finish the trade");
-            bot.SteamFriends.SendChatMessage(partenarSteamID, EChatEntryType.ChatMsg, "Please complete the confirmation to finish the trade");
+            bot.TradeoffersGS.Add(tradeOfferID.ToString(), serverID + "|" + moduleID + "|" + value + "|" + args);
+            bot.TradeOfferValue.Add(tradeOfferID.ToString(), value);
 
             TradeOffer to = null;
-
             bot.TradeOfferManager.TryGetOffer(tradeOfferID.ToString(), out to);
             bot.UpdateTradeOfferInDatabase(to, value);
 
-            bot.TradeoffersGS.Add(tradeOfferID.ToString(), serverID + "|" + moduleID + "|" + value + "|" + args);
-            bot.TradeOfferValue.Add(tradeOfferID.ToString(), value);
+            trade.SendMessage("Please complete the confirmation to finish the trade");
+            bot.SteamFriends.SendChatMessage(partenarSteamID, EChatEntryType.ChatMsg, "Please complete the confirmation to finish the trade");
+
 
             bot.Manager.Send(serverID, moduleID, NetworkCode.ASteambotCode.CreateTradeOffer, partenarSteamID.ConvertToUInt64() + "/" + tradeOfferID + "/" + value + "/" + args);
         }
