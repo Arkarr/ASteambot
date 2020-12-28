@@ -101,8 +101,11 @@ namespace ASteambot.SteamTrade
 
         public void OnTradeAwaitingConfirmation(long tradeOfferID)
         {
-            bot.TradeoffersGS.Add(tradeOfferID.ToString(), serverID + "|" + moduleID + "|" + value + "|" + args);
-            bot.TradeOfferValue.Add(tradeOfferID.ToString(), value);
+            if (!bot.TradeoffersGS.Keys.Contains(tradeOfferID.ToString()))
+                bot.TradeoffersGS.Add(tradeOfferID.ToString(), serverID + "|" + moduleID + "|" + value + "|" + args);
+
+            if(!bot.TradeOfferValue.Keys.Contains(tradeOfferID.ToString()))
+                bot.TradeOfferValue.Add(tradeOfferID.ToString(), value);
 
             TradeOffer to = null;
             bot.TradeOfferManager.TryGetOffer(tradeOfferID.ToString(), out to);
@@ -133,6 +136,12 @@ namespace ASteambot.SteamTrade
 
                 totalValue += itemInfo.Value;
             }*/
+
+            if (value <= 0)
+            {
+                trade.SendMessage("I don't recognize anything of value in this trade. I can't accept it.");
+                return false;
+            }
 
             trade.SendMessage(string.Format("Trade validated. Total value : {0}$ !", value));
 

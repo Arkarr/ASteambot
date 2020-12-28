@@ -693,17 +693,12 @@ namespace SteamTrade
                     OnUserAddItem(null, item);
                 }*/
             }
-            /*else
+            else
             {
-                var schemaItem = GetItemFromPrivateBp(asset);
-                if(schemaItem == null)
-                {
-                    Console.WriteLine("User added an unknown item to the trade.");
-                }
-
-                OnUserAddItem(schemaItem, null);
-                // todo: figure out what to send in with Inventory item.....
-            }*/
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Other user inventory couldn't be loaded !!!");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
         }
 
         private Schema.Item GetItemFromPrivateBp(TradeUserAssets asset)

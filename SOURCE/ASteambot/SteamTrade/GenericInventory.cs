@@ -144,6 +144,7 @@ namespace SteamTrade
         {
             if (_loadTask == null)
                 return null;
+
             _loadTask.Wait();
 
             try
@@ -167,6 +168,7 @@ namespace SteamTrade
         {
             List<long> contextIdsCopy = contextIds.ToList();
             _loadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamID));
+            _loadTask.Wait();
         }
 
         private void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)

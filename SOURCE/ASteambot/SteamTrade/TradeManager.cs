@@ -147,8 +147,7 @@ namespace SteamTrade
         /// </remarks>
         public Trade CreateTrade (int game, SteamID me, SteamID other, string sessionID, string token, string tokenSecure)
         {
-            if (!otherInventory.isLoaded || !myInventory.isLoaded)
-                InitializeTrade(game, me, other);
+            InitializeTrade(game, me, other);
 
             Trade t = new Trade (sessionID, token, tokenSecure, me, other, SteamWeb, myInventory, otherInventory);
 
