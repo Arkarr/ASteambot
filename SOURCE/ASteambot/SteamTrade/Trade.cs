@@ -670,7 +670,7 @@ namespace SteamTrade
                 SetReady(false);
             }
 
-            if(OtherInventory != null && !OtherInventory.isLoaded)
+            if(OtherInventory != null && OtherInventory.isLoaded)
             {
                 GenericInventory.Item item = OtherInventory.GetItem(asset.assetid);
                 if(item != null)
