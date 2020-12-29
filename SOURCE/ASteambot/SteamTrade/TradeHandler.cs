@@ -27,11 +27,12 @@ namespace ASteambot.SteamTrade
         private readonly int serverID;
         private readonly int moduleID;
         private readonly string args;
+        private readonly bool giveAway;
         private readonly List<ulong> itemsToGive;
 
         private double value;
 
-        public TradeHandler(Trade trade, Bot bot, SteamID partenarSteamID, SteamWebCustom steamWeb, int serverID, int moduleID, string args, int gameID, List<ulong> itemsToGive = null)
+        public TradeHandler(Trade trade, Bot bot, SteamID partenarSteamID, SteamWebCustom steamWeb, int serverID, int moduleID, string args, int gameID, List<ulong> itemsToGive = null, bool giveAway = false)
         {
             this.trade = trade;
             this.bot = bot;
@@ -41,6 +42,7 @@ namespace ASteambot.SteamTrade
             this.moduleID = moduleID;
             this.args = args;
             this.itemsToGive = itemsToGive;
+            this.giveAway = giveAway;
             mySteamInventory = new GenericInventory(steamWeb);
             OtherSteamInventory = new GenericInventory(steamWeb);
         }
@@ -59,8 +61,6 @@ namespace ASteambot.SteamTrade
         {
             Thread.Sleep(2000);
 
-            trade.SendMessage("Please wait...");
-            trade.SendMessage("This is your trade ID:");
             trade.SendMessage(args);
 
             List<long> contextId = new List<long>();
@@ -72,13 +72,8 @@ namespace ASteambot.SteamTrade
                 OtherSteamInventory.load(gameID, contextId, partenarSteamID);
             }
 
-            Thread.Sleep(2000);
-
             foreach (ulong itemID in itemsToGive)
-            {
-                if (trade.AddItem(itemID, gameID, 2))
-                    Console.WriteLine("Success !");
-            }
+                trade.AddItem(itemID, gameID, 2);
         }
 
         public void OnTradeAddItem(GenericInventory.ItemDescription itemDescription, GenericInventory.Item inventoryItem)
@@ -120,7 +115,7 @@ namespace ASteambot.SteamTrade
 
         public bool Validate()
         {
-            if (trade.MyOfferedItems.Count() > 0)
+            if (!giveAway && trade.MyOfferedItems.Count() > 0)
             {
                 trade.SendMessage("Something went horribly wrong... !");
                 return false;
@@ -137,13 +132,14 @@ namespace ASteambot.SteamTrade
                 totalValue += itemInfo.Value;
             }*/
 
-            if (value <= 0)
+            if (!giveAway && value <= 0)
             {
                 trade.SendMessage("I don't recognize anything of value in this trade. I can't accept it.");
                 return false;
             }
 
-            trade.SendMessage(string.Format("Trade validated. Total value : {0}$ !", value));
+            if(!giveAway)
+                trade.SendMessage(string.Format("Trade validated. Total value : {0}$ !", value));
 
             return true;
         }

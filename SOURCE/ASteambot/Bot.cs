@@ -401,7 +401,7 @@ namespace ASteambot
             }
         }
 
-        public void CreateQuickTrade(SteamID steamid, uint gameID, int serverID, int moduleID, string args, List<ulong> itemsToGive)
+        public void CreateQuickTrade(SteamID steamid, uint gameID, int serverID, int moduleID, string args, List<ulong> itemsToGive, bool giveAway)
         {
             if (InTrade)
             {
@@ -412,7 +412,7 @@ namespace ASteambot
                 PlayGames(gameID).ConfigureAwait(false);
 
                 Trade CurrentTrade = TradeManager.CreateTrade((int)gameID, steamUser.SteamID, steamid, GetUniqueID(), SteamWeb.Token, SteamWeb.TokenSecure);
-                TradeHandler th = new TradeHandler(CurrentTrade, this, steamid, SteamWeb, serverID, moduleID, args, (int)gameID, itemsToGive);
+                TradeHandler th = new TradeHandler(CurrentTrade, this, steamid, SteamWeb, serverID, moduleID, args, (int)gameID, itemsToGive, giveAway);
                 SubscribeTrade(CurrentTrade, th);
                 TradeManager.StartTradeThread(CurrentTrade);
 
@@ -1436,6 +1436,16 @@ namespace ASteambot
 
                 SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(srvID_mID_value[0]), Int32.Parse(srvID_mID_value[1]), NetworkCode.ASteambotCode.TradeOfferDecline, msg);
             }
+            else if (offer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation && TradeOfferValue.ContainsKey(offer.TradeOfferId))
+            {
+                string[] srvID_mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId] + "/" + srvID_mID_value[3];
+                TradeOfferValue.Remove(offer.TradeOfferId);
+
+                AcceptMobileTradeConfirmation(offer.TradeOfferId);
+
+                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(srvID_mID_value[0]), Int32.Parse(srvID_mID_value[1]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+            }
         }
 
         private void OnPartenarTradeOfferUpdated(TradeOffer offer)
@@ -1443,7 +1453,6 @@ namespace ASteambot
             if (offer.OfferState == TradeOfferState.TradeOfferStateAccepted)
             {
                 double value = GetTradeOfferValue(offer.PartnerSteamId.ConvertToUInt64(), offer.Items.GetTheirItems());
-
 
                 if (TradeoffersGS.ContainsKey(offer.TradeOfferId))
                 {

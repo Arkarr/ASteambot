@@ -25,6 +25,8 @@ namespace ASteambot
         private string tcppasswd;
         private DataQueue dataQueue;
 
+        private string endDelimiter = "<EOF>";
+
         private bool socketError = false;
 
         public GameServer(Socket socket, string tcppaswd, int serverid, string ipportname)
@@ -75,7 +77,7 @@ namespace ASteambot
 
         public bool SocketConnected()
         {
-            string finaldata = tcppasswd + -1 + ")" + ((int)NetworkCode.ASteambotCode.Simple).ToString() + "|" + "PING" + "<EOF>";
+            string finaldata = tcppasswd + -1 + ")" + ((int)NetworkCode.ASteambotCode.Simple).ToString() + "|" + "PING" + endDelimiter;
            
             //socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
             int size = Encoding.ASCII.GetByteCount(finaldata);
@@ -116,7 +118,7 @@ namespace ASteambot
 
         public void FirstSend(int serverID)
         {
-            string finaldata = tcppasswd + "-1)SRVID| " + serverID + "<EOF>";
+            string finaldata = tcppasswd + "-1)SRVID| " + serverID + endDelimiter;
 
             //Console.WriteLine(finaldata);
             /*byte[] byteData = Encoding.UTF8.GetBytes(finaldata);
@@ -144,29 +146,56 @@ namespace ASteambot
 
         public bool Send(int moduleID, NetworkCode.ASteambotCode netcode, string data)
         {
-            string finaldata = tcppasswd + moduleID + ")" + ((int)netcode).ToString() + "|" + data + "<EOF>";
+            string finaldata = tcppasswd + moduleID + ")" + ((int)netcode).ToString() + "|" + data;
             int size = Encoding.ASCII.GetByteCount(finaldata);
 
             if (size > NetworkCode.MAX_CHUNK_SIZE && !socketError)
             {
                 List<string> chunks = ChunksUpto(finaldata, NetworkCode.MAX_CHUNK_SIZE).ToList();
+                string lastChunk = chunks.Last();
+
                 foreach (string chunk in chunks)
                 {
                     if (socketError)
                         break;
 
-                    dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
+                    if (chunk.Equals(lastChunk))
+                    {
+                        if (chunk.Length + endDelimiter.Length > NetworkCode.MAX_CHUNK_SIZE)
+                        {
+                            dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
+                            dataQueue.Add(Encoding.UTF8.GetBytes(endDelimiter));
+                        }
+                        else
+                        {
+                            dataQueue.Add(Encoding.UTF8.GetBytes(chunk + endDelimiter));
+                        }
+                    }
+                    else
+                    {
+                        dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
+                    }
+
                     Thread.Sleep(100);
                 }
             }
             else
             {
-                dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
+                if (finaldata.Length + endDelimiter.Length > NetworkCode.MAX_CHUNK_SIZE)
+                {
+                    dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
+                    Thread.Sleep(100);
+                    dataQueue.Add(Encoding.UTF8.GetBytes(endDelimiter));
+                }
+                else
+                {
+                    dataQueue.Add(Encoding.UTF8.GetBytes(finaldata + endDelimiter));
+                }
             }
 
             dataQueue.Clear();
 
-            Console.WriteLine("Done, status -> Sucess ? " + !socketError);
+            //Console.WriteLine("Done, status -> Sucess ? " + !socketError);
 
             return !socketError;
             /*try

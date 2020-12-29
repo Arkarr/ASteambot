@@ -423,7 +423,7 @@ namespace ASteambot
                 }
 
                 Thread.Sleep(100);
-                Console.WriteLine("Sending to " + gs.Name + "(" + gs.IP + ":" + gs.Port + ")");
+                //Console.WriteLine("Sending to " + gs.Name + "(" + gs.IP + ":" + gs.Port + ")");
                 sendSuccess = gs.Send(moduleID, netcode, data);
 
                 if (!sendSuccess)
