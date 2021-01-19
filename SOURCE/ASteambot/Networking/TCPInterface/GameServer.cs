@@ -20,6 +20,7 @@ namespace ASteambot
         public int ServerID { get; private set; }
         public long SteamID { get; private set; }
         public bool Alive { get; private set; }
+        public bool isWebSocket { get; private set; }
 
         private Socket socket;
         private string tcppasswd;
@@ -29,7 +30,7 @@ namespace ASteambot
 
         private bool socketError = false;
 
-        public GameServer(Socket socket, string tcppaswd, int serverid, string ipportname)
+        public GameServer(Socket socket, string tcppaswd, int serverid, string ipportname, bool isWebSocket)
         {
             Alive = true;
             string[] srvinfos = ipportname.Split(new[] { '|' }, 4);
@@ -41,6 +42,7 @@ namespace ASteambot
             this.socket = socket;
             ServerID = serverid;
             dataQueue = new DataQueue();
+            this.isWebSocket = isWebSocket;
             dataQueue.OnAdd += DataQueue_OnAdd;
             
             FirstSend(ServerID);
@@ -134,7 +136,10 @@ namespace ASteambot
             }
             else
             {
-                dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
+                if (isWebSocket)
+                    SendMessageToClient(finaldata);
+                else
+                    dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
             }
         }
 
@@ -149,86 +154,62 @@ namespace ASteambot
             string finaldata = tcppasswd + moduleID + ")" + ((int)netcode).ToString() + "|" + data;
             int size = Encoding.ASCII.GetByteCount(finaldata);
 
-            if (size > NetworkCode.MAX_CHUNK_SIZE && !socketError)
+            if (isWebSocket && !socketError)
             {
-                List<string> chunks = ChunksUpto(finaldata, NetworkCode.MAX_CHUNK_SIZE).ToList();
-                string lastChunk = chunks.Last();
-
-                foreach (string chunk in chunks)
-                {
-                    if (socketError)
-                        break;
-
-                    if (chunk.Equals(lastChunk))
-                    {
-                        if (chunk.Length + endDelimiter.Length > NetworkCode.MAX_CHUNK_SIZE)
-                        {
-                            dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
-                            dataQueue.Add(Encoding.UTF8.GetBytes(endDelimiter));
-                        }
-                        else
-                        {
-                            dataQueue.Add(Encoding.UTF8.GetBytes(chunk + endDelimiter));
-                        }
-                    }
-                    else
-                    {
-                        dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
-                    }
-
-                    Thread.Sleep(100);
-                }
+                SendMessageToClient(finaldata);
             }
             else
             {
-                if (finaldata.Length + endDelimiter.Length > NetworkCode.MAX_CHUNK_SIZE)
+                if (size > NetworkCode.MAX_CHUNK_SIZE && !socketError)
                 {
-                    dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
-                    Thread.Sleep(100);
-                    dataQueue.Add(Encoding.UTF8.GetBytes(endDelimiter));
+                    List<string> chunks = ChunksUpto(finaldata, NetworkCode.MAX_CHUNK_SIZE).ToList();
+                    string lastChunk = chunks.Last();
+
+                    foreach (string chunk in chunks)
+                    {
+                        if (socketError)
+                            break;
+
+                        if (chunk.Equals(lastChunk))
+                        {
+                            if (chunk.Length + endDelimiter.Length > NetworkCode.MAX_CHUNK_SIZE)
+                            {
+                                dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
+                                dataQueue.Add(Encoding.UTF8.GetBytes(endDelimiter));
+                            }
+                            else
+                            {
+                                dataQueue.Add(Encoding.UTF8.GetBytes(chunk + endDelimiter));
+                            }
+                        }
+                        else
+                        {
+                            dataQueue.Add(Encoding.UTF8.GetBytes(chunk));
+                        }
+
+                        Thread.Sleep(100);
+                    }
                 }
                 else
                 {
-                    dataQueue.Add(Encoding.UTF8.GetBytes(finaldata + endDelimiter));
+                    if (finaldata.Length + endDelimiter.Length > NetworkCode.MAX_CHUNK_SIZE)
+                    {
+                        dataQueue.Add(Encoding.UTF8.GetBytes(finaldata));
+                        Thread.Sleep(100);
+                        dataQueue.Add(Encoding.UTF8.GetBytes(endDelimiter));
+                    }
+                    else
+                    {
+                        dataQueue.Add(Encoding.UTF8.GetBytes(finaldata + endDelimiter));
+                    }
                 }
-            }
 
-            dataQueue.Clear();
+                dataQueue.Clear();
+            }
 
             //Console.WriteLine("Done, status -> Sucess ? " + !socketError);
 
             return !socketError;
-            /*try
-            {
-                byte[] byteData = Encoding.UTF8.GetBytes(finaldata);
-                if(byteData.Length > 900)
-                {
-                    for(int i = 0; i < byteData.Length; i+=900)
-                    {
-                        if (i > byteData.Length)
-                            i = byteData.Length;
-
-                        ArrayView<byte> p1 = new ArrayView<byte>(byteData, i, i+900);
-                        byte[] bytes = p1.ToArray();
-                        dataQueue.Add(bytes);
-                        socket.BeginSend(bytes, 0, bytes.Length, 0, new AsyncCallback(SendCallback), socket);
-                    }
-                }
-                else
-                {
-                    dataQueue.Add(byteData);
-                    socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), socket);
-                }
-            }
-            catch (Exception e)
-            {
-                /*Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(e);
-                Console.ForegroundColor = ConsoleColor.White;
-                PrintSocketError(data);///
-                Alive = false;
-                return false;
-            }*/
         }
 
         private void SendCallback(IAsyncResult ar)
@@ -252,6 +233,63 @@ namespace ASteambot
             {
                 Console.WriteLine(e.ToString());
             }*/
+        }
+
+        public void SendMessageToClient(string msg)
+        {
+            using (var stream = new NetworkStream(socket))
+            {
+                Queue<string> que = new Queue<string>(SplitInGroups(msg, 125));
+                int len = que.Count;
+
+                while (que.Count > 0)
+                {
+                    var header = GetHeader(
+                        que.Count > 1 ? false : true,
+                        que.Count == len ? false : true
+                    );
+
+                    byte[] list = Encoding.UTF8.GetBytes(que.Dequeue());
+                    header = (header << 7) + list.Length;
+                    stream.Write(IntToByteArray((ushort)header), 0, 2);
+                    stream.Write(list, 0, list.Length);
+                }
+            }
+        }
+
+        protected byte[] IntToByteArray(ushort value)
+        {
+            var ary = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(ary);
+            }
+
+            return ary;
+        }
+
+        private IEnumerable<string> SplitInGroups(string original, int size)
+        {
+            var p = 0;
+            var l = original.Length;
+            while (l - p > size)
+            {
+                yield return original.Substring(p, size);
+                p += size;
+            }
+            yield return original.Substring(p);
+        }
+
+        protected int GetHeader(bool finalFrame, bool contFrame)
+        {
+            int header = finalFrame ? 1 : 0;//fin: 0 = more frames, 1 = final frame
+            header = (header << 1) + 0;//rsv1
+            header = (header << 1) + 0;//rsv2
+            header = (header << 1) + 0;//rsv3
+            header = (header << 4) + (contFrame ? 0 : 1);//opcode : 0 = continuation frame, 1 = text
+            header = (header << 1) + 0;//mask: server -> client = no mask
+
+            return header;
         }
 
         private void PrintSocketError(string msg)
@@ -312,5 +350,11 @@ namespace ASteambot
             }
         }
 
+        private T[] SubArray<T>(T[] data, int index, int length)
+        {
+            T[] result = new T[length];
+            Array.Copy(data, index, result, 0, length);
+            return result;
+        }
     }
 }

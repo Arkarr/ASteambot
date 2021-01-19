@@ -13,6 +13,7 @@ using ASteambot.SteamTrade;
 using ASteambot.CustomSteamMessageHandler;
 using SteamKit2.GC;
 using System.Threading.Tasks;
+using System.Net.WebSockets;
 
 namespace ASteambot
 {

@@ -22,6 +22,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ASteambot.SteamTrade;
 using SteamKit2.GC;
+using System.Net.WebSockets;
 
 namespace ASteambot
 {
@@ -240,9 +241,15 @@ namespace ASteambot
             cbManager.Subscribe<SteamFriends.PersonaChangeCallback>(OnSteamNameChange);
             cbManager.Subscribe<SteamFriends.FriendsListCallback>(OnSteamFriendsList);
             cbManager.Subscribe<SteamFriends.PersonaStateCallback>(OnProfileInfo);
+            cbManager.Subscribe<SteamFriends.ChatMsgCallback>(test);
 
             //Custom events:
             //cbManager.Subscribe<GenericSteamMessageHandler.OnSteamMessageReceived>(OnGenericMessageReceived);
+        }
+
+        private void test(SteamFriends.ChatMsgCallback obj)
+        {
+            Console.WriteLine("test");
         }
 
         //*************//
@@ -1438,14 +1445,24 @@ namespace ASteambot
             }
             else if (offer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation && TradeOfferValue.ContainsKey(offer.TradeOfferId))
             {
+                /*string[] srvID_mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
+                string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId] + "/" + srvID_mID_value[3];
+                TradeOfferValue.Remove(offer.TradeOfferId);*/
+
+                AcceptMobileTradeConfirmation(offer.TradeOfferId);
+
+                //SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(srvID_mID_value[0]), Int32.Parse(srvID_mID_value[1]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+            }
+            /*else if (offer.OfferState == TradeOfferState.TradeOfferStateActive && TradeOfferValue.ContainsKey(offer.TradeOfferId))
+            {
                 string[] srvID_mID_value = TradeoffersGS[offer.TradeOfferId].Split('|');
                 string msg = offer.PartnerSteamId.ConvertToUInt64() + "/" + offer.TradeOfferId + "/" + TradeOfferValue[offer.TradeOfferId] + "/" + srvID_mID_value[3];
                 TradeOfferValue.Remove(offer.TradeOfferId);
 
-                AcceptMobileTradeConfirmation(offer.TradeOfferId);
+                offer.Accept();
 
-                SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(srvID_mID_value[0]), Int32.Parse(srvID_mID_value[1]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
-            }
+                //SendTradeOfferConfirmationToGameServers(offer.TradeOfferId, Int32.Parse(srvID_mID_value[0]), Int32.Parse(srvID_mID_value[1]), NetworkCode.ASteambotCode.TradeOfferSuccess, msg);
+            }*/
         }
 
         private void OnPartenarTradeOfferUpdated(TradeOffer offer)

@@ -2,8 +2,6 @@
 using ASteambot.Modules;
 using ASteambot.Networking;
 using ASteambot.Networking.Webinterface;
-using ASteambot.Networking.Webinterface.Models;
-using ASteambot.Networking.Webinterface.Models.SimpleHttpServer.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -25,7 +23,7 @@ namespace ASteambot
         private static Manager steambotManager;
         private static Thread threadManager;
 
-        private static string BUILD_VERSION = "V13.6";
+        private static string BUILD_VERSION = "V13.7";
         private static string BUILD_NAME = BUILD_VERSION + " - PUBLIC";
 
         public static bool DEBUG;

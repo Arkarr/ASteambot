@@ -135,7 +135,7 @@ namespace SteamTrade.TradeOffer
             {
                 if(resp.Offer == null)
                 {
-                    Debug.WriteLine("Offer returned from steam api is not valid - Wrong steam API key : " + resp.Offer.TradeOfferId);
+                    Debug.WriteLine("Offer returned from steam api is not valid - Wrong steam API key. Offer ID : " + offerId);
                     return false;
                 }
                 else if (IsOfferValid(resp.Offer))

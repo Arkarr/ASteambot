@@ -1010,7 +1010,7 @@ namespace ASteambot.CustomSteamMessageHandler
 		}
 	}
 
-	internal class InitateTradeResponseCallback : CallbackMsg
+    internal class InitateTradeResponseCallback : CallbackMsg
 	{
 		private ulong targetJobID;
 		private CMsgTrading_InitiateTradeResponse body;

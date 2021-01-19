@@ -105,10 +105,8 @@ namespace ASteambot.SteamTrade
             TradeOffer to = null;
             bot.TradeOfferManager.TryGetOffer(tradeOfferID.ToString(), out to);
             bot.UpdateTradeOfferInDatabase(to, value);
-
-            trade.SendMessage("Please complete the confirmation to finish the trade");
-            bot.SteamFriends.SendChatMessage(partenarSteamID, EChatEntryType.ChatMsg, "Please complete the confirmation to finish the trade");
-
+            //to.Accept();
+            //bot.AcceptMobileTradeConfirmation(to.TradeOfferId);
 
             bot.Manager.Send(serverID, moduleID, NetworkCode.ASteambotCode.CreateTradeOffer, partenarSteamID.ConvertToUInt64() + "/" + tradeOfferID + "/" + value + "/" + args);
         }

@@ -14,8 +14,9 @@ namespace ASteambot.Networking
         public int NetworkCode { get; private set; }
         public string Arguments { get; private set; }
         public Socket Socket { get; private set; }
+        public bool isWebSocket { get; private set; }
 
-        public GameServerRequest(Socket socket, string srvid, string code, string args)
+        public GameServerRequest(Socket socket, string srvid, string code, string args, bool isWebSocket)
         {
             string[] idmid = srvid.Split(',');
 
@@ -28,7 +29,8 @@ namespace ASteambot.Networking
             ModuleID = tmpInt;
             NetworkCode = Int32.Parse(code);
             Arguments = args;
-            Socket = socket;
+            this.Socket = socket;
+            this.isWebSocket = isWebSocket;
         }
     }
 }

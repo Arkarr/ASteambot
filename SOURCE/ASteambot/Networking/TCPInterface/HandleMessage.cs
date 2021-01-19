@@ -168,13 +168,15 @@ namespace ASteambot.Networking
 
             SINGLE_SERVER_ID++;
 
-            GameServer gameserver = new GameServer(gsr.Socket, bot.Manager.Config.TCPPassword, SINGLE_SERVER_ID, gsr.Arguments);
+            GameServer gameserver = new GameServer(gsr.Socket, bot.Manager.Config.TCPPassword, SINGLE_SERVER_ID, gsr.Arguments, gsr.isWebSocket);
             GameServer gs = bot.Manager.Servers.Find(srv => srv.SteamID == gameserver.SteamID);
 
             if (gs == null)
                 bot.Manager.Servers.Add(gameserver);
             else
                 gs.Update(gameserver);
+
+            //gameserver.Send(-1, NetworkCode.ASteambotCode.Core, "ping");
         }
 
         private void Disconnect(Bot bot, GameServerRequest gsr)

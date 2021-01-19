@@ -1,7 +1,9 @@
 ﻿using CsQuery;
 using CsQuery.Implementation;
+using Microsoft.AspNetCore.Http.Features;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Renci.SshNet.Security;
 using SteamTrade;
 using System;
 using System.Collections.Generic;
@@ -12,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Cache;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -44,6 +47,7 @@ namespace ASteambot.SteamMarketUtility
         private static List<Item> steamMarketItemsTF2;
         private static List<Item> steamMarketItemsCSGO;
         private static List<Item> steamMarketItemsDOTA2;
+        private readonly Dictionary<string, float> priceOverride;
 
         public SteamMarket(string apikey, bool disabled)
         {
@@ -55,9 +59,14 @@ namespace ASteambot.SteamMarketUtility
             steamMarketItemsTF2 = new List<Item>();
             steamMarketItemsCSGO = new List<Item>();
             steamMarketItemsDOTA2 = new List<Item>();
+            priceOverride = new Dictionary<string, float>();
 
             if (!disabled)
             {
+                LoadPriceOverride("TF2_PriceOverride.ini", Games.TF2, steamMarketItemsTF2);
+                LoadPriceOverride("CSGO_PriceOverride.ini", Games.CSGO, steamMarketItemsCSGO);
+                LoadPriceOverride("Dota2_PriceOverride.ini", Games.Dota2, steamMarketItemsDOTA2);
+
                 RefreshMarket();
 
                 System.Timers.Timer timerMarketRefresher = new System.Timers.Timer();
@@ -76,6 +85,37 @@ namespace ASteambot.SteamMarketUtility
         public void Cancel()
         {
             stop = true;
+        }
+
+        private void LoadPriceOverride(string fileName, Games game, List<Item> items)
+        {
+            string path = @"./configs/" + fileName;
+
+            if (!File.Exists(path))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Config file " + path + " doesn't exist. Default prices loaded.");
+                Console.ForegroundColor = ConsoleColor.White;
+                return;
+            }
+
+            string line;
+            StreamReader file = new StreamReader(path);
+            while ((line = file.ReadLine()) != null)
+            {
+                string[] item_value = line.Split("=");
+
+                foreach (KeyValuePair<string, float> entry in priceOverride)
+                    item_value[1] = item_value[1].Replace("" + entry.Key, "" + entry.Value);
+
+                item_value[1] = item_value[1].Replace(",", ".");
+
+                float result = float.Parse(new DataTable().Compute(item_value[1], null).ToString());
+
+                priceOverride.Add(item_value[0], result);
+
+                items.Add(new Item(item_value[0], (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds, 1, result, 440, ""));
+            }
         }
 
         private void RefreshMarket(Games game = Games.None)
@@ -308,11 +348,30 @@ namespace ASteambot.SteamMarketUtility
 
                         if (i != null && i.Value != item.Value)
                         {
-                            i.Value = item.Value;
-                            i.LastUpdated = item.LastUpdated;
+                            foreach (KeyValuePair<string, float> entry in priceOverride)
+                            {
+                                if (item.Name.ToLower().Contains(entry.Key.ToLower()))
+                                {
+                                    i.Value = entry.Value;
+                                }
+                                else
+                                {
+                                    i.Value = item.Value;
+                                    i.LastUpdated = item.LastUpdated;
+                                }
+                            }
                         }
                         else if (i == null)
                         {
+                            foreach (KeyValuePair<string, float> entry in priceOverride)
+                            {
+                                if (item.Name.ToLower().Contains(entry.Key.ToLower()))
+                                {
+                                    item.Value = entry.Value;
+                                    break;
+                                }
+                            }
+
                             itemToAdd.Add(item);
                         }
                     }
